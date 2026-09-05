@@ -134,6 +134,9 @@ test('CI binds a public notifier manifest to the Release asset, tagged archive, 
   const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
   const job = workflowJob(workflow, 'published-update-manifest');
   assert.match(job, /validateStableUpdateManifest/);
+  assert.match(job, /PUBLISH_REPOSITORY: tt-a1i\/archify/);
+  assert.doesNotMatch(job, /repos\/\$\{GITHUB_REPOSITORY\}\/releases/);
+  assert.match(job, /https:\/\/github\.com\/\$\{PUBLISH_REPOSITORY\}\.git/);
   assert.match(job, /releases\/latest/);
   assert.match(job, /latest_stable_tag" != "v\$\{manifest_version\}"/);
   assert.match(job, /releases\/tags\/v\$\{manifest_version\}/);
