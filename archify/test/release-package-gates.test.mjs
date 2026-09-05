@@ -88,7 +88,7 @@ test('release prevents manifest preannouncement and smokes the exact archive bef
   assert.match(smoke, /node scripts\/package-smoke\.mjs "\$package_root\/archify"/);
   assert.doesNotMatch(smoke, /\bnpm\s+(?:ci|install)\b/);
   assert.match(freshness, /cmp -s \/tmp\/archify-built\.zip archify\.zip/);
-  assert.match(upload, /uses: softprops\/action-gh-release@v3\s/);
+  assert.match(upload, /uses: softprops\/action-gh-release@5113cdc90fd4d541c801c55356214017bf5ae34b # v3/);
   assert.match(upload, /files: archify\.zip/);
   assert.match(followUp, /docs\/skill-updates\/archify\/stable\.json/);
 });
@@ -177,11 +177,25 @@ test('GitHub Pages deploys docs only after every repository gate succeeds', () =
   assert.match(job, /current_main" == "\$GITHUB_SHA"/);
   assert.match(job, /Skipping obsolete Pages deployment/);
   assert.match(job, /if: steps\.deployment-head\.outputs\.current == 'true'/);
-  assert.match(job, /actions\/configure-pages@v6/);
+  assert.match(job, /actions\/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6/);
   // v5 delegates to upload-artifact v7 (Node 24); v4 still embeds Node 20.
-  assert.match(job, /actions\/upload-pages-artifact@v5\s/);
+  assert.match(job, /actions\/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5/);
   assert.match(job, /path: docs/);
-  assert.match(job, /actions\/deploy-pages@v5/);
+  assert.match(job, /actions\/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5/);
+});
+
+test('every remote GitHub Action is pinned to an immutable commit SHA', () => {
+  const workflows = fs.readdirSync(path.join(repoRoot, '.github', 'workflows'))
+    .filter((name) => name.endsWith('.yml'));
+  for (const name of workflows) {
+    const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', name), 'utf8');
+    const remoteActions = [...workflow.matchAll(/^\s*-?\s*uses:\s*([^\s#]+)(?:\s+#.*)?$/gm)]
+      .map((match) => match[1])
+      .filter((reference) => !reference.startsWith('./'));
+    for (const reference of remoteActions) {
+      assert.match(reference, /@[a-f0-9]{40}$/, `${name} must pin ${reference} to a full commit SHA`);
+    }
+  }
 });
 
 test('release tags with a SemVer prerelease are marked prerelease and never become latest', () => {

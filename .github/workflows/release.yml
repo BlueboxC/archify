@@ -11,11 +11,13 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
       - name: Fetch exact tag object
         shell: bash
         run: git fetch --force --no-tags origin "+refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
           cache: npm
@@ -28,7 +30,7 @@ jobs:
         working-directory: archify
       - name: Provision a known Chrome runtime
         id: setup-chrome
-        uses: browser-actions/setup-chrome@v2
+        uses: browser-actions/setup-chrome@48483d551c22a1fe6154c6a195ccc6d5773dc8c4 # v2
         with:
           chrome-version: stable
           install-dependencies: true
@@ -93,7 +95,7 @@ jobs:
       - name: Committed zip must match the build (same gate as CI)
         run: cmp -s /tmp/archify-built.zip archify.zip
       - name: Create GitHub Release with the zip attached
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@5113cdc90fd4d541c801c55356214017bf5ae34b # v3
         with:
           files: archify.zip
           generate_release_notes: true

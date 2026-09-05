@@ -48,6 +48,18 @@ The OpenAI vector path is recorded from the
 Use remains subject to those current guidelines and any applicable trademark
 rights. Its inclusion does not state or imply endorsement by OpenAI.
 
+## JetBrains Mono
+
+Archify bundles the variable JetBrains Mono font distributed by
+[Google Fonts](https://github.com/google/fonts/tree/main/ofl/jetbrainsmono) and
+embeds it in generated HTML artifacts so they remain portable and do not contact
+third-party font services. The pinned font bytes have SHA-256
+`48715a42ec242c21e9f02692891e147d022299a52e48d5e413e1a942193ffeda`.
+
+JetBrains Mono is Copyright 2020 The JetBrains Mono Project Authors and is
+licensed under the SIL Open Font License 1.1. The complete license is preserved
+at `assets/fonts/OFL.txt`.
+
 ## No additional rights granted
 
 Brand names, logos, and trademarks remain the property of their respective

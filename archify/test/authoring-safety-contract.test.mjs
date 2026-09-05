@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -12,6 +13,20 @@ const authoringContract = fs.readFileSync(
   'utf8',
 );
 const schemaReadme = fs.readFileSync(path.join(skillRoot, 'schemas', 'README.md'), 'utf8');
+const artifactTemplate = fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8');
+const bundledFont = fs.readFileSync(path.join(skillRoot, 'assets', 'fonts', 'JetBrainsMono-Variable.ttf'));
+const bundledFontLicense = fs.readFileSync(path.join(skillRoot, 'assets', 'fonts', 'OFL.txt'), 'utf8');
+
+test('generated artifacts embed the verified JetBrains Mono font without contacting third parties', () => {
+  assert.doesNotMatch(artifactTemplate, /fonts\.(?:googleapis|gstatic)\.com/i);
+  assert.doesNotMatch(artifactTemplate, /<link[^>]+rel=["']preconnect["'][^>]+https?:\/\//i);
+  assert.match(artifactTemplate, /data:font\/ttf;base64,/i);
+  assert.equal(
+    createHash('sha256').update(bundledFont).digest('hex'),
+    '48715a42ec242c21e9f02692891e147d022299a52e48d5e413e1a942193ffeda',
+  );
+  assert.match(bundledFontLicense, /SIL OPEN FONT LICENSE Version 1\.1/);
+});
 
 test('semantic relationship labels are preserved and deletion is not a geometry repair', () => {
   for (const [name, source] of [['SKILL.md', skill], ['authoring contract', authoringContract]]) {
