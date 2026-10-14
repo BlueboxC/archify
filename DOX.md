@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Maintain BlueboxC's Archify fork and compatible, verified corrections to its five-type 2.17 baseline.
+Maintain BlueboxC's Archify fork and compatible, verified corrections to the ten-type Archify 3.1.0 release.
 
 ## Ownership
 
-Root owns distribution builders, workflows, generated public examples, licensing and fork policy. `archify/` owns the installed Skill runtime and its tests.
+Root owns distribution builders, workflows, generated public examples, licensing and fork policy. `archify/` owns the installed Skill runtime. `viewer/` owns authored Viewer sources; `test/` owns repository regression tests.
 
 ## Local Contracts
 
@@ -23,10 +23,12 @@ Root owns distribution builders, workflows, generated public examples, licensing
 
 ## Verification
 
-- Run failing regressions before fixes, focused compatibility checks afterward, then `npm test` from `archify/` and `git diff --check`.
+- Run failing regressions before fixes, focused compatibility checks afterward, then root `npm run test:full`, the maintained browser gate and `git diff --check`.
 - Browser behavior requires real Chrome checks; distinguish them from static geometry and perceptual review.
 - Verify generated output and the extracted package match tracked source while preserving font/security customizations.
 
 ## Child DOX Index
 
-- [archify/DOX.md](archify/DOX.md) — Skill runtime, contracts, source and tests.
+- [archify/DOX.md](archify/DOX.md) — Skill runtime, contracts and bundled source.
+- [viewer/DOX.md](viewer/DOX.md) — authored Viewer modules and generated template boundary.
+- [test/DOX.md](test/DOX.md) — regression ownership and runtime/package/browser gates.

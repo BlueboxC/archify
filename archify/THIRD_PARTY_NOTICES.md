@@ -50,15 +50,19 @@ rights. Its inclusion does not state or imply endorsement by OpenAI.
 
 ## JetBrains Mono
 
-Archify bundles the variable JetBrains Mono font distributed by
-[Google Fonts](https://github.com/google/fonts/tree/main/ofl/jetbrainsmono) and
-embeds it in generated HTML artifacts so they remain portable and do not contact
-third-party font services. The pinned font bytes have SHA-256
-`48715a42ec242c21e9f02692891e147d022299a52e48d5e413e1a942193ffeda`.
+Delivered Archify viewer artifacts embed the JetBrains Mono variable font
+subsets served by Google Fonts. For characters covered by these subsets, font
+selection does not depend on a network request or a locally installed copy.
+Uncovered characters (including CJK) still use the system fallback stack;
+browser and operating-system rasterization can differ.
+JetBrains Mono is maintained at
+[github.com/JetBrains/JetBrainsMono](https://github.com/JetBrains/JetBrainsMono)
+and is distributed under the SIL Open Font License 1.1. The complete license
+text is preserved in `assets/JetBrainsMono-OFL.txt` in the packaged Skill and
+in the font CSS carried by standalone HTML and SVG exports.
 
-JetBrains Mono is Copyright 2020 The JetBrains Mono Project Authors and is
-licensed under the SIL Open Font License 1.1. The complete license is preserved
-at `assets/fonts/OFL.txt`.
+The fork also retains the original JetBrains Mono TTF assets and their OFL
+license under `archify/assets/fonts/` (packaged as `assets/fonts/`).
 
 ## No additional rights granted
 

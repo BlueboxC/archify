@@ -1,12 +1,20 @@
 # Archify — BlueboxC fork
 
-This fork keeps the five-type 2.17 development baseline and its schema-v1 inputs.
-It backports reviewed corrections without importing the Archify 3.x release or
-changing existing generated HTML in user projects.
+This fork integrates official Archify 3.1.0 (`v3.1.0`, commit
+`1c2b42d660e4a7571813fb43839c79e3e9ca7720`) with our reviewed corrections.
+It supports ten diagram types and the release's Viewer, workflow migration,
+Preview and verified `finalize` delivery. Existing generated user artifacts are
+not rewritten by upgrading the Skill.
 
-Our original hardening remains: embedded JetBrains Mono with its OFL license,
-immutable GitHub Action references, reduced workflow permissions and the existing
-dependency lock. MIT and third-party notices remain intact.
+## Preserved customizations
+
+- Offline licensed JetBrains Mono: 3.1's six embedded WOFF2 subsets replace the
+  old runtime TTF embedding while retaining the original licensed assets.
+- Immutable Action references, read-only workflow defaults, no retained checkout
+  credentials except the existing star-history publishing job, and updated locks.
+- Independent artifact membership checks, version-scoped compare geometry,
+  advisory coincident routes, complete checker output and retained Preview output.
+- Concise DOX ownership contracts and source/package/installation reconciliation.
 
 ## Adapted corrections
 
@@ -17,22 +25,28 @@ dependency lock. MIT and third-party notices remain intact.
 | [#590](https://github.com/tt-a1i/archify/issues/590) | [gold-beyond, PR538](https://github.com/tt-a1i/archify/pull/538), `08d057862abe5e65c72a6551d199320629ec8e82` | Piped children use a 64 MiB default. Captured checker calls accept `ARCHIFY_CHECK_MAX_BUFFER`; exhausted capture reports `artifact/check-output-limit` and preserves previous output. The direct checker streams. Natural checker shutdown also flushes complete JSON before exit. |
 | [#927](https://github.com/tt-a1i/archify/issues/927) | [To3akaRin, PR930](https://github.com/tt-a1i/archify/pull/930), `83632403931d995c5d1507b31bc44d96a7e4c469` | New Preview clients restore the retained verified revision during checking/failure; status, diagnostics and same-revision focus remain intact. |
 
-The upstream implementations and tests are adapted under MIT. Open upstream PRs
-remain proposals there; their inclusion here does not imply upstream approval.
-This baseline has no `finalize` command, so its 3.x capture changes are not copied.
-Compare generation checks both snapshots independently. A later check of the
-overlay can judge only the geometry it actually contains, including any drawn
-baseline phantoms; it cannot reconstruct omitted baseline geometry.
+The upstream implementations and tests are adapted under MIT. Their inclusion
+here does not imply that upstream has reviewed or merged our adaptations.
+Archify 3.1 already rejects fully enclosed non-members during showcase rendering;
+the independent artifact check additionally covers HTML and compare overlays.
+`finalize` retains detailed coincident-route and straddling-boundary warnings for
+manual review, while other showcase warnings and all hard errors remain blocking.
+It still verifies artifact identities, delivery provenance and the browser gate.
 
 ## Verification and installation
 
-Run `npm ci` and `npm test` from `archify/`. The focused regression files are
-`boundary-membership.test.mjs`, `coincident-routes.test.mjs`,
-`checker-buffer.test.mjs` and `preview-browser.test.mjs`. Set `ARCHIFY_CHROME`
-to execute the real Preview browser tests; skipped checks are not passes.
+Install development dependencies with `npm ci` at the root and in `archify/`.
+Run root `npm run test:full`, `ARCHIFY_CHROME=/path/to/chrome npm run test:browser`
+and `npm run test:webm`. The four focused regressions are in root `test/`:
+boundary membership, coincident routes, checker buffer and Preview browser tests.
+Skips are not passes. Browser tests use real Chrome; manual visual review remains
+separate from automated containment and interaction evidence.
 
-The ZIP uses `scripts/build-zip.sh` with Node 22 and the tracked-only stager.
-Qualify the extracted package independently. Existing installations require a
-private backup and source/hash reconciliation before replacing affected files;
-preserve local additions and stop for conflicting edits. Keep installation
-receipts and rollback material outside this public repository.
+Build the canonical tracked-only ZIP with `scripts/build-zip.sh` under official
+Node 22 and its bundled zlib. Repository tests are not installed with the Skill.
+Qualify the extracted package independently. Update existing installations only
+after a private backup and source/hash reconciliation; preserve local additions
+and stop for conflicting edits. Machine receipts and rollback stay private.
+
+The stable update manifest describes the published upstream release, not this
+fork's customized ZIP. No fork release or automatic installation is implied.

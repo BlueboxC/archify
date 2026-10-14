@@ -6,7 +6,7 @@ Own the zero-dependency installed CLI, renderers, checker, Viewer, authoring con
 
 ## Ownership
 
-This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schemas/`, `references/`, bundled examples and `test/`.
+This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schemas/`, `references/`, bundled examples. Root `test/` owns tests and root `viewer/` owns Viewer sources.
 
 ## Local Contracts
 
@@ -23,7 +23,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 
 ## Verification
 
-- `npm test`; focused boundary-membership, coincident-routes, checker-buffer and preview regressions.
+- Root `npm run test:full`; focused boundary-membership, coincident-routes, checker-buffer and preview regressions.
 - Regenerate affected examples/gallery and compare source, staged package and installed bytes.
 
 ## Child DOX Index
