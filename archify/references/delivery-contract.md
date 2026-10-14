@@ -70,6 +70,8 @@ node bin/archify.mjs preview <type> <input>.json <output>.html --quality showcas
 
 Preview watches one explicit input on loopback, binds each stable digest to a private snapshot, and advances only after the existing verified delivery pipeline passes. Invalid, half-written, deleted, or superseded input leaves the previous verified revision on screen and on disk. Identical bytes do not rebuild or reload.
 
+Refreshing Preview restores its retained verified diagram during checking or failure. Status and diagnostics remain visible; updates for the same revision preserve the loaded document and Viewer state. A session without verified output retains its waiting view.
+
 The preview runtime ships inside the zero-dependency Skill ZIP and must work without `node_modules`.
 
 Never start it by default. Do not use it for CI, unattended agents, remote sharing, or mobile use. `--no-open` is only for a user who will open the printed local URL or for loop testing. Stop it with Ctrl-C before handoff. Server state, port, source path, diagnostics, error text, and reload tokens must never enter the generated artifact or any export.
@@ -110,3 +112,5 @@ correction_rounds: 0|1|2
 Derive `browser_evidence` only from the latest artifact-bound `visual-check` receipt. Record any manual browser work separately with its artifact binding, viewport/theme scope, and observations; never use it or `visual_review` to overwrite the automated status.
 
 Opening, preview status, Share Cards, and other viewer exports are not validation claims.
+
+Checker receipts use a 64 MiB capture limit. `ARCHIFY_CHECK_MAX_BUFFER` selects an explicit byte limit for captured check calls. Exhaustion reports `artifact/check-output-limit` with no artifact verdict; failed delivery preserves previous output. The direct `check` command streams its receipt.

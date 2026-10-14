@@ -14,6 +14,13 @@ const skillRoot = path.resolve(__dirname, '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-viewer-chrome-layout-'));
 const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
 
+async function closeBrowser(browser) {
+  await browser.close();
+  // Chrome helpers can outlive the browser and retain inherited fixture pipes.
+  for (const pipe of browser.child.stdio || []) pipe?.destroy?.();
+  browser.child.unref?.();
+}
+
 const CASES = {
   architecture: 'web-app.architecture.json',
   workflow: 'agent-tool-call.workflow.json',
@@ -305,7 +312,7 @@ test('Dock Safe Rail keeps typed renderers clear across themes, Presentation, an
       assert.ok(receipt.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX, message);
     }
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -322,7 +329,7 @@ test('an artifact with no Legend still receives the desktop stage rail', {
     assert.ok(receipt.stageGap >= 9, JSON.stringify(receipt));
     assert.ok(receipt.navBottom <= receipt.containerBottom + 0.5, JSON.stringify(receipt));
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -362,7 +369,7 @@ test('Dock Safe Rail resolves a forced Legend collision across the shared diagra
       assert.ok(receipt.stageGap >= 9, `${mode}: ${JSON.stringify(receipt)}`);
     }
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -395,7 +402,7 @@ test('Maka remains collision-free at the reported Retina-equivalent viewport', {
     assert.equal(receipt.intersectionArea, 0, JSON.stringify(receipt));
     assert.ok(receipt.scrollWidth <= receipt.innerWidth, JSON.stringify(receipt));
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -423,7 +430,7 @@ test('a real 5px Legend gap keeps the stage rail and Legend clear', {
     assert.ok(receipt.reserve > 0, JSON.stringify(receipt));
     assert.ok(receipt.stageGap >= 9, JSON.stringify(receipt));
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -451,7 +458,7 @@ test('Presentation keeps its visible Dock clear of a colliding Legend', {
     assert.equal(receipt.legendDockIntersectionArea, 0, JSON.stringify(receipt));
     assert.ok(receipt.reserve > 0, JSON.stringify(receipt));
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -481,7 +488,7 @@ test('manual zoom and pan reschedules Legend and Dock collision measurement', {
     assert.equal(receipt.semanticDockIntersectionArea, 0, JSON.stringify(receipt));
     assert.ok(receipt.reserve > 0, JSON.stringify(receipt));
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -513,7 +520,7 @@ test('camera pan clips authored relationship paint at the protected stage bounda
 
     assert.deepEqual(hits, [], JSON.stringify(hits));
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -591,7 +598,7 @@ test('live camera transitions keep authored relationship paint outside the Dock 
       }
     }
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -622,7 +629,7 @@ test('zoom keeps the desktop rail stable and reports protected stage geometry', 
     assert.equal(zoomed.dockStageIntersectionArea, 0, JSON.stringify({ baseline, zoomed }));
     assert.equal(zoomed.receiptStageIntersectionArea, 0, JSON.stringify({ baseline, zoomed }));
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -654,7 +661,7 @@ test('Reset followed immediately by zoom and pan retains a collision-free deskto
     assert.ok(receipt.reserve <= baseline.reserve + 1, JSON.stringify({ baseline, receipt }));
     assert.equal(receipt.semanticDockIntersectionArea, 0, JSON.stringify({ baseline, receipt }));
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -696,7 +703,7 @@ test('zoomed camera restores its bounded desktop rail after crossing the mobile 
     assert.equal(restored.receiptEligible, true, JSON.stringify(restored));
     assert.ok(restored.scrollHeight <= restored.innerHeight, JSON.stringify(restored));
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -773,7 +780,7 @@ test('localized multiline Legends remain clear across required viewports, themes
       assert.ok(receipt.stageGap >= 9, JSON.stringify({ ...entry, receipt }));
     }
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -798,7 +805,7 @@ test('Semantic Lens and Radar protect the final Legend and Dock rectangles', {
     assert.equal(receipt.legendRadarIntersectionArea, 0, JSON.stringify(receipt));
     assert.equal(receipt.navRadarIntersectionArea, 0, JSON.stringify(receipt));
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -832,7 +839,7 @@ test('Radar, Passport, Legend, and Dock remain mutually clear on desktop and nar
       assert.equal(receipt.radarPassportIntersectionArea, 0, message);
     }
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
@@ -865,7 +872,7 @@ test('mobile, embed, and print keep zero reserve while hidden Legends retain the
     receipt = await finalGeometry(browser, sessionId);
     assert.equal(receipt.reserve, 0, `print: ${JSON.stringify(receipt)}`);
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
   }
 });
 
