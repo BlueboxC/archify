@@ -48,5 +48,8 @@ Qualify the extracted package independently. Update existing installations only
 after a private backup and source/hash reconciliation; preserve local additions
 and stop for conflicting edits. Machine receipts and rollback stay private.
 
+Automatic GitHub Pages deployment runs only in the original repository. Fork
+CI still builds and tests the website without requiring hosting setup.
+
 The stable update manifest describes the published upstream release, not this
 fork's customized ZIP. No fork release or automatic installation is implied.

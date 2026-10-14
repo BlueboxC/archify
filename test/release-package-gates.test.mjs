@@ -223,6 +223,7 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
   assert.match(workflow, /push:\n    branches: \[main, dev\]/);
   assert.match(job, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
   const jobs = parse(workflow).jobs;
+  assert.match(jobs['deploy-pages'].if, /github\.repository == 'tt-a1i\/archify'/, 'fork updates must not provision or publish an unconfigured website');
   const dependencies = jobs['deploy-pages'].needs;
   for (const gate of ['test', 'canonical-test', 'webm-artifact', 'zip-freshness', 'published-update-manifest', 'package-smoke', 'windows-test-portability', 'website']) {
     assert.ok(dependencies.includes(gate), `Pages deployment must require ${gate}`);

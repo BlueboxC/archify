@@ -13,6 +13,7 @@ Root owns distribution builders, workflows, generated public examples, licensing
 - Keep fast-uri >=3.1.8 in both root and Skill development dependency graphs.
 - Preserve MIT attribution, pinned Actions, restricted workflow permissions and the embedded licensed font. Never restore network-loaded fonts.
 - Adapt reviewed corrections independently of upstream integration. Preserve schema-v1 inputs, explicit geometry, existing receipt failures and standard-quality compatibility.
+- Automatic GitHub Pages publishing is limited to the original repository; the fork still builds and verifies the website without provisioning hosting.
 - Keep private project data, installed backups, machine paths and local test receipts out of Git. Keep installation rollback outside the public package.
 - Regenerate only artifacts affected by changed inputs. Build the canonical ZIP with Node 22 through the tracked-only stager.
 - Existing user installation changes require a preimage, checks for concurrent/local edits and a verified readback. Preserve unrelated files and settings.
