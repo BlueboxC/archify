@@ -830,6 +830,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         else open(false);
       });
       btn.addEventListener('keydown', function (e) {
+        if (e.isComposing || e.keyCode === 229) return;
+        if ((e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(e.key)) return;
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
           e.preventDefault();
           if (!isOpen()) open(e.key === 'ArrowUp');
@@ -844,6 +846,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (apply(option.getAttribute('data-preset-value'))) close(true);
       });
       menu.addEventListener('keydown', function (e) {
+        if (e.isComposing || e.keyCode === 229) return;
+        if ((e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(e.key)) return;
         if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
         if (e.key === 'Tab') { close(false); return; }
         var available = options();
@@ -1294,6 +1298,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         execute(button.getAttribute('data-guide-action'));
       });
       panel.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
+        if ((event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(event.key)) return;
         if (event.key === 'Escape' || event.key === '?') {
           event.preventDefault();
           event.stopPropagation();
@@ -1359,7 +1365,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        Ignored when focus is inside an input/textarea/contenteditable.
        ============================================================ */
     document.addEventListener('keydown', function (e) {
+      if (e.isComposing || e.keyCode === 229) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.shiftKey && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(e.key)) return;
       if (e.defaultPrevented) return;
       var t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;

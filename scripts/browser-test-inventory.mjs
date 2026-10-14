@@ -21,6 +21,7 @@ export const browserTestFiles = [
   'viewer-radar-scroll-browser.test.mjs',
   'motion-governor-browser.test.mjs',
   'finder-browser.test.mjs',
+  'viewer-keyboard-boundaries-browser.test.mjs',
   'intent-trace-browser.test.mjs',
   'semantic-lens-browser.test.mjs',
   'reading-address-browser.test.mjs',

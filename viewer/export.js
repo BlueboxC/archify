@@ -1158,6 +1158,8 @@
       });
       // APG menu-button pattern: ArrowDown/ArrowUp on the trigger opens the menu.
       btn.addEventListener('keydown', function (e) {
+        if (e.isComposing || e.keyCode === 229) return;
+        if ((e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(e.key)) return;
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
           e.preventDefault();
           if (!isOpen()) open(e.key === 'ArrowUp');
@@ -1171,6 +1173,8 @@
       //   Menu items: Up/Down, Home/End.
       //   Esc closes + returns focus to trigger; Tab closes.
       menu.addEventListener('keydown', function (e) {
+        if (e.isComposing || e.keyCode === 229) return;
+        if ((e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(e.key)) return;
         if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
         if (e.key === 'Tab')    { close(false); return; }
 

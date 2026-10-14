@@ -102,6 +102,8 @@ images, shared or out-of-order ranges, and trailing bytes remain supported;
 the check does not decode pixels or guarantee that an otherwise bounded payload
 is decodable. A rejected ICO candidate does not prevent trying later icons.
 
+WebP capture checks the declared RIFF range, complete chunk headers, payloads and padding, and non-empty VP8/VP8L data in each ANMF frame. Unknown chunks and bytes beyond RIFF remain compatible; the digest covers the unchanged complete file. This is container validation, not pixel decoding. The same checks apply to matching digest pins; a rejected candidate still permits later icons.
+
 Page, icon and redirect requests send `Accept-Encoding: identity`. Capture does
 not decompress response bodies: a successful response declaring another content
 coding is closed and rejected explicitly. This keeps the existing byte limits

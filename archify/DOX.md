@@ -14,6 +14,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Boundary membership is authored data. Older HTML without membership metadata remains readable and explicitly unjudged by that rule; never infer membership from labels.
 - Checker transport failure is not an artifact verdict. Preserve previous delivered output when verification cannot complete.
 - Preview retains the last verified artifact independently of checking/failure status; same-revision state updates preserve the loaded document.
+- Migration validates complete source/final semantic contracts; group repair spans preserve exact membership. Self-calls retain ownership, notes and identity. Raster pins undergo container checks even with matching digests.
 - Keep fonts embedded and preserve THIRD_PARTY_NOTICES.md and asset licenses. No new runtime dependencies or automatic installation/update side effects.
 
 ## Work Guidance

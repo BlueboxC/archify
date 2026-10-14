@@ -12,6 +12,7 @@ Viewer modules own UI state, navigation, keyboard behavior, themes and export. T
 
 - Follow README.md module interfaces and export cleanup contracts.
 - Edit authored modules, then regenerate the template; do not patch generated template scripts directly.
+- Composition and IME commit events remain native. Modified navigation leaves roving focus unchanged; preserve ordinary and printable Shift shortcuts. Refresh owned public Viewer copies without altering authored diagram geometry.
 - Preserve offline fonts, authored identity/geometry, accessibility and last-verified Preview recovery.
 
 ## Work Guidance

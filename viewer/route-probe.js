@@ -899,6 +899,7 @@
         });
       }
       function interceptSelection(event) {
+        if (event.type === 'keydown' && (event.isComposing || event.keyCode === 229)) return;
         if (mode !== 'source' && mode !== 'target') return;
         if (container.getAttribute('data-just-panned') === 'true') return;
         var node = event.target.closest('[data-node-id]');
@@ -962,6 +963,8 @@
         if (journeyPlaying && event.target.closest('[data-route-journey-index]')) pauseJourney({ preserveElapsed: true });
       });
       path.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
+        if ((event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(event.key)) return;
         var button = event.target.closest('[data-route-journey-index]');
         if (!button) return;
         var index = Number(button.getAttribute('data-route-journey-index'));

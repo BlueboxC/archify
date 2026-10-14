@@ -1512,6 +1512,7 @@
         selectStoryBeat(Number(stop.getAttribute('data-story-index')));
       });
       trail.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
         if (event.key !== 'Enter' && event.key !== ' ') return;
         var stop = event.target.closest('[data-story-node]');
         if (!stop || stop.disabled) return;
@@ -1545,6 +1546,8 @@
         clearChapterPreviewIntent('focus', chapterButtons.indexOf(button));
       });
       chapterList.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
+        if ((event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(event.key)) return;
         var button = event.target.closest('[data-guided-view-id]');
         var index = chapterButtons.indexOf(button);
         if (index < 0) return;
@@ -1568,10 +1571,12 @@
       }
       svg.addEventListener('click', releaseForNode, true);
       svg.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
         if (event.key === 'Enter' || event.key === ' ') releaseForNode(event);
       }, true);
 
       document.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
         if (event.metaKey || event.ctrlKey || event.altKey) return;
         if (document.documentElement.getAttribute('data-guide-open') === 'true') return;
         var target = event.target;

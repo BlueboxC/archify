@@ -586,6 +586,8 @@
           syncLegendPreview();
         });
         legendBridge.addEventListener('keydown', function (event) {
+          if (event.isComposing || event.keyCode === 229) return;
+          if ((event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(event.key)) return;
           var entry = event.target.closest('[data-legend-kind][role="button"]');
           if (!entry) return;
           if (event.key === 'Enter' || event.key === ' ') {
@@ -616,6 +618,8 @@
         select(button.getAttribute('data-kind'));
       });
       kindsRoot.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
+        if ((event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(event.key)) return;
         var buttons = Array.prototype.slice.call(kindsRoot.querySelectorAll('button:not(:disabled)'));
         var index = buttons.indexOf(document.activeElement);
         var next = null;
@@ -626,6 +630,7 @@
         if (next !== null) { event.preventDefault(); buttons[next].focus(); }
       });
       panel.addEventListener('keydown', function (event) {
+        if (event.isComposing || event.keyCode === 229) return;
         if (event.key !== 'Escape') return;
         event.preventDefault();
         event.stopPropagation();

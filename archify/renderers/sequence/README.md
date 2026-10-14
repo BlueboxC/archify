@@ -71,9 +71,9 @@ muted text color.
 | Participant columns | `fixed`: centers at x = 62 + index×108; `spread`: columns distribute across the available viewBox width with at least a 16px card gutter |
 | Participant count | the last box must end at or before width − 40; layouts that cannot fit fail closed |
 | Lifelines | from y 142 down to height − 65 (drawn to just above the legend); band must be ≥120px tall |
-| Message `y` range | `[160, height − 83]` |
+| Message `y` range | `[160, height − 83]`; self-calls end at `y + 42` and require `y ≤ height − 111`. Notes and legend reserve their own additional space. |
 | Message spacing | ≥28px vertical between messages that share horizontal space |
-| Arrow span | ≥60px horizontal between the two participants |
+| Arrow span | ≥60px between distinct participants; self-calls use a measured orthogonal loop, rightward except on the rightmost participant |
 | Message notes | 7px context text under the arrow, visible at normal Read zoom (Map hides it without changing timeline geometry), wrapped at 11px line spacing inside one gap between neighbouring lifelines (the widest gap the message spans; gaps within 0.5px count as equal and resolve to the left-most, where notes have always started), clear of activation bars; long unbroken text breaks after `/ . - ? & = # _`, otherwise at any character, so the full note is kept in every export. In `showcase`, a note that reaches a later message fails as `sequence/note-overlap` with the `y` that message needs, a note past the canvas content limit fails as `sequence/note-canvas-limit` with the `meta.viewBox[1]` it needs, and a segment label still covering a message label, route or note after its four upward steps fails as `sequence/segment-label-overlap`; each diagnostic names the source path and offers a verified `supportedFixes` edit when one exists |
 | Segments | y pixel ranges with `to > from`, inside `[72, lifeline bottom + 20]` |
 | Legend | last row baseline at height − 54; extra rows wrap upward and stay 12px below the timeline content |
@@ -105,14 +105,7 @@ for the bounded authoring repair and explicit-fixed preservation rules.
 
 ## Design Rules
 
-- Messages currently require distinct `from` and `to` participants. Although
-  schema-v1 accepts matching IDs, this renderer does not draw self-call loops
-  and rejects them with `sequence/self-message-unsupported`, naming the message
-  path and participant. Increasing column distance cannot repair a self-message.
-  Preserve an internal step's wording, ownership, and order in a note on an
-  actual interaction or an explicitly ordered card. Do not invent another
-  participant or change the target merely to pass validation. These authoring
-  choices require semantic review and are not advertised as automatic fixes.
+- Matching `from` and `to` IDs draw a self-call on that participant. Keep at least 28px after the loop ends before a message sharing its horizontal space. Notes wrap below the complete loop. Automatic canvases account for both; explicit canvases fail with measured space, timeline or overlap diagnostics instead of changing authored coordinates.
 - Put participants across the top, ordered by the story the reader should
   follow.
 - Time moves downward.
@@ -144,3 +137,5 @@ messages overlap for at least 8px. Shared semantic endpoints, point touches,
 and shorter overlaps remain valid. Showcase also rejects any route segment
 below 8px and any interior turn segment below 16px; ordinary 8–15px endpoint
 stubs remain valid.
+
+Canvas failures use `sequence/message-outside-timeline`, `sequence/segment-outside-canvas`, `sequence/segment-label-overflow`, `sequence/participants-exceed-canvas` and `sequence/legend-canvas-limit`. Receipts name the affected JSON path and measured capacity. A repair clears its own constraint; independent readability checks remain. Segment bounds are offered together only when every offending bound has a safe edit.

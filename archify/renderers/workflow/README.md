@@ -92,6 +92,8 @@ author input, expands an explicit viewBox only for an unambiguous containment
 repair, and writes the destination only after v2 compilation and artifact
 checks pass. Ambiguous explicit pins fail without producing the destination.
 
+A temporary migration layout projection may omit explicitly routed edges. Full-graph semantic checks run on the original source and final mapped candidate, never that incomplete projection. Their authored definitions remain unchanged.
+
 Inspect the stable author-facing v2 plan with:
 
 ```bash
@@ -330,3 +332,5 @@ remove the marker-only path as dead code without retiring that export format.
 Showcase also
 rejects any route segment below 8px and any interior turn segment below 16px;
 ordinary 8–15px endpoint stubs remain valid for fixed lane gaps.
+
+When a group label blocks a route preset, the diagnostic identifies the group and obstructed segment or label. A suggested group span is checked against the complete workflow and must preserve exactly the original membership, including exclusion of unrelated nodes. Unsatisfiable constraints remain rejected; no group or meaningful label is removed automatically.

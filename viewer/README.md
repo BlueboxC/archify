@@ -933,3 +933,7 @@ isolated clone tests supplement them for restoration and idempotence.
 
 For required browser, output and package evidence, follow
 [Contributing](../CONTRIBUTING.md#local-setup-and-verification).
+
+## Keyboard boundaries
+
+Keyboard handlers leave composition (`isComposing` or commit key code 229) to the browser, including capture-phase selection and local dismissal. Ctrl/Alt/Meta/Shift plus Arrow/Home/End do not move roving focus or open toolbar menus. Ordinary navigation, modified Finder Enter, printable Shift shortcuts such as `?`/`+`, and Shift fine movement of Passport remain supported. `viewer-keyboard-boundaries-browser.test.mjs` exercises generated HTML and the retained community chapter surface in real Chrome; synthetic events do not qualify a physical IME or Safari. Existing user HTML needs regeneration to acquire these fixes.

@@ -2,9 +2,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
-import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { throwDiagnosticProblems, withIsolatedDiagnosticRecording } from '../shared/diagnostics.mjs';
 import { legendFootprint, measureLegend, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
-import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, cleanLabelCanvasContainmentProblems, routePointsValue, asArray, isFinitePoint, edgeLabelAccent } from '../shared/geometry.mjs';
+import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, cleanLabelCanvasContainmentProblems, polylinePath, routePointsValue, asArray, isFinitePoint, edgeLabelAccent } from '../shared/geometry.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
@@ -59,16 +59,56 @@ function spreadColumnGeometry(canvasWidth, width = spreadParticipantWidth(canvas
   const margin = Math.max(40, Math.min(62, canvasWidth - 40 - span));
   return { width, margin, gap: count > 1 ? Math.max(width + 16, (canvasWidth - 40 - margin - width) / (count - 1)) : 108 };
 }
+const selfMessageLayout = {
+  minimumWidth: 56,
+  labelPadding: 15,
+  height: 42,
+  canvasMargin: 40,
+  lifelineClearance: 18,
+};
+
+function messageLabelWidth(message) {
+  const unitWidth = sequence.meta?.quality_profile === 'showcase' ? 6.6 : 5.2;
+  return Math.max(34, textUnits(message.label) * unitWidth + 12);
+}
+
+// Also used while choosing an automatic width, before final columns exist.
+function selfMessageGeometry(message, cx, index, count) {
+  const direction = count > 1 && index === count - 1 ? -1 : 1;
+  const start = cx + direction * 7;
+  const outer = cx + direction * Math.max(selfMessageLayout.minimumWidth,
+    messageLabelWidth(message) + selfMessageLayout.labelPadding);
+  return {
+    self: true, direction, start, end: start, outer, center: (start + outer) / 2,
+    points: [[start, message.y], [outer, message.y],
+      [outer, message.y + selfMessageLayout.height], [start, message.y + selfMessageLayout.height]],
+  };
+}
+
+function selfMessageBoundary(neighbourCx, direction, width) {
+  return direction > 0
+    ? (neighbourCx ?? width - selfMessageLayout.canvasMargin) - selfMessageLayout.lifelineClearance
+    : (neighbourCx ?? selfMessageLayout.canvasMargin) + selfMessageLayout.lifelineClearance;
+}
+
 // Evaluate the same spread coordinates and full masks used by the renderer;
 // short participant names alone do not imply a compact timeline will fit.
 function timelineLabelsFit(canvasWidth) {
   const { width, margin, gap } = spreadColumnGeometry(canvasWidth);
   const centers = new Map(asArray(sequence.participants).map((participant, index) => [participant.id, margin + width / 2 + index * gap]));
-  const unitWidth = sequence.meta?.quality_profile === 'showcase' ? 6.6 : 5.2;
   return asArray(sequence.messages).every((message) => {
     if (!centers.has(message.from) || !centers.has(message.to)) return true;
+    if (message.from === message.to) {
+      const list = asArray(sequence.participants);
+      const index = list.findIndex((participant) => participant.id === message.from);
+      const geometry = selfMessageGeometry(message, centers.get(message.from), index, list.length);
+      const neighbour = list[index + geometry.direction];
+      const boundary = selfMessageBoundary(
+        neighbour ? centers.get(neighbour.id) : null, geometry.direction, canvasWidth);
+      return geometry.direction * (geometry.outer - boundary) <= 0.0001;
+    }
     const center = (centers.get(message.from) + centers.get(message.to)) / 2;
-    const halfWidth = Math.max(34, textUnits(message.label) * unitWidth + 12) / 2;
+    const halfWidth = messageLabelWidth(message) / 2;
     return center - halfWidth >= 0 && center + halfWidth <= canvasWidth;
   }) && asArray(sequence.segments).every((segment) => 56 + Math.max(42, textUnits(segment.label) * 5.2 + 14) <= canvasWidth - 48);
 }
@@ -158,6 +198,36 @@ const participantIndexById = new Map(asArray(sequence.participants).map((partici
 
 function participantX(index) {
   return leftX + index * colGap;
+}
+
+function messageGeometry(message) {
+  const fromIndex = participantIndexById.get(message.from);
+  const toIndex = participantIndexById.get(message.to);
+  if (fromIndex === undefined || toIndex === undefined || typeof message.y !== 'number') return null;
+  const from = participantX(fromIndex);
+  const to = participantX(toIndex);
+  if (message.from === message.to) return selfMessageGeometry(message, from, fromIndex, participantCount);
+  const direction = to > from ? 1 : -1;
+  const start = from + direction * 7;
+  const end = to - direction * 7;
+  return { self: false, start, end, center: (start + end) / 2,
+    points: [[start, message.y], [end, message.y]] };
+}
+
+function messageBottom(message) {
+  return message.y + (message.from === message.to ? selfMessageLayout.height : 0);
+}
+
+function messageMaximumY(message) {
+  return layout.lifelineBottom - (message.from === message.to ? selfMessageLayout.height + 4 : 18);
+}
+
+function messageSpan(message) {
+  const geometry = messageGeometry(message);
+  if (geometry?.self) return [Math.min(geometry.start, geometry.outer), Math.max(geometry.start, geometry.outer)];
+  const from = participantX(participantIndexById.get(message.from));
+  const to = participantX(participantIndexById.get(message.to));
+  return [Math.min(from, to), Math.max(from, to)];
 }
 
 // A note wraps inside one gap between neighbouring lifelines, so it never
@@ -270,48 +340,72 @@ function noteLayout(message) {
   let result = null;
   const fromIndex = participantIndexById.get(message.from);
   const toIndex = participantIndexById.get(message.to);
-  if (message.note && typeof message.y === 'number' && fromIndex !== undefined && toIndex !== undefined && fromIndex !== toIndex) {
-    const gap = noteGapIndex(fromIndex, toIndex);
+  if (message.note && typeof message.y === 'number' && fromIndex !== undefined && toIndex !== undefined) {
+    const geometry = messageGeometry(message);
+    // Self-call notes use the adjacent lane on the loop side; ordinary
+    // note placements stay put.
+    const gap = geometry.self
+      ? (geometry.direction > 0 ? fromIndex : fromIndex - 1)
+      : noteGapIndex(fromIndex, toIndex);
     const x = participantX(gap) + NOTE_ARROW_INSET + NOTE_TEXT_INSET;
-    const maxWidth = Math.max(1, participantX(gap + 1) - NOTE_LIFELINE_CLEARANCE - x);
+    const right = gap + 1 < participantCount
+      ? participantX(gap + 1) - NOTE_LIFELINE_CLEARANCE
+      : canvasWidth - selfMessageLayout.canvasMargin;
+    const maxWidth = Math.max(1, right - x);
     const lines = noteTextWidth(message.note) <= maxWidth ? [message.note] : wrapNoteText(message.note, maxWidth);
-    const baseline = message.y + 18;
+    const baseline = messageBottom(message) + 18;
+    const width = Math.max(...lines.map(noteTextWidth));
+    const rightAligned = geometry.self && geometry.direction < 0;
     result = {
-      x,
+      x: rightAligned ? right - width : x,
+      textX: rightAligned ? right : x,
+      anchor: rightAligned ? 'end' : null,
       baseline,
       lines,
-      width: Math.max(...lines.map(noteTextWidth)),
+      width,
       // Include fallback-font ascent in the same bounds used for title clearance.
       top: baseline - NOTE_FONT_SIZE * 1.2,
-      bottom: message.y + 22 + (lines.length - 1) * NOTE_LINE_HEIGHT,
+      bottom: baseline + 4 + (lines.length - 1) * NOTE_LINE_HEIGHT,
     };
   }
   noteLayouts.set(message, result);
   return result;
 }
 
-const contentBottom = Math.max(
-  0,
-  ...asArray(sequence.messages).map((message) => (message.note
-    ? noteLayout(message)?.bottom ?? message.y + 22
-    : message.y + 6)),
-  ...asArray(sequence.activations).map((activation) => activation.to),
-  ...asArray(sequence.segments).map((segment) => segment.to),
-);
-function legendRequiredHeight(width) {
+// The lowest timeline content — messages with their notes, activation bars,
+// segment frames. The legend block is measured from it, so a repair that moves
+// a message down can change it.
+function measureContentBottom() {
+  return Math.max(
+    0,
+    ...asArray(sequence.messages).map((message) => (message.note
+      ? noteLayout(message)?.bottom ?? messageBottom(message) + 22
+      : messageBottom(message) + 6)),
+    ...asArray(sequence.activations).map((activation) => activation.to),
+    ...asArray(sequence.segments).map((segment) => segment.to),
+  );
+}
+const contentBottom = measureContentBottom();
+function legendRequiredHeightAt(bottom, width) {
   const entries = legendEntries();
   if (!entries.length) return 0;
-  return Math.ceil(contentBottom + LEGEND_CONTENT_GAP + LEGEND_BLOCK_HEIGHT
+  return Math.ceil(bottom + LEGEND_CONTENT_GAP + LEGEND_BLOCK_HEIGHT
     + legendFootprint(entries, { width: width - 80 }).extraHeight);
+}
+function legendRequiredHeight(width) {
+  return legendRequiredHeightAt(contentBottom, width);
 }
 // A renderer-sized canvas grows to keep the legend clear of late messages and
 // shrinks when the timeline is short. Keep a readable minimum band (lifelineTop
 // 142 + 120px timeline + 65px footer = 327); honor authored canvases below.
 const SEQUENCE_MIN_AUTO_HEIGHT = 327;
+// The sequence schema requires both meta.viewBox entries to be at least 480;
+// a repair that authors a viewBox must not land below that floor.
+const MIN_AUTHORED_VIEWBOX = 480;
 // Timeline clearance is independent of legend visibility. Messages need 18px
 // before the lifeline bottom; notes, activations and frames need their footer.
 const timelineRequiredHeight = Math.max(contentBottom + 65,
-  ...asArray(sequence.messages).map((message) => message.y + 18 + 65));
+  ...asArray(sequence.messages).map((message) => messageBottom(message) + 18 + 65));
 const automaticHeight = Math.max(SEQUENCE_MIN_AUTO_HEIGHT, timelineRequiredHeight, legendRequiredHeight(automaticWidth));
 const viewBox = sequence.meta?.viewBox || [automaticWidth, automaticHeight];
 // The timeline scales with viewBox height: a taller viewBox gains message room,
@@ -319,7 +413,6 @@ const viewBox = sequence.meta?.viewBox || [automaticWidth, automaticHeight];
 
 // Showcase is the fast-authoring default; standard retains legacy label geometry.
 const messageFontSize = readableMessages ? 11 : 9;
-const messageUnitWidth = readableMessages ? 6.6 : 5.2;
 const layout = {
   topY: 72,
   participantW,
@@ -361,20 +454,11 @@ const participants = new Map(asArray(sequence.participants).map((participant, in
   }
 ]));
 
-function messageGeometry(message) {
-  const from = participants.get(message.from);
-  const to = participants.get(message.to);
-  if (!from || !to || typeof message.y !== 'number') return null;
-  const direction = to.cx > from.cx ? 1 : -1;
-  const start = from.cx + direction * 7;
-  const end = to.cx - direction * 7;
-  return { start, end, center: (start + end) / 2 };
-}
 
 function messageLabelBox(message, relationIndex = null) {
   const geometry = messageGeometry(message);
   if (!geometry) return null;
-  const width = Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
+  const width = messageLabelWidth(message);
   return {
     relation: message,
     relationIndex,
@@ -389,11 +473,12 @@ function messageLabelBox(message, relationIndex = null) {
 function messageRouteBox(message) {
   const geometry = messageGeometry(message);
   if (!geometry) return null;
+  const xs = geometry.points.map(([x]) => x);
   return {
-    x: Math.min(geometry.start, geometry.end),
+    x: Math.min(...xs) - (geometry.self ? 2 : 0),
     y: message.y - 2,
-    width: Math.abs(geometry.end - geometry.start),
-    height: 4,
+    width: Math.max(...xs) - Math.min(...xs) + (geometry.self ? 4 : 0),
+    height: messageBottom(message) - message.y + 4,
   };
 }
 
@@ -497,22 +582,112 @@ function messageFitsAt(messageIndex, y) {
   if (y < layout.lifelineTop + 18) return false;
   // An automatic canvas recalculates its height after this edit; an authored
   // canvas must still fit the suggested position without a second repair.
-  if (sequence.meta?.viewBox && y > layout.lifelineBottom - 18) return false;
-  const span = (message) => {
-    const from = participants.get(message.from)?.cx;
-    const to = participants.get(message.to)?.cx;
-    return [Math.min(from, to), Math.max(from, to)];
-  };
+  if (sequence.meta?.viewBox && y > messageMaximumY(messages[messageIndex])) return false;
   const moved = { ...messages[messageIndex], y };
-  const [left, right] = span(moved);
+  // Keep both horizontal legs clear of phase borders, as validation requires.
+  const arrowYs = [moved.y, messageBottom(moved)];
+  if (asArray(sequence.segments).some((segment) =>
+    [segment.from, segment.to].some((border) =>
+      arrowYs.some((arrowY) => Math.abs(border - arrowY) < 4)
+    )
+  )) return false;
+  const [left, right] = messageSpan(moved);
+  if (sequence.meta?.viewBox && noteLayout(moved)?.bottom > layout.lifelineBottom + 20) return false;
   const movedRects = [messageLabelBox(moved), messageRouteBox(moved), noteRect(moved)].filter(Boolean);
-  return messages.every((other, otherIndex) => {
+  const clearsOtherMessages = messages.every((other, otherIndex) => {
     if (otherIndex === messageIndex || typeof other.y !== 'number') return true;
-    const [otherLeft, otherRight] = span(other);
-    if (Math.abs(other.y - y) < 28 && left < otherRight && otherLeft < right) return false;
+    const [otherLeft, otherRight] = messageSpan(other);
+    const separation = y >= other.y ? y - messageBottom(other) : other.y - messageBottom(moved);
+    if (separation < 28 && left < otherRight && otherLeft < right) return false;
     const otherRects = [messageLabelBox(other), messageRouteBox(other), noteRect(other)].filter(Boolean);
     return !movedRects.some((rect) => otherRects.some((otherRect) => rectsOverlap(rect, otherRect, 2)));
   });
+  if (!clearsOtherMessages) return false;
+  // Moving a message changes which rectangles the segment labels step around:
+  // the repair must not trade this failure for sequence/segment-label-overlap,
+  // a pair of titles landing on the same fallback slot (an overlap that fails
+  // in every profile), or sequence/note-canvas-limit. A segment or pair that
+  // is already in that state keeps its own failure; only a newly created
+  // collision withholds the repair.
+  const message = messages[messageIndex];
+  const segments = asArray(sequence.segments);
+  const currentLabelBoxes = segments.map((segment) => segmentLabelBox(segment));
+  const createsLabelPairOverlap = () => {
+    const boxes = segments.map((segment) => segmentLabelBox(segment));
+    for (let i = 0; i < boxes.length; i += 1) {
+      for (let j = i + 1; j < boxes.length; j += 1) {
+        if (!rectsOverlap(currentLabelBoxes[i], currentLabelBoxes[j], 0)
+          && rectsOverlap(boxes[i], boxes[j], 0)) return true;
+      }
+    }
+    return false;
+  };
+  const currentlyBlocked = readableMessages
+    ? segments.map((segment) => Boolean(segmentLabelBlocker(segment)))
+    : [];
+  // The legend block sits below the content floor; the implicit showcase
+  // legend is reported when it would be silently dropped and an authored one
+  // throws when its band cannot hold it. Measure the fit at both states and
+  // withhold a newly created legend failure; a document that already lacked
+  // legend room keeps its own failure.
+  const legendFits = (bottom) => {
+    const entries = legendEntries();
+    if (!entries.length) return true;
+    // A speculative misfit throws a typed diagnostic; keep that receipt out of
+    // the caller's real failure while we only ask whether the fit holds.
+    let fits = false;
+    try {
+      fits = withIsolatedDiagnosticRecording(
+        () => Boolean(measureLegend(entries, legendLayout(bottom))),
+      );
+    } catch {
+      fits = false;
+    }
+    if (sequence.meta?.legend === undefined) {
+      return !(sequence.meta?.quality_profile === 'showcase'
+        && legendRequiredHeightAt(bottom, viewBox[0]) > viewBox[1] && !fits);
+    }
+    return fits;
+  };
+  const currentLegendFits = legendFits(contentBottom);
+  // An automatic canvas regrows to fit its content, so moving a message down
+  // cannot create the note limit there; only an authored canvas can lose that
+  // trade, matching the y-bound check above.
+  const noteLimitY = layout.lifelineBottom + 20;
+  const currentNoteBottom = noteLayout(message)?.bottom ?? null;
+  const authoredCanvas = Boolean(sequence.meta?.viewBox);
+  return withMessageAtY(message, y, () => {
+    if (createsLabelPairOverlap()) return false;
+    const candidateBottom = measureContentBottom();
+    // An automatic canvas regrows to hold its legend; only an authored canvas
+    // can lose the room the legend needs, matching the y-bound check above.
+    if (authoredCanvas && candidateBottom > contentBottom
+      && currentLegendFits && !legendFits(candidateBottom)) return false;
+    if (!readableMessages) return true;
+    const candidateNote = noteLayout(message);
+    if (authoredCanvas && candidateNote && candidateNote.bottom > noteLimitY
+      && (currentNoteBottom === null || currentNoteBottom <= noteLimitY)) return false;
+    return !segments.some((segment, index) => !currentlyBlocked[index] && Boolean(segmentLabelBlocker(segment)));
+  });
+}
+
+// Runs `read` with the message temporarily at y, binding the candidate on the
+// real object so the label helpers see the same identity as the post-repair
+// pass, and invalidating its memoized note layout so note geometry — which
+// depends on y — is recomputed for the candidate. Both are restored afterwards.
+function withMessageAtY(message, y, read) {
+  const previousY = message.y;
+  const hadCachedNote = noteLayouts.has(message);
+  const cachedNote = noteLayouts.get(message);
+  message.y = y;
+  noteLayouts.delete(message);
+  try {
+    return read();
+  } finally {
+    message.y = previousY;
+    if (hadCachedNote) noteLayouts.set(message, cachedNote);
+    else noteLayouts.delete(message);
+  }
 }
 
 // The first occupant the segment label still covers after its upward steps.
@@ -544,6 +719,8 @@ const compositionFrames = asArray(sequence.segments).map((segment, index) => ({
 }));
 
 function messagePath(message) {
+  const geometry = messageGeometry(message);
+  if (geometry?.self) return { points: geometry.points };
   return {
     points: participants.has(message.from) && participants.has(message.to)
       ? [[participants.get(message.from).cx, message.y], [participants.get(message.to).cx, message.y]]
@@ -554,10 +731,27 @@ function messagePath(message) {
 function validateSequence() {
   const problems = [];
   const diagnostics = [];
+  const report = (problem, detail) => {
+    problems.push(problem);
+    diagnostics.push({ severity: 'error', message: problem, ...detail });
+  };
   if (participants.size !== asArray(sequence.participants).length) problems.push('Participant ids must be unique.');
 
   if (layout.lifelineBottom - layout.lifelineTop < 120) {
-    problems.push(`viewBox height ${viewBox[1]} leaves under 120px of timeline — set meta.viewBox[1] to at least ${layout.lifelineTop + 120 + 65}.`);
+    const requiredViewBoxHeight = layout.lifelineTop + 120 + 65;
+    report(`viewBox height ${viewBox[1]} leaves under 120px of timeline — set meta.viewBox[1] to at least ${requiredViewBoxHeight}.`, {
+      code: 'sequence/timeline-height-insufficient',
+      subject: { diagramType: 'sequence', path: '/meta/viewBox/1' },
+      evidence: {
+        viewBoxHeight: viewBox[1],
+        lifelineTop: layout.lifelineTop,
+        lifelineBottom: layout.lifelineBottom,
+        timelineHeight: layout.lifelineBottom - layout.lifelineTop,
+        minimumTimelineHeight: 120,
+        requiredViewBoxHeight,
+      },
+      supportedFixes: [`set /meta/viewBox/1 to ${requiredViewBoxHeight}`],
+    });
   }
 
   for (const participant of participants.values()) {
@@ -625,35 +819,49 @@ function validateSequence() {
       problems.push(problem);
     }
     if (typeof message.y !== 'number') problems.push(`Message "${message.label}" must provide a numeric y.`);
-    if (message.y < layout.lifelineTop + 18 || message.y > layout.lifelineBottom - 18) {
-      problems.push(`Message "${message.label}" sits outside the readable timeline — keep y between ${layout.lifelineTop + 18} and ${layout.lifelineBottom - 18}.`);
+    const maximumY = messageMaximumY(message);
+    if (message.y < layout.lifelineTop + 18 || message.y > maximumY) {
+      const minimumY = layout.lifelineTop + 18;
+      const problem = `Message "${message.label}" sits outside the readable timeline — keep y between ${minimumY} and ${maximumY}${message.from === message.to ? ' so its self-call loop stays inside the lifeline' : ''}.`;
+      problems.push(problem);
+      if (message.from !== message.to) {
+        const targetY = Math.min(Math.max(message.y, minimumY), maximumY);
+        diagnostics.push({
+          code: 'sequence/message-outside-timeline', severity: 'error', message: problem,
+          subject: { diagramType: 'sequence', message: message.label ?? null, path: `/messages/${messageIndex}/y`, from: message.from, to: message.to },
+          evidence: { y: message.y, minimumY, maximumY, viewBoxHeight: viewBox[1], lifelineTop: layout.lifelineTop, lifelineBottom: layout.lifelineBottom },
+          supportedFixes: messageFitsAt(messageIndex, targetY) ? [`set /messages/${messageIndex}/y to ${targetY}`] : [],
+        });
+      }
+      if (message.from === message.to) {
+        const requiredHeight = Math.ceil(Math.max(messageBottom(message) + 69,
+          (noteLayout(message)?.bottom ?? 0) + 45, legendRequiredHeight(viewBox[0])));
+        diagnostics.push({
+          code: 'sequence/self-message-timeline', severity: 'error', message: problem,
+          subject: { diagramType: 'sequence', path: `/messages/${messageIndex}/y`, from: message.from, to: message.to },
+          evidence: { y: message.y, minimumY: layout.lifelineTop + 18, maximumY, loopHeight: selfMessageLayout.height,
+            ...(message.y > maximumY ? { requiredViewBoxHeight: requiredHeight } : {}) },
+          supportedFixes: message.y > maximumY ? [`set /meta/viewBox/1 to ${requiredHeight}`] : [],
+        });
+      }
     }
     if (participants.has(message.from) && participants.has(message.to)) {
       if (message.from === message.to) {
-        const problem = `Message "${message.label}" is a self-message on participant "${message.from}"; this Sequence renderer supports only messages between distinct participants. Participant spacing cannot repair it. Preserve the internal step's meaning and order in a supported representation such as a note on a real message or a card; do not invent a participant.`;
-        diagnostics.push({
-          code: 'sequence/self-message-unsupported', severity: 'error', message: problem,
-          subject: {
-            diagramType: 'sequence',
-            message: message.label,
-            collection: 'messages',
-            index: messageIndex,
-            path: `/messages/${messageIndex}`,
-            ...(message.id ? { id: message.id } : {}),
-            from: message.from,
-            to: message.to,
-            fromPath: `/messages/${messageIndex}/from`,
-            toPath: `/messages/${messageIndex}/to`,
-          },
-          evidence: {
-            participant: message.from,
-            participantPath: `/participants/${participantOrder.get(message.from)}`,
-            y: message.y,
-            supportedMessageGeometry: 'horizontal-between-distinct-participants',
-          },
-          supportedFixes: [],
-        });
-        problems.push(problem);
+        const geometry = messageGeometry(message);
+        const index = participantOrder.get(message.from);
+        const neighbour = participantList[index + geometry.direction];
+        const boundary = selfMessageBoundary(
+          neighbour ? participants.get(neighbour.id).cx : null, geometry.direction, viewBox[0]);
+        if (geometry.direction * (geometry.outer - boundary) > 0.0001) {
+          const problem = `Self-message "${message.label}" does not fit beside participant "${message.from}" — increase meta.viewBox[0], use meta.column_fit "spread", or shorten the label while preserving its meaning.`;
+          problems.push(problem);
+          diagnostics.push({
+            code: 'sequence/self-message-space', severity: 'error', message: problem,
+            subject: { diagramType: 'sequence', path: `/messages/${messageIndex}/label`, from: message.from, to: message.to },
+            evidence: { outerX: geometry.outer, boundaryX: boundary, direction: geometry.direction, labelWidth: messageLabelWidth(message) },
+            supportedFixes: [],
+          });
+        }
       } else {
         const distance = Math.abs(participants.get(message.to).cx - participants.get(message.from).cx);
         if (distance < 60) problems.push(`Message "${message.label}" spans ${Math.round(distance)}px (minimum 60px) — give its participants more column distance.`);
@@ -715,17 +923,29 @@ function validateSequence() {
   // disjoint arrows may legitimately run in parallel rows.
   const placed = asArray(sequence.messages)
     .filter((m) => participants.has(m.from) && participants.has(m.to))
-    .map((m) => ({
-      label: m.label,
-      y: m.y,
-      x1: Math.min(participants.get(m.from).cx, participants.get(m.to).cx),
-      x2: Math.max(participants.get(m.from).cx, participants.get(m.to).cx)
-    }))
+    .map((m) => {
+      const [x1, x2] = messageSpan(m);
+      return { message: m, label: m.label, y: m.y, bottom: messageBottom(m), x1, x2 };
+    })
     .sort((a, b) => a.y - b.y);
   for (let i = 0; i < placed.length; i += 1) {
-    for (let j = i + 1; j < placed.length && placed[j].y - placed[i].y < 28; j += 1) {
+    for (let j = i + 1; j < placed.length && placed[j].y - placed[i].bottom < 28; j += 1) {
       if (placed[i].x1 < placed[j].x2 && placed[j].x1 < placed[i].x2) {
-        problems.push(`Messages "${placed[i].label}" and "${placed[j].label}" are less than 28px apart and share horizontal space — spread their y values.`);
+        const self = placed[i].message.from === placed[i].message.to || placed[j].message.from === placed[j].message.to;
+        const problem = self
+          ? `Messages "${placed[i].label}" and "${placed[j].label}" crowd a self-call loop — leave at least 28px after the earlier route ends at y=${placed[i].bottom}, including room for the next label.`
+          : `Messages "${placed[i].label}" and "${placed[j].label}" are less than 28px apart and share horizontal space — spread their y values.`;
+        problems.push(problem);
+        if (self) {
+          const index = messageList.indexOf(placed[j].message);
+          const requiredY = placed[i].bottom + 28;
+          diagnostics.push({
+            code: 'sequence/self-message-overlap', severity: 'error', message: problem,
+            subject: { diagramType: 'sequence', path: `/messages/${index}/y`, from: placed[j].message.from, to: placed[j].message.to },
+            evidence: { earlierMessage: placed[i].label, routeBottomY: placed[i].bottom, y: placed[j].y, requiredY },
+            supportedFixes: messageFitsAt(index, requiredY) ? [`set /messages/${index}/y to ${requiredY}`] : [],
+          });
+        }
       }
     }
   }
@@ -765,10 +985,6 @@ function validateSequence() {
   // later message or the canvas bottom needs the diagram changed; authored y
   // values and viewBox stay as written. Showcase only, so standard keeps
   // accepting existing diagrams.
-  const report = (problem, detail) => {
-    problems.push(problem);
-    diagnostics.push({ severity: 'error', message: problem, ...detail });
-  };
   const bounds = (rect) => ({
     x: Math.round(rect.x * 10) / 10,
     y: Math.round(rect.y * 10) / 10,
@@ -838,7 +1054,64 @@ function validateSequence() {
       problems.push(`Segment "${segment.label}" has invalid y range (from ${segment.from} to ${segment.to}) — "to" must be greater than "from".`);
     }
     if (segment.from < layout.topY || segment.to > layout.lifelineBottom + 20) {
-      problems.push(`Segment "${segment.label}" extends outside the canvas — keep its y range between ${layout.topY} and ${layout.lifelineBottom + 20}.`);
+      const minimumY = layout.topY;
+      const maximumY = layout.lifelineBottom + 20;
+      // A repaired bound may move or re-place this segment's label; offer the
+      // edit only while the label stays clear of other labels and, in showcase,
+      // of the messages it would cover. The candidate bound is bound on the
+      // segment itself so the label helpers see the same object identity they
+      // see in the real post-repair pass, then restored. A sibling eligible
+      // for the same repair moves with it in a repair loop, so the pair is
+      // simulated together as well; two labels landing on the same fallback
+      // slot would overlap after both repairs.
+      const siblingSharesRepair = (other, field) => (field === 'from'
+        ? other.from < minimumY && minimumY < other.to
+        : other.to > maximumY && other.from < maximumY);
+      const repairedBoundsKeepLabelsReadable = (field, value) => {
+        const previous = segment[field];
+        segment[field] = value;
+        try {
+          const label = segmentLabelBox(segment);
+          if (asArray(sequence.segments).some((other) => other !== segment && rectsOverlap(label, segmentLabelBox(other), 0))) return false;
+          if (readableMessages && segmentLabelBlocker(segment)) return false;
+          return !asArray(sequence.segments).some((other) => {
+            if (other === segment || !siblingSharesRepair(other, field)) return false;
+            const otherPrevious = other[field];
+            other[field] = value;
+            try {
+              return rectsOverlap(segmentLabelBox(segment), segmentLabelBox(other), 0);
+            } finally {
+              other[field] = otherPrevious;
+            }
+          });
+        } finally {
+          segment[field] = previous;
+        }
+      };
+      const supportedFixes = [];
+      if (segment.from < minimumY && minimumY < segment.to && repairedBoundsKeepLabelsReadable('from', minimumY)) supportedFixes.push(`set /segments/${segmentIndex}/from to ${minimumY}`);
+      if (segment.to > maximumY && segment.from < maximumY && repairedBoundsKeepLabelsReadable('to', maximumY)) supportedFixes.push(`set /segments/${segmentIndex}/to to ${maximumY}`);
+      const requiredEdits = Number(segment.from < minimumY) + Number(segment.to > maximumY);
+      if (supportedFixes.length !== requiredEdits) supportedFixes.length = 0;
+      if (supportedFixes.length > 1) {
+        const { from, to } = segment;
+        try {
+          segment.from = Math.max(from, minimumY);
+          segment.to = Math.min(to, maximumY);
+          if ((readableMessages && segmentLabelBlocker(segment))
+            || asArray(sequence.segments).some((other) => other !== segment
+              && rectsOverlap(segmentLabelBox(segment), segmentLabelBox(other), 0))) supportedFixes.length = 0;
+        } finally {
+          segment.from = from;
+          segment.to = to;
+        }
+      }
+      report(`Segment "${segment.label}" extends outside the canvas — keep its y range between ${minimumY} and ${maximumY}.`, {
+        code: 'sequence/segment-outside-canvas',
+        subject: { diagramType: 'sequence', segment: segment.label ?? null, collection: 'segments', index: segmentIndex, path: `/segments/${segmentIndex}` },
+        evidence: { from: segment.from, to: segment.to, minimumY, maximumY, viewBoxHeight: viewBox[1], lifelineTop: layout.lifelineTop, lifelineBottom: layout.lifelineBottom },
+        supportedFixes,
+      });
     }
     // A frame edge may pass behind a masked message label, but an edge that
     // runs along the arrow itself leaves the reader unable to tell which phase
@@ -869,9 +1142,22 @@ function validateSequence() {
       }
     }
     const availableWidth = Math.max(0, viewBox[0] - 48 - labelBox.x);
-    if (labelBox.x + labelBox.width > viewBox[0] - 48) {
-      const requiredWidth = Math.ceil(labelBox.x + labelBox.width + 48);
-      problems.push(`Segment "${segment.label}" label (~${Math.round(labelBox.width)}px) exceeds the segment frame's available width (${availableWidth}px) — shorten the label or increase meta.viewBox[0] to at least ${requiredWidth}.`);
+    const labelRight = labelBox.x + labelBox.width;
+    if (labelRight > viewBox[0] - 48) {
+      let requiredWidth = Math.ceil(labelRight + 48);
+      // Same predicate revalidation as the participant width repair: a
+      // rounding artifact must not offer a width that equals the current one.
+      if (labelRight > requiredWidth - 48) requiredWidth += 1;
+      report(`Segment "${segment.label}" label (~${Math.round(labelBox.width)}px) exceeds the segment frame's available width (${availableWidth}px) — shorten the label or increase meta.viewBox[0] to at least ${requiredWidth}.`, {
+        code: 'sequence/segment-label-overflow',
+        subject: { diagramType: 'sequence', segment: segment.label ?? null, collection: 'segments', index: segmentIndex, path: `/segments/${segmentIndex}/label` },
+        evidence: { label: segment.label ?? null, labelWidth: Math.round(labelBox.width), availableWidth, viewBoxWidth: viewBox[0], requiredViewBoxWidth: requiredWidth, labelBounds: bounds(labelBox) },
+        // An automatic canvas has no authored width to raise; authoring one
+        // keeps the measured height the reader already receives.
+        supportedFixes: sequence.meta?.viewBox
+          ? [`set /meta/viewBox/0 to ${requiredWidth}`]
+          : [`set /meta/viewBox to [${requiredWidth}, ${Math.max(MIN_AUTHORED_VIEWBOX, viewBox[1])}]`],
+      });
     }
     // Segment labels are drawn above messages and notes and step up to stay
     // clear of them; in showcase, a label left covering any of them fails.
@@ -908,9 +1194,36 @@ function validateSequence() {
   }
 
   const lastParticipant = asArray(sequence.participants)[asArray(sequence.participants).length - 1];
-  if (lastParticipant && participants.get(lastParticipant.id).cx + layout.participantW / 2 > viewBox[0] - 40) {
-    const requiredWidth = Math.ceil(participants.get(lastParticipant.id).cx + layout.participantW / 2 + 40);
-    problems.push(`Participants exceed viewBox width — set meta.viewBox[0] to at least ${requiredWidth} or remove a participant.`);
+  if (lastParticipant) {
+    const rowRight = participants.get(lastParticipant.id).cx + layout.participantW / 2;
+    if (rowRight > viewBox[0] - 40) {
+      let requiredWidth = Math.ceil(rowRight + 40);
+      // The check and the suggested width round separately, and raising the
+      // width also moves the last spread column: re-evaluate the same column
+      // geometry the layout uses at the candidate width and step the
+      // suggestion up until the row it would produce fits, so the advertised
+      // edit clears this diagnostic in one application.
+      if (columnFit === 'spread' && participantCount > 1) {
+        for (let step = 0; step < 64; step += 1) {
+          const candidate = spreadColumnGeometry(requiredWidth);
+          const candidateRight = candidate.margin + candidate.width / 2
+            + (participantCount - 1) * candidate.gap + candidate.width / 2;
+          if (candidateRight <= requiredWidth - 40) break;
+          requiredWidth += 1;
+        }
+      } else if (rowRight > requiredWidth - 40) {
+        // Fixed columns keep their x coordinates, so one step is enough.
+        requiredWidth += 1;
+      }
+      report(`Participants exceed viewBox width — set meta.viewBox[0] to at least ${requiredWidth} or remove a participant.`, {
+        code: 'sequence/participants-exceed-canvas',
+        subject: { diagramType: 'sequence', path: '/meta/viewBox/0' },
+        evidence: { viewBoxWidth: viewBox[0], requiredViewBoxWidth: requiredWidth, viewBoxAuthored: Boolean(sequence.meta?.viewBox), lastParticipant: lastParticipant.id, participantWidth: layout.participantW, participantCount, columnFit, rightMargin: 40 },
+        supportedFixes: sequence.meta?.viewBox
+          ? [`set /meta/viewBox/0 to ${requiredWidth}`]
+          : [`set /meta/viewBox to [${requiredWidth}, ${Math.max(MIN_AUTHORED_VIEWBOX, viewBox[1])}]`],
+      });
+    }
   }
 
   // Showcase must not silently drop the implicit legend because late content
@@ -918,7 +1231,12 @@ function validateSequence() {
   const legendHeight = legendRequiredHeight(viewBox[0]);
   if (sequence.meta?.quality_profile === 'showcase' && sequence.meta?.legend === undefined
     && legendHeight > viewBox[1] && !measureLegend(legendEntries(), legendLayout())) {
-    problems.push(`Sequence content ends at y=${contentBottom}, leaving no room for the legend below it — set meta.viewBox[1] to at least ${legendHeight} or omit meta.viewBox so the canvas grows.`);
+    report(`Sequence content ends at y=${contentBottom}, leaving no room for the legend below it — set meta.viewBox[1] to at least ${legendHeight} or omit meta.viewBox so the canvas grows.`, {
+      code: 'sequence/legend-canvas-limit',
+      subject: { diagramType: 'sequence', path: '/meta/viewBox/1' },
+      evidence: { contentBottom, legendHeight, viewBoxHeight: viewBox[1], requiredViewBoxHeight: legendHeight, viewBoxAuthored: Boolean(sequence.meta?.viewBox) },
+      supportedFixes: sequence.meta?.viewBox ? [`set /meta/viewBox/1 to ${legendHeight}`] : [],
+    });
   }
 
   if (problems.length) {
@@ -988,7 +1306,7 @@ function messageLabel(message, x1, x2) {
   const box = messageLabelBox(message);
   const center = box ? box.x + box.width / 2 : (x1 + x2) / 2;
   const y = message.y - 10;
-  const labelW = box?.width || Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
+  const labelW = box?.width || messageLabelWidth(message);
   // A colored line gets a label in the same color, as in the legend swatches.
   // Gray lines (default and return) keep the readable muted text color.
   const accent = ['emphasis', 'security', 'dashed'].includes(message.variant) ? edgeLabelAccent(message.variant) : 't-muted';
@@ -1015,34 +1333,34 @@ function noteBackdrop(message) {
 }
 
 function renderMessage(message, index) {
-  const { start, end } = messageGeometry(message);
+  const { start, end, points } = messageGeometry(message);
   const [cls, marker] = arrowClass[message.variant || 'default'] || arrowClass.default;
   const strokeWidth = message.variant === 'emphasis' ? 1.8 : 1.4;
   const dash = message.variant === 'return' ? ' stroke-dasharray="3,5"' : '';
   const noteBox = noteLayout(message);
   const noteContent = noteBox?.lines.length > 1
-    ? noteBox.lines.map((line, lineIndex) => `<tspan x="${noteBox.x}" dy="${lineIndex ? NOTE_LINE_HEIGHT : 0}">${esc(line)}</tspan>`).join('')
+    ? noteBox.lines.map((line, lineIndex) => `<tspan x="${noteBox.textX}" dy="${lineIndex ? NOTE_LINE_HEIGHT : 0}">${esc(line)}</tspan>`).join('')
     : esc(message.note);
   // Notes carry message conditions and already reserve timeline space. Keep
   // them readable at the default depth; Map still hides context without reflow.
   const note = noteBox
-    ? `\n        <text data-detail="context" x="${noteBox.x}" y="${noteBox.baseline}" class="t-muted" font-size="${NOTE_FONT_SIZE}">${noteContent}</text>`
+    ? `\n        <text data-detail="context" x="${noteBox.textX}" y="${noteBox.baseline}" class="t-muted" font-size="${NOTE_FONT_SIZE}"${noteBox.anchor ? ` text-anchor="${noteBox.anchor}"` : ''}>${noteContent}</text>`
     : '';
   return `        <g ${focusEdgeAttrs(message.from, message.to, message.label, index, message.id)}>
-          <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue([[start, message.y], [end, message.y]])}" d="M ${start} ${message.y} L ${end} ${message.y}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${marker})"/>
+          <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue(points)}" d="${polylinePath(points)}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${marker})"/>
 ${messageLabel(message, start, end)}${noteBackdrop(message)}${note}
         </g>`;
 }
 
 
-function legendLayout() {
+function legendLayout(bottom = contentBottom) {
   return {
     x: 40,
     baselineY: layout.legendY,
     width: viewBox[0] - 80,
     // The same content-based budget as legendRequiredHeight(): a wrapped
     // legend may use any rows it needs as long as it stays below the content.
-    minTitleY: Math.max(layout.lifelineTop, contentBottom + LEGEND_CONTENT_GAP),
+    minTitleY: Math.max(layout.lifelineTop, bottom + LEGEND_CONTENT_GAP),
     unfit: sequence.meta?.legend === undefined ? 'hide' : 'error',
     diagramType: 'sequence',
   };
