@@ -11,7 +11,7 @@ not rewritten by upgrading the Skill.
 - Offline licensed JetBrains Mono: 3.1's six embedded WOFF2 subsets replace the
   old runtime TTF embedding while retaining the original licensed assets.
 - Immutable Action references, read-only workflow defaults, no retained checkout
-  credentials except the existing star-history publishing job, and updated locks.
+  credentials except the existing star-history publishing job, and fast-uri >=3.1.8 in both development dependency graphs.
 - Independent artifact membership checks, version-scoped compare geometry,
   advisory coincident routes, complete checker output and retained Preview output.
 - Concise DOX ownership contracts and source/package/installation reconciliation.

@@ -10,6 +10,7 @@ Root owns distribution builders, workflows, generated public examples, licensing
 
 ## Local Contracts
 
+- Keep fast-uri >=3.1.8 in both root and Skill development dependency graphs.
 - Preserve MIT attribution, pinned Actions, restricted workflow permissions and the embedded licensed font. Never restore network-loaded fonts.
 - Adapt reviewed corrections independently of upstream integration. Preserve schema-v1 inputs, explicit geometry, existing receipt failures and standard-quality compatibility.
 - Keep private project data, installed backups, machine paths and local test receipts out of Git. Keep installation rollback outside the public package.
@@ -24,6 +25,7 @@ Root owns distribution builders, workflows, generated public examples, licensing
 ## Verification
 
 - Run failing regressions before fixes, focused compatibility checks afterward, then root `npm run test:full`, the maintained browser gate and `git diff --check`.
+- Windows repository-evidence fixtures bind the actual credential-free checkout origin and pinned revision; keep origin validation strict.
 - Browser behavior requires real Chrome checks; distinguish them from static geometry and perceptual review.
 - Verify generated output and the extracted package match tracked source while preserving font/security customizations.
 
