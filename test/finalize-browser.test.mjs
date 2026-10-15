@@ -40,3 +40,41 @@ test('finalize proves all four gates in real Chrome with bounded mixed-case side
     assert.deepEqual(fs.readdirSync(dir).filter(name => name.endsWith('.png')), ['unrelated.visual-check.light.png']);
   }
 });
+
+test('finalize --out-dir keeps the adjacent summary current and preserves historical full evidence', {
+  skip: !process.env.ARCHIFY_CHROME,
+}, t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-finalize-latest-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const input = path.join(dir, 'candidate.json');
+  const output = path.join(dir, 'diagram.html');
+  const adjacentSummary = path.join(dir, 'diagram.finalize-summary.json');
+  const candidate = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json')));
+  const run = (outDir) => {
+    fs.writeFileSync(input, JSON.stringify(candidate));
+    const result = spawnSync(process.execPath, [cli, 'finalize', 'architecture', input, output,
+      '--quality', 'showcase', '--json', ...(outDir ? ['--out-dir', outDir] : [])],
+    { cwd: skillRoot, encoding: 'utf8', env: process.env, timeout: 180000 });
+    return { status: result.status, summary: JSON.parse(result.stdout), stderr: result.stderr };
+  };
+  const first = run();
+  assert.equal(first.status, 0, first.stderr);
+  const historical = [first.summary.evidence.receipt, first.summary.evidence.browserCheckReceipt]
+    .map(file => [file, fs.readFileSync(file)]);
+  fs.copyFileSync(output, path.join(dir, 'first.html'));
+  candidate.meta.title += ' revised';
+  const second = run(path.join(dir, 'review-2'));
+  assert.equal(second.status, 0, second.stderr);
+  assert.notEqual(first.summary.artifact.sha256, second.summary.artifact.sha256);
+  assert.deepEqual(JSON.parse(fs.readFileSync(adjacentSummary)), second.summary);
+  assert.deepEqual(JSON.parse(fs.readFileSync(second.summary.evidence.summaryReceipt)), second.summary);
+  for (const [file, bytes] of historical) assert.deepEqual(fs.readFileSync(file), bytes);
+  const acceptedHtml = fs.readFileSync(output);
+  candidate.nodes = [];
+  const failed = run(path.join(dir, 'review-3'));
+  assert.notEqual(failed.status, 0);
+  assert.equal(failed.summary.ok, false);
+  assert.deepEqual(JSON.parse(fs.readFileSync(adjacentSummary)), failed.summary);
+  assert.deepEqual(fs.readFileSync(output), acceptedHtml);
+  for (const [file, bytes] of historical) assert.deepEqual(fs.readFileSync(file), bytes);
+});

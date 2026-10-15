@@ -762,17 +762,27 @@ export async function runFinalize({
   const resolvedSummary = resolveOutputPath({
     requestedOutput: defaultFinalizeSummaryPath(resolvedReceipt), inputPaths: [resolvedInput], requiredExtension: '.json',
   }).outputPath;
+  const summaryPaths = [resolvedSummary];
+  if (resolvedOutDir !== undefined) {
+    const adjacent = resolveOutputPath({
+      requestedOutput: defaultFinalizeSummaryPath(defaultFinalizeReceiptPath(resolvedOutput)),
+      inputPaths: [resolvedInput], requiredExtension: '.json',
+    }).outputPath;
+    if (!pathsAlias(adjacent, resolvedSummary)) summaryPaths.push(adjacent);
+  }
   const assertReceiptPaths = () => {
     const reserved = reservedFinalizePaths({ input: resolvedInput, output: resolvedOutput, outDir: resolvedOutDir, deliveryPaths });
     const receiptCollision = reserved.find((file) => pathsAlias(resolvedReceipt, file));
     if (receiptCollision) throw new Error(`The finalize receipt must be distinct from the specification, artifact, and gate sidecars: "${receiptCollision}".`);
-    const summaryCollision = [resolvedReceipt, ...reserved].find((file) => pathsAlias(resolvedSummary, file));
-    if (summaryCollision) throw new Error(`The finalize summary must be distinct from the full receipt, specification, artifact, and gate sidecars: "${summaryCollision}".`);
+    for (const summary of summaryPaths) {
+      const collision = [resolvedReceipt, ...reserved].find((file) => pathsAlias(summary, file));
+      if (collision) throw new Error(`The finalize summary must be distinct from the full receipt, specification, artifact, and gate sidecars: "${collision}".`);
+    }
   };
   assertReceiptPaths();
-  // Capture both paths before changing either: an unsafe summary cannot leave a new full receipt behind.
+  // Capture every slot before writing: an unsafe summary cannot leave a new full receipt behind.
   let receiptCapture = captureReceipt(resolvedReceipt);
-  let summaryCapture = captureReceipt(resolvedSummary);
+  const summaries = summaryPaths.map(file => ({ file, capture: captureReceipt(file) }));
 
   const receipt = {
     schemaVersion: 1,
@@ -791,12 +801,13 @@ export async function runFinalize({
   };
   const persistReceipts = () => {
     assertReceiptPaths();
-    for (const [file, capture] of [[resolvedReceipt, receiptCapture], [resolvedSummary, summaryCapture]]) {
+    for (const [file, capture] of [[resolvedReceipt, receiptCapture], ...summaries.map(slot => [slot.file, slot.capture])]) {
       const current = verifyAtomicOutput(capture.snapshot);
       if (current.status !== 'match') throw receiptWriteError(file, current);
     }
     receiptCapture = writeJsonAtomic(resolvedReceipt, receipt, receiptCapture, assertReceiptPaths);
-    summaryCapture = writeJsonAtomic(resolvedSummary, compactFinalizeReceipt(receipt), summaryCapture, assertReceiptPaths);
+    const summary = compactFinalizeReceipt(receipt);
+    for (const slot of summaries) slot.capture = writeJsonAtomic(slot.file, summary, slot.capture, assertReceiptPaths);
   };
   persistReceipts();
   // The gates below usually take seconds, so a slower network can finish the

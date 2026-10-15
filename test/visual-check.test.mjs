@@ -3228,3 +3228,28 @@ test('browser cleanup failure publishes a failed receipt instead of successful e
   assert.equal(saved.ok, false);
   assert.deepEqual(saved.captures.screenshots, []);
 });
+
+test('findChrome uses Edge only after Chrome and Chromium, keeping explicit overrides authoritative', () => {
+  const windowsEnv = { PROGRAMFILES: String.raw`C:\Program Files`, 'PROGRAMFILES(X86)': String.raw`C:\Program Files (x86)`, LOCALAPPDATA: String.raw`C:\Users\Fixture\AppData\Local`, PATH: String.raw`D:\Browser Bin`, PATHEXT: '.EXE' };
+  const candidates = [
+    ...[windowsEnv.PROGRAMFILES, windowsEnv['PROGRAMFILES(X86)'], windowsEnv.LOCALAPPDATA].map(root => ['win32', windowsEnv, path.win32.join(root, 'Microsoft', 'Edge', 'Application', 'msedge.exe')]),
+    ['win32', windowsEnv, String.raw`D:\Browser Bin\msedge.EXE`],
+    ['darwin', { PATH: '/opt/bin' }, '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'],
+    ['darwin', { PATH: '/opt/bin' }, '/opt/bin/microsoft-edge'],
+    ['linux', { PATH: '/usr/bin' }, '/usr/bin/microsoft-edge-stable'],
+  ];
+  for (const [platform, env, expected] of candidates) {
+    assert.equal(findChrome({ platform, env, resolveExecutable: candidate => candidate === expected ? candidate : null }), expected);
+  }
+  const edge = candidates[0][2];
+  const chrome = String.raw`D:\Browser Bin\chrome.EXE`;
+  assert.equal(findChrome({ platform: 'win32', env: windowsEnv,
+    resolveExecutable: candidate => [edge, chrome].includes(candidate) ? candidate : null }), chrome);
+  for (const override of ['chosen-browser', 'missing-browser', '']) {
+    const checked = [];
+    const result = findChrome({ platform: 'win32', env: { ...windowsEnv, ARCHIFY_CHROME: override },
+      resolveExecutable: candidate => { checked.push(candidate); return candidate === 'chosen-browser' ? candidate : null; } });
+    assert.deepEqual(checked, [override]);
+    assert.equal(result, override === 'chosen-browser' ? override : null);
+  }
+});

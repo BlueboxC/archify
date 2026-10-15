@@ -79,10 +79,14 @@ Read Mermaid for topology and meaning, then author fresh Archify JSON; do not me
 ## Delivery
 
 Use the `finalize` command above for the first candidate and after a repair.
+`--out-dir` relocates evidence only: the requested HTML and its delivery receipt
+are rewritten in place. Its adjacent `.finalize-summary.json` follows the latest
+attempt and links the current evidence directory; older full/browser receipts
+remain historical and must match the HTML hash before being used as evidence.
 
 `finalize` stops at the first non-passing gate. Its compact stdout and `<output-stem>.finalize-summary.json` are ordinary evidence. A passing run creates no screenshots and reports `visualReview: "not-requested"`.
 
-When a passing Architecture receipt reports `visualReviewRecommendation.signals.resolvedCrossovers`, copy the candidate aside and apply the hints in one edit that changes only node positions and sizes: every node, relationship (including its `from` and `to`), label, and source stays as it was. Rerun the complete `finalize` once with `--out-dir <folder>/review-2`, because the previous HTML already owns its browser evidence. If that run fails, reports more crossings, or reports the same crossings with more `signals.routesOverSuggestedBends`, restore the copy and finalize it with `--out-dir <folder>/review-3`. Do not start a second placement round. Hints about extra bends alone are optional.
+When a passing Architecture receipt reports `visualReviewRecommendation.signals.resolvedCrossovers`, copy both the candidate JSON and generated HTML aside and apply the hints in one edit that changes only node positions and sizes: every node, relationship (including its `from` and `to`), label, and source stays as it was. Rerun the complete `finalize` once with `--out-dir <folder>/review-2`, because the previous HTML already owns its browser evidence. If that run fails, reports more crossings, or reports the same crossings with more `signals.routesOverSuggestedBends`, restore the saved JSON and HTML and finalize the JSON with `--out-dir <folder>/review-3`. Do not start a second placement round. Hints about extra bends alone are optional.
 
 When `layoutReviewRecommendation.action` is `inspect-sequence-width`, follow [Sequence width review](references/delivery-contract.md#sequence-width-review) before handing off a newly authored Sequence.
 

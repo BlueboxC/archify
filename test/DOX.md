@@ -11,6 +11,7 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 ## Local Contracts
 
 - Keep independent regressions for adapted fixes and failure/recovery paths. Exercise advertised repairs and exact group membership; a compiling candidate alone does not prove preserved intent.
+- Cover display-clock transitions, browser-discovery precedence and current summary links without replacing historical evidence; redirected summaries retain collision and concurrent-claim protection.
 - Assert user outcomes; adapt obsolete automatic-layout expectations when a better valid result replaces an old limitation.
 - Skips and platform simulations are not runtime passes. Keep real browser and package evidence distinct.
 

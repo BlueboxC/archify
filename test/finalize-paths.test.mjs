@@ -99,3 +99,41 @@ test('finalize preserves its existing receipt permissions on repeat publication'
   assert.equal(result.exitCode, 1);
   assert.equal(fs.statSync(receiptPath).mode & 0o777, beforeMode);
 });
+
+test('finalize with redirected evidence rejects unsafe adjacent summaries before touching artifacts', async t => {
+  const dir = workspace(t);
+  for (const kind of ['hardlink', 'symlink', 'input', 'receipt']) {
+    const folder = path.join(dir, kind);
+    fs.mkdirSync(folder);
+    const output = path.join(folder, 'diagram.html');
+    const summary = defaultFinalizeSummaryPath(defaultFinalizeReceiptPath(output));
+    const sentinel = path.join(folder, 'sentinel.json');
+    fs.writeFileSync(sentinel, 'protected');
+    let input = example;
+    let receiptPath;
+    if (kind === 'hardlink') fs.linkSync(sentinel, summary);
+    if (kind === 'symlink') fs.symlinkSync(sentinel, summary);
+    if (kind === 'input') { input = summary; fs.copyFileSync(example, input); }
+    if (kind === 'receipt') receiptPath = summary;
+    await assert.rejects(runFinalize({ cliPath: cli, type: 'architecture', input, output,
+      outDir: path.join(folder, 'review'), receiptPath }), /hardlinked|symlink|distinct|input/i);
+    assert.equal(fs.existsSync(output), false);
+    assert.equal(fs.readFileSync(sentinel, 'utf8'), 'protected');
+  }
+});
+
+test('finalize redirected evidence preserves an adjacent summary claimed during a gate', async t => {
+  const dir = workspace(t);
+  const output = path.join(dir, 'diagram.html');
+  const summary = defaultFinalizeSummaryPath(defaultFinalizeReceiptPath(output));
+  const claimant = path.join(dir, 'claimant.json');
+  fs.writeFileSync(claimant, 'external claimant');
+  await assert.rejects(runFinalize({ cliPath: cli, type: 'architecture', input: example, output,
+    outDir: path.join(dir, 'review'),
+    runCommand: () => {
+      fs.renameSync(claimant, summary);
+      return { status: 1, stdout: JSON.stringify({ ok: false, command: 'deliver', stage: 'render', diagnostics: [] }) };
+    },
+  }), /requested-entry-changed/);
+  assert.equal(fs.readFileSync(summary, 'utf8'), 'external claimant');
+});

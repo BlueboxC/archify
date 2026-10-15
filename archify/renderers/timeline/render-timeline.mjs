@@ -256,6 +256,34 @@ function xOf(time) {
 // on its own whole hours.
 const TICKS = [1000, 2000, 5000, 10_000, 15_000, 30_000, MINUTE, 2 * MINUTE, 5 * MINUTE, 10 * MINUTE, 15 * MINUTE, 30 * MINUTE,
   HOUR, 2 * HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 7 * DAY];
+// Split elapsed time at offset changes; each run has an unambiguous wall grid.
+function* wallTicks(start, end, interval) {
+  let runStart = start;
+  let offset = zoneOffset(start);
+  let cursor = start;
+  while (cursor < end) {
+    const probe = Math.min(cursor + 6 * HOUR, end);
+    const nextOffset = zoneOffset(probe);
+    let boundary = probe;
+    if (nextOffset !== offset) {
+      let lo = Math.floor(cursor / 1000);
+      let hi = Math.ceil(probe / 1000);
+      while (hi - lo > 1) {
+        const mid = Math.floor((lo + hi) / 2);
+        if (zoneOffset(mid * 1000) === offset) lo = mid;
+        else hi = mid;
+      }
+      boundary = hi * 1000;
+    }
+    if (nextOffset !== offset) {
+      for (let t = Math.ceil((runStart + offset) / interval) * interval - offset; t < boundary; t += interval) yield t;
+      runStart = boundary;
+      offset = zoneOffset(boundary);
+    }
+    cursor = boundary;
+  }
+  for (let t = Math.ceil((runStart + offset) / interval) * interval - offset; t <= end; t += interval) yield t;
+}
 const ticks = [];
 for (const segment of segments) {
   const length = segment.end - segment.start;
@@ -264,10 +292,8 @@ for (const segment of segments) {
     continue;
   }
   const interval = TICKS.find((candidate) => candidate * scale >= layout.minTickPx) ?? TICKS.at(-1);
-  const offset = zoneOffset(segment.start);
-  let t = Math.ceil((segment.start + offset) / interval) * interval - offset;
   const before = ticks.length;
-  for (; t <= segment.end; t += interval) ticks.push({ t, x: xOf(t), interval });
+  for (const t of wallTicks(segment.start, segment.end, interval)) ticks.push({ t, x: xOf(t), interval });
   // A segment too short for a regular tick still states where it starts.
   if (ticks.length === before) ticks.push({ t: segment.start, x: segment.x0, interval });
 }

@@ -180,3 +180,47 @@ test('timeline: automatic breaks leave room for proportional time on a narrow ax
   const receipt = JSON.parse(spawnSync(process.execPath, [checker, result.output], { encoding: 'utf8' }).stdout);
   assert.equal(receipt.ok, true, JSON.stringify(receipt.checks.filter((entry) => !entry.ok)));
 });
+
+// #926: calendar boundaries follow the display clock, not a frozen UTC offset.
+test('timeline: wall-clock ticks survive offset transitions without moving events', () => {
+  const cases = [
+    ['America/New_York', '2026-03-07T00:00:00-05:00', '2026-03-10T00:00:00-04:00', [24, 23, 24]],
+    ['America/New_York', '2026-10-31T00:00:00-04:00', '2026-11-03T00:00:00-05:00', [24, 25, 24]],
+    ['Australia/Lord_Howe', '2026-10-03T00:00:00+10:30', '2026-10-06T00:00:00+11:00', [24, 23.5, 24]],
+    ['Australia/Lord_Howe', '2026-04-04T00:00:00+11:00', '2026-04-07T00:00:00+10:30', [24, 24.5, 24]],
+    ['Asia/Kathmandu', '2026-03-07T00:00:00+05:45', '2026-03-10T00:00:00+05:45', [24, 24, 24]],
+    ['UTC', '2026-03-07T00:00:00Z', '2026-03-10T00:00:00Z', [24, 24, 24]],
+    ['Pacific/Apia', '2011-12-29T00:00:00-10:00', '2012-01-01T00:00:00+14:00', [24, 24]],
+  ];
+  for (const [timezone, start, end, gaps] of cases) {
+    const diagram = { schema_version: 1, diagram_type: 'timeline',
+      meta: { title: 'Calendar boundaries', evidence: 'illustrative', timezone },
+      layout: { width: 480, breaks: 'none' },
+      events: [{ id: 'start', at: start, title: 'Start' }, { id: 'end', at: end, title: 'End' }] };
+    const report = layoutOf(diagram);
+    const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hourCycle: 'h23', hour: '2-digit', minute: '2-digit' });
+    assert.equal(report.ticks.length, gaps.length + 1, timezone);
+    assert.ok(report.ticks.every(({ t }) => fmt.format(t) === '00:00'), timezone);
+    assert.deepEqual(report.ticks.slice(1).map(({ t }, i) => (t - report.ticks[i].t) / 3600000), gaps, timezone);
+    assert.equal(report.ticks[0].t, Date.parse(start));
+    assert.equal(report.ticks.at(-1).t, Date.parse(end));
+    assert.deepEqual(report.events.map(({ t }) => t), [Date.parse(start), Date.parse(end)]);
+    const utc = layoutOf({ ...diagram, meta: { ...diagram.meta, timezone: 'UTC' } });
+    assert.deepEqual(report.events.map(({ t, x }) => ({ t, x })), utc.events.map(({ t, x }) => ({ t, x })));
+  }
+});
+
+test('timeline: sub-day wall ticks keep repeated hours and omit missing local hours', () => {
+  for (const [timezone, start, end, expected] of [
+    ['America/New_York', '2026-11-01T00:00:00-04:00', '2026-11-01T03:00:00-05:00', ['00:00', '01:00', '01:00', '02:00', '03:00']],
+    ['America/New_York', '2026-03-08T00:00:00-05:00', '2026-03-08T05:00:00-04:00', ['00:00', '01:00', '03:00', '04:00', '05:00']],
+    ['Australia/Lord_Howe', '2026-10-04T00:00:00+10:30', '2026-10-04T05:00:00+11:00', ['00:00', '01:00', '03:00', '04:00', '05:00']],
+  ]) {
+    const report = layoutOf({ schema_version: 1, diagram_type: 'timeline',
+      meta: { title: 'Transition hours', evidence: 'illustrative', timezone }, layout: { width: 600, breaks: 'none' },
+      events: [{ id: 'start', at: start, title: 'Start' }, { id: 'end', at: end, title: 'End' }] });
+    const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hourCycle: 'h23', hour: '2-digit', minute: '2-digit' });
+    assert.deepEqual(report.ticks.map(({ t }) => fmt.format(t)), expected, timezone);
+    assert.ok(report.ticks.every(({ t }, i, all) => !i || t > all[i - 1].t));
+  }
+});

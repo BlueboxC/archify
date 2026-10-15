@@ -15,6 +15,8 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Checker transport failure is not an artifact verdict. Preserve previous delivered output when verification cannot complete.
 - Preview retains the last verified artifact independently of checking/failure status; same-revision state updates preserve the loaded document.
 - Migration validates complete source/final semantic contracts; group repair spans preserve exact membership. Self-calls retain ownership, notes and identity. Raster pins undergo container checks even with matching digests.
+- Timeline ticks follow display-zone offset transitions without changing elapsed event geometry. Browser discovery keeps explicit overrides authoritative and prefers Chrome/Chromium before Edge.
+- Redirected finalize evidence retains historical full/browser receipts; the adjacent guarded summary tracks the latest attempt, including failures. `--out-dir` does not relocate the HTML or delivery provenance.
 - Keep fonts embedded and preserve THIRD_PARTY_NOTICES.md and asset licenses. No new runtime dependencies or automatic installation/update side effects.
 
 ## Work Guidance

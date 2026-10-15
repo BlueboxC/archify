@@ -1318,11 +1318,15 @@ export function findChrome({
 
   const fixed = [];
   const commands = [];
+  const edgeFixed = [];
+  const edgeCommands = [];
   if (platform === 'darwin') {
     fixed.push(
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
       '/Applications/Chromium.app/Contents/MacOS/Chromium',
     );
+    edgeFixed.push('/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge');
+    edgeCommands.push('microsoft-edge', 'microsoft-edge-stable');
   } else if (platform === 'win32') {
     const pathApi = path.win32;
     for (const root of [env.PROGRAMFILES, env['PROGRAMFILES(X86)'], env.LOCALAPPDATA].filter(Boolean)) {
@@ -1330,19 +1334,24 @@ export function findChrome({
         pathApi.join(root, 'Google', 'Chrome', 'Application', 'chrome.exe'),
         pathApi.join(root, 'Chromium', 'Application', 'chrome.exe'),
       );
+      edgeFixed.push(pathApi.join(root, 'Microsoft', 'Edge', 'Application', 'msedge.exe'));
     }
     commands.push('chrome', 'google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser');
+    edgeCommands.push('msedge');
   } else {
     commands.push('google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser');
+    edgeCommands.push('microsoft-edge', 'microsoft-edge-stable');
   }
 
-  for (const candidate of fixed) {
-    const resolved = resolveExecutable(candidate, platform);
-    if (resolved) return resolved;
-  }
-  for (const command of commands) {
-    const resolved = findOnPath(command, env, platform, resolveExecutable);
-    if (resolved) return resolved;
+  for (const [locations, names] of [[fixed, commands], [edgeFixed, edgeCommands]]) {
+    for (const candidate of locations) {
+      const resolved = resolveExecutable(candidate, platform);
+      if (resolved) return resolved;
+    }
+    for (const command of names) {
+      const resolved = findOnPath(command, env, platform, resolveExecutable);
+      if (resolved) return resolved;
+    }
   }
   return null;
 }
@@ -2470,14 +2479,14 @@ async function runBrowserEvidence({
     receipt.viewerChrome.status = 'skipped';
     receipt.themeStates.status = 'skipped';
     if (capture) receipt.captures.status = 'skipped';
-    receipt.error = 'Chrome or Chromium is unavailable. Set ARCHIFY_CHROME to its executable path.';
+    receipt.error = 'Chrome, Chromium or Microsoft Edge is unavailable. Set ARCHIFY_CHROME to its executable path.';
     receipt.diagnostics = [failureDiagnostic({
       code: 'viewer/chrome-unavailable',
       severity: 'warning',
       message: receipt.error,
       subject: { artifact },
       evidence: { executable: null },
-      supportedFixes: [`set ARCHIFY_CHROME to a Chrome or Chromium executable and rerun ${command}`],
+      supportedFixes: [`set ARCHIFY_CHROME to a Chrome, Chromium or Microsoft Edge executable and rerun ${command}`],
     })];
     const publication = publishReceiptOnly(artifact, outputs, receipt, ownership);
     if (publication.ok) publishedBrowserEvidenceReceipts.add(receipt);

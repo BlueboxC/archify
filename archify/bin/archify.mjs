@@ -2213,6 +2213,10 @@ function usage() {
   return `Usage:
 ${commands.join('\n')}
 
+Finalize paths:
+  --out-dir relocates evidence only; output.html and its delivery receipt are rewritten in place.
+  The adjacent .finalize-summary.json follows the latest attempt and links its evidence.
+
 Types:
   architecture, workflow, sequence, dataflow, lifecycle, erd, tree, class, timeline, waterfall
 `;

@@ -25,7 +25,9 @@ events (with their millisecond timestamps and x positions) instead of HTML.
   impossible date fails `timeline/invalid-timestamp`.
 - `meta.timezone` is an IANA zone (default `UTC`) used for every tick and label;
   ticks fall on that zone's wall clock, so a `+05:30` zone ticks on its own
-  hours. An unknown zone fails `timeline/invalid-timezone`.
+  hours. Offset transitions keep daily ticks at local midnight and preserve
+  repeated hourly ticks; elapsed spacing and event positions remain proportional.
+  An unknown zone fails `timeline/invalid-timezone`.
 - `meta.evidence` (`observed` or `illustrative`) is required and drawn as a
   badge at the top-left of the canvas.
 - With `lanes`, every event names a declared lane (`timeline/unknown-lane`).

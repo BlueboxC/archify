@@ -34,6 +34,9 @@ not rewritten by upgrading the Skill.
 | [#925](https://github.com/tt-a1i/archify/issues/925) | [outlier27-cell, PR928](https://github.com/tt-a1i/archify/pull/928), `9484c4eb46840f934ef47b8436a548bbd1655d11` | Protect local panels and capture-phase selection during composition. |
 | [#907](https://github.com/tt-a1i/archify/issues/907) | [outlier27-cell, PR908](https://github.com/tt-a1i/archify/pull/908), `bbf72d5c668fc75241f4a3667607cd127309ce3c` | Keep modified toolbar navigation native; preserve printable Shift shortcuts. |
 | [#909](https://github.com/tt-a1i/archify/issues/909) | [outlier27-cell, PR911](https://github.com/tt-a1i/archify/pull/911), `e4944b9b4d567c0ff63aed8ddb761b66276180aa` | Protect all roving surfaces, including legend, direct relationships, Guide and retained chapters; preserve modified Finder Enter. |
+| [#926](https://github.com/tt-a1i/archify/issues/926) | Fork implementation from the reported reproduction | Keep wall-clock ticks aligned across daylight saving and non-hour offset changes; preserve elapsed event geometry. |
+| [#920](https://github.com/tt-a1i/archify/issues/920) | Fork implementation from Luis85's report | Discover Edge after Chrome/Chromium on Windows, macOS and Linux; retain explicit override precedence. |
+| [#921](https://github.com/tt-a1i/archify/issues/921) | Fork implementation from Luis85's report | Clarify evidence-only redirection; keep the adjacent guarded summary current while retaining historical full/browser receipts. |
 
 The upstream implementations and tests are adapted under MIT. Their inclusion
 here does not imply that upstream has reviewed or merged our adaptations.
@@ -49,6 +52,8 @@ Install development dependencies with `npm ci` at the root and in `archify/`.
 Run root `npm run test:full`, `ARCHIFY_CHROME=/path/to/chrome npm run test:browser`
 and `npm run test:webm`. Focused regressions are in root `test/`, including migration semantics, workflow hard contracts, self-calls, WebP bounds, Sequence canvas diagnostics, keyboard boundaries, and the retained original checks:
 boundary membership, coincident routes, checker buffer and Preview browser tests.
+Additional checks cover calendar transitions, browser discovery and redirected
+finalize evidence, including unsafe paths and concurrent claimants.
 Skips are not passes. Browser tests use real Chrome; manual visual review remains
 separate from automated containment and interaction evidence.
 
