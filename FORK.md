@@ -93,3 +93,17 @@ CI still builds and tests the website without requiring hosting setup.
 
 The stable update manifest describes the published upstream release, not this
 fork's customized ZIP. No fork release or automatic installation is implied.
+
+## Overlapping workflow group repairs
+
+The #821 follow-up preserves both the edited group's exact membership and each
+node's effective group identity. It reuses canonical group ordering and node
+lookup; equal labels do not make two group IDs interchangeable. A repair that
+only compiles remains insufficient. Regression cases cover owner changes,
+masked outside-node absorption and equal labels, alongside existing legitimate
+repairs. This extends robll-v1's #838 and its overlapping-group review; it retains
+the membership guard contributed by this fork.
+
+The earlier c5e1059 commit bundled ten fixes, including shared Viewer keyboard
+changes that required HTML refreshes. This isolated compiler follow-up rebuilds
+only the Skill archive; canonical example HTML and Viewer sources stay unchanged.

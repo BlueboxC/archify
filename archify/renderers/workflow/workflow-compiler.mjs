@@ -704,6 +704,20 @@ function compareWorkflowEdges(left, right) {
     || stableCompare(stableValueKey(left), stableValueKey(right));
 }
 
+function canonicalWorkflowGroups(groups, laneOrder) {
+  return [...asArray(groups)].sort((left, right) => (
+    (laneOrder.get(left.lane) ?? Number.MAX_SAFE_INTEGER) - (laneOrder.get(right.lane) ?? Number.MAX_SAFE_INTEGER)
+    || left.fromCol - right.fromCol || left.toCol - right.toCol
+    || stableCompare(left.id, right.id)
+  ));
+}
+
+function workflowGroupForNode(groups, node) {
+  return asArray(groups).find((candidate) => (
+    candidate.lane === node.lane && node.col >= candidate.fromCol && node.col <= candidate.toCol
+  ));
+}
+
 function canonicalReadableWorkflow(workflow, widthOverrides) {
   if (workflow.schema_version !== 2) return workflow;
   for (const node of asArray(workflow.nodes)) {
@@ -724,11 +738,7 @@ function canonicalReadableWorkflow(workflow, widthOverrides) {
     left.fromCol - right.fromCol || left.toCol - right.toCol
     || stableCompare(left.id, right.id)
   ));
-  const groups = workflow.groups === undefined ? undefined : [...asArray(workflow.groups)].sort((left, right) => (
-    (laneOrder.get(left.lane) ?? Number.MAX_SAFE_INTEGER) - (laneOrder.get(right.lane) ?? Number.MAX_SAFE_INTEGER)
-    || left.fromCol - right.fromCol || left.toCol - right.toCol
-    || stableCompare(left.id, right.id)
-  ));
+  const groups = workflow.groups === undefined ? undefined : canonicalWorkflowGroups(workflow.groups, laneOrder);
   return {
     ...workflow,
     nodes,
@@ -922,9 +932,7 @@ function createWorkflowLaneGeometry(workflow, layout, legendExtraHeight, minimum
   const laneLabels = new Map(asArray(workflow.lanes).map((lane) => [lane.id, lane.label]));
 
   function nodeContext(node) {
-    const group = asArray(workflow.groups).find((candidate) => (
-      candidate.lane === node.lane && node.col >= candidate.fromCol && node.col <= candidate.toCol
-    ));
+    const group = workflowGroupForNode(workflow.groups, node);
     const phase = asArray(workflow.phases).find((candidate) => (
       node.col >= candidate.fromCol && node.col <= candidate.toCol
     ));
@@ -4304,9 +4312,10 @@ function readablePresetVia(edge, from, to, start, end, fromSide, toSide) {
     && rejection.blockedBy.id) {
     const group = asArray(workflow.groups).find((entry) => entry.id === rejection.blockedBy.id);
     if (group) {
-      const memberColumns = asArray(workflow.nodes)
-        .filter((node) => node.lane === group.lane
-          && Number.isInteger(node.col)
+      const laneNodes = asArray(workflow.nodes).filter((node) => node.lane === group.lane);
+      const originalOwners = laneNodes.map((node) => workflowGroupForNode(workflow.groups, node)?.id);
+      const memberColumns = laneNodes
+        .filter((node) => Number.isInteger(node.col)
           && node.col >= group.fromCol
           && node.col <= group.toCol)
         .map((node) => node.col);
@@ -4316,9 +4325,13 @@ function readablePresetVia(edge, from, to, start, end, fromSide, toSide) {
       for (let fromCol = 0; fromCol <= minimumFrom; fromCol += 1) {
         for (let toCol = maximumTo; toCol <= Math.max(group.toCol, maximumTo); toCol += 1) {
           if (fromCol === group.fromCol && toCol === group.toCol) continue;
-          if (asArray(workflow.nodes).some((node) => node.lane === group.lane
-            && (node.col >= fromCol && node.col <= toCol)
-              !== (node.col >= group.fromCol && node.col <= group.toCol))) continue;
+          if (laneNodes.some((node) => (node.col >= fromCol && node.col <= toCol)
+            !== (node.col >= group.fromCol && node.col <= group.toCol))) continue;
+          const candidateGroups = canonicalWorkflowGroups(asArray(workflow.groups).map((entry) => (
+            entry.id === group.id ? { ...entry, fromCol, toCol } : entry
+          )), laneIndex);
+          // Overlapping groups can change canonical precedence without changing membership.
+          if (laneNodes.some((node, index) => workflowGroupForNode(candidateGroups, node)?.id !== originalOwners[index])) continue;
           candidates.push({ fromCol, toCol, span: toCol - fromCol, shift: Math.abs(fromCol - group.fromCol) + Math.abs(toCol - group.toCol) });
         }
       }

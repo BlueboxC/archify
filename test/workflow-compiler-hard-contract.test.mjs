@@ -3034,3 +3034,42 @@ test('the group-placement repair does not advertise a repair that absorbs an unr
   assert.equal(diagnostic.supportedFixes.some((fix) => /^set group "command"/.test(fix)), false,
     'a compiling span must not absorb the unrelated col-0 node');
 });
+
+
+test('overlapping group repairs preserve membership and resolved identity', async (t) => {
+  for (const equalLabels of [false, true]) {
+    for (const maskedLeftNode of [false, true]) {
+      await t.test(`${maskedLeftNode ? 'masked left node' : 'owner changes'}; ${equalLabels ? 'equal' : 'distinct'} labels`, () => {
+        const document = {
+          schema_version: 2,
+          diagram_type: 'workflow',
+          meta: { title: 'Overlapping groups', output: 'group-overlap.html' },
+          lanes: [
+            { id: 'signals', label: 'Signals' },
+            { id: 'responders', label: 'Incident Command' },
+            { id: 'exceptions', label: 'Escalation + Rollback', variant: 'exception' },
+          ],
+          mainPath: ['alert', 'page'],
+          nodes: [
+            { id: 'alert', lane: 'signals', col: 0, type: 'messagebus', label: 'SLO Alert' },
+            { id: 'page', lane: 'responders', col: 1, width: 76, type: 'external', label: 'Page On-call' },
+            { id: 'rollback', lane: 'exceptions', col: 5, type: 'messagebus', label: 'Rollback' },
+            ...(maskedLeftNode ? [{ id: 'earlier', lane: 'responders', col: 0, type: 'backend', label: 'Earlier step' }] : []),
+          ],
+          edges: [{ from: 'alert', to: 'page', label: 'page', variant: 'emphasis', route: 'drop', fromSide: 'bottom', toSide: 'top' }],
+          groups: [
+            { id: maskedLeftNode ? 'zcommand' : 'command', label: 'Incident command', lane: 'responders', fromCol: 1, toCol: 1, variant: 'emphasis' },
+            { id: maskedLeftNode ? 'aother' : 'other', label: equalLabels ? 'Incident command' : 'Other', lane: 'responders', fromCol: 0, toCol: 1 },
+          ],
+        };
+        const result = compileWorkflow({ workflow: clone(document), qualityProfile: 'showcase' });
+        assert.equal(result.ok, false);
+        const diagnostic = result.diagnostics.find(({ code }) => code === 'workflow/route-preset-conflict');
+        assert.ok(diagnostic, JSON.stringify(result.diagnostics));
+        assert.deepEqual(diagnostic.evidence.blockedBy, { kind: 'group-label', id: document.groups[0].id });
+        assert.equal(diagnostic.supportedFixes.some((fix) => /^set group /.test(fix)), false,
+          'a compiling span must preserve both group membership and effective owner identity');
+      });
+    }
+  }
+});
