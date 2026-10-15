@@ -23,7 +23,7 @@ When the user supplies a frozen candidate, run `finalize` first as one CLI invoc
 
 ## Fast authoring path
 
-Use this path for ordinary generation. Read branch references only when their stated trigger applies.
+Use this path for ordinary generation. Read branch references only when their stated trigger applies. The authoring and delivery contracts are routing indexes: load only the topic needed for the current task or diagnostic.
 
 1. Choose `architecture`, `workflow`, `sequence`, `dataflow`, `lifecycle`, `erd`, `class`, `tree`, `timeline`, or `waterfall` from the question.
 2. Use the exact schema and example paths in the Type router without listing their directories. Read [Authoring defaults](references/authoring-defaults.md) and the mode's example in a bounded batch separate from project documents and complete schemas so neither is truncated; recover any missing section before writing. For Architecture, use the matching showcase example. For every mode except Architecture, also read the mode and common schemas. Read the relevant schema definition before choosing any new field, enum, or constrained text, especially boundary kinds. Examples teach shape, not facts. Use fresh IDs, wording, and layout. Go directly to the candidate without preliminary help, doctor, starter validation, temporary diagrams, or output-path listing. Query brands only for an explicitly requested mark; read [Brand marks](references/brand-marks.md) for an unknown mark with a user-provided URL.

@@ -249,8 +249,13 @@ test('the unedited payment draft reports its note overlap with a valid spacing r
   assert.equal(diagnostic.subject.path, '/messages/5/note');
   assert.equal(diagnostic.evidence.blocker.path, '/messages/6/y');
   assert.equal(diagnostic.evidence.requiredY, 364);
-  assert.deepEqual(diagnostic.supportedFixes, [], 'moving only the reply would crowd the following message');
-  const repaired = render(spacedScanToPay(), true);
+  assert.equal(diagnostic.supportedFixes.length, 1, 'move the reply and following messages together');
+  const adjusted = structuredClone(diagram);
+  for (const edit of diagnostic.supportedFixes[0].split('; ')) {
+    const [, index, y] = edit.match(/^set \/messages\/(\d+)\/y to (\d+)$/);
+    adjusted.messages[Number(index)].y = Number(y);
+  }
+  const repaired = render(adjusted, true);
   assert.equal(repaired.status, 0, repaired.stdout + repaired.stderr);
   assert.match(repaired.html, /需验签，并按订单号幂等处理/, 'repair preserves the authored annotation');
   diagram.meta.quality_profile = 'standard';

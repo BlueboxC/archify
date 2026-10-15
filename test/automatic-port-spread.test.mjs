@@ -1,3 +1,4 @@
+import { readReferenceContract } from './helpers/reference-contract.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -447,7 +448,7 @@ test('authoring defaults point to the bounded automatic port rules and READMEs d
   const defaults = fs.readFileSync(path.join(skillRoot, 'references/authoring-defaults.md'), 'utf8');
   assert.match(defaults, /Start with automatic routes and endpoint sides/);
   assert.match(defaults, /Geometry reference.*measured spacing, port, canvas, and route rules/);
-  const authoringContract = fs.readFileSync(path.join(skillRoot, 'references/authoring-contract.md'), 'utf8');
+  const authoringContract = readReferenceContract(skillRoot, 'authoring');
   assert.match(authoringContract, /Automatic Port Spread is a default renderer behavior/);
   assert.match(authoringContract, /single relationships/);
   assert.match(authoringContract, /explicit `via`, `channelX`, `channelY`, `labelAt`/);

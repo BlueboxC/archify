@@ -401,6 +401,10 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 | **Hermes Agent** | Opt-in: `hermes skills install skills-sh/tt-a1i/archify/archify -y` | Community Skill-only integration; Node `>=18`; not a Nous official product. No telemetry. It is not a switcher target. [Details](integrations/hermes-agent/README.md). |
 | **DeepSeek Harness** | Opt-in: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`. Invoke: `Use the archify skill to map this repository's runtime architecture.` Remove: `dsh plugin --profile web remove @tt-a1i/archify-dsh`. | Community integration for developer-preview `@deepseek-ai/dsh@0.1.2-rc.1`; Node `^22.19.0 \|\| >=24.0.0`; not an official DeepSeek product. No telemetry. Shell files need exact workspace paths, not Web Produced Files. [Details](integrations/deepseek-harness/README.md). |
 
+## CLI exit codes
+
+`0` means success. `1` reports a failed command or artifact check; `2` reports usage errors or an unavailable browser gate. Read the command, stage and JSON receipt status together: a skipped browser check is not a pass. See [CLI exit codes](archify/references/delivery-paths.md#cli-exit-codes) for details.
+
 ## Reference and scope
 
 - [Schema reference](archify/schemas/README.md) · [Skill](archify/SKILL.md) · [Examples](archify/examples/) · [Agent cookbook](docs/authoring-cookbook.md)

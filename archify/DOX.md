@@ -17,6 +17,8 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Migration validates complete source/final semantic contracts; group repair spans preserve exact membership. Self-calls retain ownership, notes and identity. Raster pins undergo container checks even with matching digests.
 - Timeline ticks follow display-zone offset transitions without changing elapsed event geometry. Browser discovery keeps explicit overrides authoritative and prefers Chrome/Chromium before Edge.
 - Redirected finalize evidence retains historical full/browser receipts; the adjacent guarded summary tracks the latest attempt, including failures. `--out-dir` does not relocate the HTML or delivery provenance.
+- Note-overlap repairs describe one jointly verified translation of the affected message suffix; reject plans that create canvas, note, segment, or legend failures. Preserve authored messages and ordering.
+- Authoring and delivery references use short topic indexes; keep legacy heading links reachable and current exit-code semantics documented.
 - Keep fonts embedded and preserve THIRD_PARTY_NOTICES.md and asset licenses. No new runtime dependencies or automatic installation/update side effects.
 
 ## Work Guidance
@@ -31,4 +33,4 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 
 ## Child DOX Index
 
-- None; the Skill's runtime contracts are owned here.
+- [references/DOX.md](references/DOX.md) — on-demand guidance, routing indexes and compatibility links. Runtime contracts remain owned here.

@@ -1,3 +1,4 @@
+import { readReferenceContract } from './helpers/reference-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,7 +9,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..', 'archify');
 const repoRoot = path.resolve(skillRoot, '..');
 const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
-const delivery = fs.readFileSync(path.join(skillRoot, 'references', 'delivery-contract.md'), 'utf8');
+const delivery = readReferenceContract(skillRoot, 'delivery');
 const readme = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
 const english = fs.readFileSync(path.join(repoRoot, 'README_EN.md'), 'utf8');
 const chinese = fs.readFileSync(path.join(repoRoot, 'README_ZH.md'), 'utf8');

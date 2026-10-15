@@ -6,7 +6,7 @@ Maintain BlueboxC's Archify fork and compatible, verified corrections to the ten
 
 ## Ownership
 
-Root owns distribution builders, workflows, generated public examples, licensing and fork policy. `archify/` owns the installed Skill runtime. `viewer/` owns authored Viewer sources; `test/` owns repository regression tests.
+Root owns distribution builders, workflows, community intake, agent integration metadata, generated public examples, licensing and fork policy. `archify/` owns the installed Skill runtime. `viewer/` owns authored Viewer sources; `test/` owns repository regression tests.
 
 ## Local Contracts
 

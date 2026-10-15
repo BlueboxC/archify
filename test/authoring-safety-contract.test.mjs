@@ -1,3 +1,4 @@
+import { readReferenceContract } from './helpers/reference-contract.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -8,10 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..', 'archify');
 const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
 const authoringDefaults = fs.readFileSync(path.join(skillRoot, 'references', 'authoring-defaults.md'), 'utf8');
-const authoringContract = fs.readFileSync(
-  path.join(skillRoot, 'references', 'authoring-contract.md'),
-  'utf8',
-);
+const authoringContract = readReferenceContract(skillRoot, 'authoring');
 
 test('semantic relationship labels are preserved and deletion is not a geometry repair', () => {
   assert.match(authoringDefaults, /Relationship labels carry meaning/);
@@ -38,10 +36,7 @@ test('deployment ownership stays explicit, fact-backed, and cannot be removed to
 });
 
 test('visual-check stays a pending sidecar receipt instead of a polish claim', () => {
-  const deliveryContract = fs.readFileSync(
-    path.join(skillRoot, 'references', 'delivery-contract.md'),
-    'utf8',
-  );
+  const deliveryContract = readReferenceContract(skillRoot, 'delivery');
   assert.match(skill, /Optional capture evidence\]\(references\/delivery-contract\.md#optional-capture-evidence\)/);
   assert.match(skill, /references\/delivery-contract\.md/);
   assert.match(deliveryContract, /Both browser commands inspect the exact delivered HTML without modifying or rerendering it/);

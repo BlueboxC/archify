@@ -1,3 +1,4 @@
+import { readReferenceContract } from './helpers/reference-contract.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,7 +11,7 @@ const skillRoot = path.join(here, '..', 'archify');
 const skill = readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
 const defaults = readFileSync(path.join(skillRoot, 'references', 'authoring-defaults.md'), 'utf8');
 const updateAwareness = readFileSync(path.join(skillRoot, 'references', 'update-awareness.md'), 'utf8');
-const authoringContract = readFileSync(path.join(skillRoot, 'references', 'authoring-contract.md'), 'utf8');
+const authoringContract = readReferenceContract(skillRoot, 'authoring');
 const frontmatter = skill.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
 
 test('skill description is portable across 1024-character runtimes and remains searchable', () => {

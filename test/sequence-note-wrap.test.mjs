@@ -228,14 +228,16 @@ function failure(t, spec, code) {
 }
 
 function applyFix(spec, fix) {
-  const [, pointer, value] = fix.match(/^set (\/\S+) to (.+)$/);
   const copy = structuredClone(spec);
-  const keys = pointer.slice(1).split('/');
-  const parent = keys.slice(0, -1).reduce((node, key) => {
-    node[key] ??= {};
-    return node[key];
-  }, copy);
-  parent[keys.at(-1)] = JSON.parse(value);
+  for (const edit of fix.split('; ')) {
+    const [, pointer, value] = edit.match(/^set (\/\S+) to (.+)$/);
+    const keys = pointer.slice(1).split('/');
+    const parent = keys.slice(0, -1).reduce((node, key) => {
+      node[key] ??= {};
+      return node[key];
+    }, copy);
+    parent[keys.at(-1)] = JSON.parse(value);
+  }
   return copy;
 }
 
@@ -449,5 +451,48 @@ test('notes that fit their phase, or messages outside it, do not request a phase
     const { result } = run(t, 'validate', spec);
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.ok(!(JSON.parse(result.stdout).composition?.sequenceNoteBorders || []).some(d => d.code === 'sequence/note-segment-border'));
+  }
+});
+
+// Adapted from PR924; projected edits must retain the fork's joint safety guards.
+function multiBlockerNote() {
+  const spec = sequence({ participants: ['client', 'api'], messages: [
+    { from: 'client', to: 'api', y: 300, label: 'owner', note: 'word '.repeat(60).trim() },
+    { from: 'client', to: 'api', y: 330, label: 'first blocker' },
+    { from: 'client', to: 'api', y: 366, label: 'second blocker' },
+  ] });
+  spec.meta.viewBox = [560, 600];
+  spec.meta.legend = { mode: 'hidden' };
+  return spec;
+}
+
+test('multi-message note repair applies the whole ordered plan and preserves source intent', t => {
+  const spec = multiBlockerNote();
+  const before = JSON.stringify(spec);
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.supportedFixes.length, 1, 'one compound repair');
+  assert.match(diagnostic.supportedFixes[0], /set \/messages\/1\/y to \d+; set \/messages\/2\/y to \d+/);
+  const repaired = applyFix(spec, diagnostic.supportedFixes[0]);
+  assert.equal(run(t, 'validate', repaired).result.status, 0);
+  assert.equal(repaired.messages[2].y - repaired.messages[1].y, spec.messages[2].y - spec.messages[1].y);
+  for (let i = 0; i < spec.messages.length; i++) {
+    const { y: a, ...original } = spec.messages[i];
+    const { y: b, ...after } = repaired.messages[i];
+    assert.deepEqual(after, original);
+  }
+  assert.equal(JSON.stringify(spec), before, 'planning does not rewrite source');
+});
+
+test('multi-message note repair withholds unsafe canvas and frame-border plans', t => {
+  for (const constrain of [
+    spec => { spec.meta.viewBox[1] = 480; },
+    spec => { spec.segments = [{ label: 'Phase', from: 399, to: 500 }]; },
+    spec => { spec.messages[2].note = 'word '.repeat(120); },
+  ]) {
+    const spec = multiBlockerNote(); constrain(spec);
+    const before = JSON.stringify(spec);
+    const diagnostic = failure(t, spec, 'sequence/note-overlap');
+    assert.deepEqual(diagnostic.supportedFixes, []);
+    assert.equal(JSON.stringify(spec), before);
   }
 });

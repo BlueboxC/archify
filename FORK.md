@@ -38,6 +38,10 @@ not rewritten by upgrading the Skill.
 | [#920](https://github.com/tt-a1i/archify/issues/920) | Fork implementation from Luis85's report | Discover Edge after Chrome/Chromium on Windows, macOS and Linux; retain explicit override precedence. |
 | [#921](https://github.com/tt-a1i/archify/issues/921) | Fork implementation from Luis85's report | Clarify evidence-only redirection; keep the adjacent guarded summary current while retaining historical full/browser receipts. |
 
+| [#903](https://github.com/tt-a1i/archify/issues/903) | [tt-a1i, PR924](https://github.com/tt-a1i/archify/pull/924), `c15b27a056a00f1fc9051c2dcd1d62e462118781`; reviewed the alternative [PR923](https://github.com/tt-a1i/archify/pull/923) | Offer one jointly verified suffix translation, preserving message order and spacing. Retain current note, self-call, segment-label, legend and canvas guards; withhold unsafe plans. |
+| [PR950](https://github.com/tt-a1i/archify/pull/950) ([#883](https://github.com/tt-a1i/archify/issues/883), [#847](https://github.com/tt-a1i/archify/issues/847), [#849](https://github.com/tt-a1i/archify/issues/849)) | [tt-a1i](https://github.com/tt-a1i), `7ba389c222716e92ea5736654133d0e0debd2dcf` | Select both SVG path suites for shared changes; expose all ten types in issue/showcase intake and Hermes registration without changing integration roots. |
+| [#954](https://github.com/tt-a1i/archify/issues/954) | Fork implementation from the report | Split authoring/delivery into short indexes and bounded topics, preserve every existing rule and legacy heading link, and explain current CLI exit codes without changing them. |
+
 The upstream implementations and tests are adapted under MIT. Their inclusion
 here does not imply that upstream has reviewed or merged our adaptations.
 Archify 3.1 already rejects fully enclosed non-members during showcase rendering;
@@ -53,7 +57,7 @@ Run root `npm run test:full`, `ARCHIFY_CHROME=/path/to/chrome npm run test:brows
 and `npm run test:webm`. Focused regressions are in root `test/`, including migration semantics, workflow hard contracts, self-calls, WebP bounds, Sequence canvas diagnostics, keyboard boundaries, and the retained original checks:
 boundary membership, coincident routes, checker buffer and Preview browser tests.
 Additional checks cover calendar transitions, browser discovery and redirected
-finalize evidence, including unsafe paths and concurrent claimants.
+finalize evidence, including unsafe paths and concurrent claimants. Joint note repairs, selective CI, ten-type discovery and on-demand reference routing have independent regressions.
 Skips are not passes. Browser tests use real Chrome; manual visual review remains
 separate from automated containment and interaction evidence.
 

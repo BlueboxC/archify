@@ -1,3 +1,4 @@
+import { readReferenceContract } from './helpers/reference-contract.mjs';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,7 +7,7 @@ import assert from 'node:assert/strict';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skill = readFileSync(path.join(here, '..', 'archify', 'SKILL.md'), 'utf8');
-const delivery = readFileSync(path.join(here, '..', 'archify', 'references', 'delivery-contract.md'), 'utf8');
+const delivery = readReferenceContract(path.join(here, '..', 'archify'), 'delivery');
 const schemaReadme = readFileSync(path.join(here, '..', 'archify', 'schemas', 'README.md'), 'utf8');
 
 test('delivery contract separates portable authored outputs from native CLI outputs', () => {

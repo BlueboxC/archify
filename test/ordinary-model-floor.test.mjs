@@ -1,3 +1,4 @@
+import { readReferenceContract } from './helpers/reference-contract.mjs';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -1002,8 +1003,8 @@ test('packaged skill keeps first-draft rules inline and repair contracts behind 
   const read = (file) => fs.readFileSync(path.join(skillRoot, file), 'utf8');
   const skill = read('SKILL.md');
   const defaults = read('references/authoring-defaults.md');
-  const authoring = read('references/authoring-contract.md');
-  const delivery = read('references/delivery-contract.md');
+  const authoring = readReferenceContract(skillRoot, 'authoring');
+  const delivery = readReferenceContract(skillRoot, 'delivery');
   const repository = read('references/repository-authoring.md');
   const fastPath = skill.slice(skill.indexOf('## Fast authoring path'), skill.indexOf('## Update awareness'));
   assert.match(skill, /## Existing candidate handoff[\s\S]*run `finalize` first as one CLI invocation/);
