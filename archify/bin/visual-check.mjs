@@ -1292,7 +1292,7 @@ function executable(file, platform = process.platform) {
 }
 
 function findOnPath(command, env, platform, resolveExecutable) {
-  const pathApi = platform === 'win32' ? path.win32 : path;
+  const pathApi = platform === 'win32' ? path.win32 : path.posix;
   const directories = String(env.PATH || '').split(pathApi.delimiter).filter(Boolean);
   const extensions = platform === 'win32'
     ? String(env.PATHEXT || '.EXE;.CMD;.BAT;.COM').split(';').filter(Boolean)
