@@ -251,7 +251,7 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 ## 选择合适的图表
 
 <details>
-<summary>五种图表、架构差异对比与示例</summary>
+<summary>十种图表、架构差异对比与示例</summary>
 
 
 | 类型 | 最适合 | Prompt 中应包含 |
@@ -261,6 +261,11 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 | **Sequence** | API 调用、缓存回源、鉴权、异步链路 | 调用方、被调用方、返回、时序 |
 | **Data Flow** | 数据管线、血缘、PII、下游消费者 | 来源、转换、存储、边界 |
 | **Lifecycle** | 状态、重试、等待、终态 | 状态、事件、重试与取消路径 |
+| **ERD** | 数据库结构：表、字段、键、基数关系 | 表、每个字段及类型、主键/外键/唯一键、关系基数 |
+| **Class** | 类、接口、关键成员与类型关系 | 类型、关键成员、继承与接口实现、组合与依赖 |
+| **Tree** | 单一父级的层级结构：仓库、模块、能力拆解 | 根节点、层级、各分支包含的内容 |
+| **Timeline** | 何时发生了什么：故障复盘、发布历史 | 带时区的时间点、事件、来源泳道，以及时间是真实观测还是示意 |
+| **Waterfall** | 一次请求或 Agent 运行的耗时分布 | Span、开始时间与时长、嵌套关系，以及耗时是实测还是示意 |
 
 做生产部署评审时，Architecture 可以按需启用 `deployment-ownership`
 工程画像：负责人、单一区域归属、数据库私有边界或边界穿越机制缺失时会直接阻断。
@@ -295,6 +300,76 @@ Data Flow 突出数据移动和敏感边界：
 Lifecycle 区分正常进展、等待、重试和终态：
 
 ![Lifecycle 示例](docs/assets/archify-lifecycle.png)
+
+3.1 新增 ERD、Class、Tree、Timeline 和 Waterfall。
+
+这些是说明设计的示意示例，不代表已核验的仓库或数据库事实。下载 HTML 后用浏览器打开；GitHub 显示的是源码。真实时间应来自事件日志或实测 Trace。
+
+ERD 把表、每个字段与键，以及关系基数放在一起：
+
+[![ERD 示例：订单管理库，customer、order、payment、inventory、product 和 order_item 表按业务域分组](docs/assets/archify-erd.png)](examples/erd-orders-rendered.html)
+
+[下载 HTML](examples/erd-orders-rendered.html) · [可编辑 JSON](archify/examples/orders.erd.json)
+
+可复制提示词:
+
+```text
+用 Archify 绘制示意性的订单管理 ERD，包含客户、订单、商品和订单明细。保留拟议结构中的每个字段、
+类型、全部键角色和关系基数。
+```
+
+Class 展示接口契约、关键成员，以及哪些类型依赖或实现它们：
+
+[![Class 示例：OrderService 依赖 PaymentGateway 接口，由银行卡和钱包网关实现](docs/assets/archify-class.png)](examples/class-payments-rendered.html)
+
+[下载 HTML](examples/class-payments-rendered.html) · [可编辑 JSON](archify/examples/payments.class.json)
+
+可复制提示词:
+
+```text
+用 Archify 解释概念性的 Class 模型：OrderService 依赖 PaymentGateway，由 CardGateway
+和 WalletGateway 实现。展示关键成员，区分依赖与接口实现。
+```
+
+Tree 展示单一父级的包含关系，例如能力拆解：
+
+[![Tree 示例：支付平台拆解为订单、支付和运营能力](docs/assets/archify-tree.png)](examples/tree-payment-platform-rendered.html)
+
+[下载 HTML](examples/tree-payment-platform-rendered.html) · [可编辑 JSON](archify/examples/payment-platform.tree.json)
+
+可复制提示词:
+
+```text
+用 Archify 绘制支付平台的概念性单父级 Tree，包含订单、支付和运营能力。展示包含层级，不要当作调用依赖。
+```
+
+Timeline 把事件放在同一条按比例的时间轴上，每个来源一条泳道：
+
+[![Timeline 示例：一次示意性的支付故障，发布、监控和响应事件位于同一时间轴](docs/assets/archify-timeline.png)](examples/timeline-payment-incident-rendered.html)
+
+[下载 HTML](examples/timeline-payment-incident-rendered.html) · [可编辑 JSON](archify/examples/payment-incident.timeline.json)
+
+可复制提示词:
+
+```text
+用 Archify 绘制 2026-10-01 的示意 Timeline，时区 Asia/Shanghai（+08:00）：10:00 发布、
+10:05 告警、10:10 回滚、10:15 恢复、10:20 关闭。分为发布、监控和响应泳道。
+```
+
+Waterfall 展示嵌套、重叠的 Span 中时间花在了哪里：
+
+[![Waterfall 示例：一次结账请求的示意耗时，库存查询与折扣计算并发执行](docs/assets/archify-waterfall.png)](examples/waterfall-checkout-request-rendered.html)
+
+[下载 HTML](examples/waterfall-checkout-request-rendered.html) · [可编辑 JSON](archify/examples/checkout-request.waterfall.json)
+
+可复制提示词:
+
+```text
+用 Archify 绘制毫秒级的示意 Waterfall：checkout 0–1200；认证 0–100；库存 100–400 与折扣
+100–300 并行；支付 400–1050；保存 1050–1200。所有步骤属于 checkout，不要累加父子耗时。
+```
+
+打开这些示例：[`ERD`](examples/erd-orders-rendered.html) · [`Class`](examples/class-payments-rendered.html) · [`Tree`](examples/tree-payment-platform-rendered.html) · [`Timeline`](examples/timeline-payment-incident-rendered.html) · [`Waterfall`](examples/waterfall-checkout-request-rendered.html)。其中 Timeline 和 Waterfall 示例使用示意数据；只有来自日志或链路追踪的时间和耗时，才能当作真实数据。
 
 Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`](examples/archify-repo.html) · [`Grid 布局`](examples/archify-repo-grid.html) · [`桌面 Agent`](examples/maka-architecture.html)
 

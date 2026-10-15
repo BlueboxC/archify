@@ -253,7 +253,7 @@ Continue with focused requests such as `add Redis`, `move auth to the left`, or 
 ## Choose the right diagram
 
 <details>
-<summary>Five diagram types, architecture comparisons, and examples</summary>
+<summary>Ten diagram types, architecture comparisons, and examples</summary>
 
 
 | Type | Best for | Include in your prompt |
@@ -263,6 +263,11 @@ Continue with focused requests such as `add Redis`, `move auth to the left`, or 
 | **Sequence** | API calls, cache fallback, auth, async traces | Callers, callees, returns, timing |
 | **Data Flow** | Pipelines, lineage, PII, consumers | Sources, transforms, stores, boundaries |
 | **Lifecycle** | States, retries, waits, terminal outcomes | States, events, retry and cancellation paths |
+| **ERD** | Database schemas: tables, columns, keys, cardinality | Tables, every column with its type, primary/foreign/unique keys, relationship cardinality |
+| **Class** | Classes, interfaces, selected members, type relationships | Types, key members, inheritance and implementations, composition, dependencies |
+| **Tree** | Single-parent hierarchies: repositories, modules, capability breakdowns | Root, levels, what each branch contains |
+| **Timeline** | When things happened: incident reviews, release histories | Timestamps with time zone, events, source lanes, whether times are observed or illustrative |
+| **Waterfall** | Where the time went in one request or agent run | Spans, start times and durations, nesting, whether timings are measured or illustrative |
 
 Architecture's optional `deployment-ownership` profile fails closed when authored owners, region placement, private database scope, or named crossings are missing; it is never implicit and does not inspect live infrastructure. See the [checked deployment proof](https://archify.si/gallery.html#proof-deployment-ownership).
 
@@ -294,6 +299,81 @@ Data Flow makes movement and sensitivity boundaries explicit:
 Lifecycle separates progress, waits, retries, and terminal outcomes:
 
 ![Lifecycle example](docs/assets/archify-lifecycle.png)
+
+New in 3.1: ERD, Class, Tree, Timeline and Waterfall.
+
+These are illustrative design examples, not inspected repository or database facts. Download the HTML and open it in a browser; GitHub displays its source. Use logged events or measured traces when you need factual times.
+
+ERD keeps tables, every column and key, and relationship cardinality together:
+
+[![ERD example: an order management schema with customer, order, payment, inventory, product and order item tables grouped by domain](docs/assets/archify-erd.png)](examples/erd-orders-rendered.html)
+
+[Download HTML](examples/erd-orders-rendered.html) · [Editable JSON](archify/examples/orders.erd.json)
+
+Copyable starter:
+
+```text
+Use Archify to draw an illustrative order-management ERD with customers, orders,
+products and order items. Include every proposed column, its type, all key roles and
+relationship cardinality.
+```
+
+Class shows contracts, selected members, and which types depend on or implement them:
+
+[![Class example: OrderService depends on the PaymentGateway interface, implemented by card and wallet gateways](docs/assets/archify-class.png)](examples/class-payments-rendered.html)
+
+[Download HTML](examples/class-payments-rendered.html) · [Editable JSON](archify/examples/payments.class.json)
+
+Copyable starter:
+
+```text
+Use Archify to explain a conceptual Class model: OrderService depends on
+PaymentGateway, implemented by CardGateway and WalletGateway. Show relevant members
+and distinguish dependency from implementation.
+```
+
+Tree shows single-parent containment, such as a capability breakdown:
+
+[![Tree example: a payment platform broken down into orders, payments and operations capabilities](docs/assets/archify-tree.png)](examples/tree-payment-platform-rendered.html)
+
+[Download HTML](examples/tree-payment-platform-rendered.html) · [Editable JSON](archify/examples/payment-platform.tree.json)
+
+Copyable starter:
+
+```text
+Use Archify to draw a conceptual single-parent Tree of a payment platform with orders,
+payments and operations capabilities. Show containment, not call dependencies.
+```
+
+Timeline places events on one proportional clock, with a lane per source:
+
+[![Timeline example: an illustrative payment incident with release, monitoring and response events on one clock](docs/assets/archify-timeline.png)](examples/timeline-payment-incident-rendered.html)
+
+[Download HTML](examples/timeline-payment-incident-rendered.html) · [Editable JSON](archify/examples/payment-incident.timeline.json)
+
+Copyable starter:
+
+```text
+Use Archify to draw an illustrative Timeline on 2026-10-01 in Asia/Shanghai (+08:00):
+deploy 10:00, alert 10:05, rollback 10:10, recovery 10:15, close 10:20. Separate
+release, monitoring and response lanes.
+```
+
+Waterfall shows where the time went across nested and overlapping spans:
+
+[![Waterfall example: illustrative timing of a checkout request where inventory lookup and discount calculation run concurrently](docs/assets/archify-waterfall.png)](examples/waterfall-checkout-request-rendered.html)
+
+[Download HTML](examples/waterfall-checkout-request-rendered.html) · [Editable JSON](archify/examples/checkout-request.waterfall.json)
+
+Copyable starter:
+
+```text
+Use Archify to draw an illustrative Waterfall in milliseconds: checkout 0–1200; auth
+0–100; inventory 100–400 and discount 100–300 in parallel; payment 400–1050; save
+1050–1200. Make every step a child of checkout; do not sum parent and child durations.
+```
+
+Explore these examples: [`ERD`](examples/erd-orders-rendered.html) · [`Class`](examples/class-payments-rendered.html) · [`Tree`](examples/tree-payment-platform-rendered.html) · [`Timeline`](examples/timeline-payment-incident-rendered.html) · [`Waterfall`](examples/waterfall-checkout-request-rendered.html). The Timeline and Waterfall examples use illustrative data; treat timestamps or durations as real only when they come from logs or traces.
 
 Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`](examples/archify-repo.html) · [`grid placement`](examples/archify-repo-grid.html) · [`desktop agent`](examples/maka-architecture.html)
 

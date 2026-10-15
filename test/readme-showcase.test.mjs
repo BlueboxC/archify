@@ -316,9 +316,14 @@ test('README preserves the visual proof set and key content', () => {
     'archify-sequence.png',
     'archify-dataflow.png',
     'archify-lifecycle.png',
+    'archify-erd.png',
+    'archify-class.png',
+    'archify-tree.png',
+    'archify-timeline.png',
+    'archify-waterfall.png',
   ];
 
-  for (const asset of commonAssets.filter(name => /^archify-(workflow|sequence|dataflow|lifecycle)\.png$/.test(name))) {
+  for (const asset of commonAssets.filter(name => /^archify-(workflow|sequence|dataflow|lifecycle|erd|class|tree|timeline|waterfall)\.png$/.test(name))) {
     const png = fs.readFileSync(path.join(repoRoot, 'docs', 'assets', asset));
     assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${asset}: expected PNG`);
     assert.equal(png.readUInt32BE(16), 2400, `${asset}: preview width`);
@@ -420,4 +425,34 @@ test('Star History publishing advances the data branch without a force push', ()
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }
+});
+
+
+test('README discovery exposes ten modes and five usable canonical starters in every language', () => {
+  const promoted = [
+    ['ERD', 'erd', 'orders.erd.json', 'erd-orders-rendered.html'],
+    ['Class', 'class', 'payments.class.json', 'class-payments-rendered.html'],
+    ['Tree', 'tree', 'payment-platform.tree.json', 'tree-payment-platform-rendered.html'],
+    ['Timeline', 'timeline', 'payment-incident.timeline.json', 'timeline-payment-incident-rendered.html'],
+    ['Waterfall', 'waterfall', 'checkout-request.waterfall.json', 'waterfall-checkout-request-rendered.html'],
+  ];
+  const labels = ['Architecture', 'Workflow', 'Sequence', 'Data Flow', 'Lifecycle', ...promoted.map(([label]) => label)];
+  for (const filename of [...readmeLanguages.map(item => item.file), 'README_KO.md']) {
+    const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
+    for (const label of labels) assert.ok(readme.includes(`| **${label}** |`), `${filename}: missing mode ${label}`);
+    const prompts = [...readme.matchAll(/```text\n([\s\S]*?)```/g)].map(match => match[1]);
+    for (const [label, mode, source, artifact] of promoted) {
+      assert.ok(prompts.some(prompt => new RegExp(`\\b${label}\\b`).test(prompt)), `${filename}: no copyable ${label} starter`);
+      const image = `docs/assets/archify-${mode}.png`;
+      assert.ok(readme.includes(`](${image})](examples/${artifact})`), `${filename}: ${label} preview must link to its downloadable HTML`);
+      assert.ok(readme.includes(`](archify/examples/${source})`), `${filename}: ${label} JSON is missing`);
+      for (const file of [image, `examples/${artifact}`, `archify/examples/${source}`]) assert.ok(fs.existsSync(path.join(repoRoot, file)), `${filename}: missing ${file}`);
+      const markup = fs.readFileSync(path.join(repoRoot, 'examples', artifact), 'utf8');
+      if (mode === 'timeline' || mode === 'waterfall') {
+        assert.equal(JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', source), 'utf8')).meta.evidence, 'illustrative');
+        assert.match(markup, /Illustrative/);
+      }
+    }
+  }
+  assert.equal(fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8'), fs.readFileSync(path.join(repoRoot, 'README_EN.md'), 'utf8'));
 });

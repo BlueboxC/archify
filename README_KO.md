@@ -118,6 +118,11 @@ Archify로 그려 줘: Browser -> API -> Redis cache -> PostgreSQL fallback.
 | **Sequence** | API 호출, 캐시 대체, 인증, 비동기 추적 | 호출자, 수신자, 응답, 시간 |
 | **Data Flow** | 파이프라인, 계보, PII, 소비자 | 소스, 변환, 저장소, 경계 |
 | **Lifecycle** | 상태, 재시도, 대기, 종료 결과 | 상태, 이벤트, 재시도와 취소 경로 |
+| **ERD** | 데이터베이스 스키마: 테이블, 열, 키, 관계 | 모든 열과 자료형, 기본/외래/고유 키, 카디널리티 |
+| **Class** | 클래스, 인터페이스, 주요 멤버와 관계 | 상속, 구현, 합성, 의존 |
+| **Tree** | 단일 부모 계층: 저장소, 모듈, 기능 분해 | 루트, 계층, 각 가지의 포함 대상 |
+| **Timeline** | 언제 일어났는지: 장애 복기, 릴리스 이력 | 시간대, 이벤트, 소스 레인, 관측 또는 설명용 시각 |
+| **Waterfall** | 한 요청 또는 에이전트 실행의 시간 배분 | 스팬, 시작, 기간, 중첩, 실측 또는 설명용 시간 |
 
 어떤 유형이 맞는지 모르겠다면 [인터랙티브 시나리오 가이드](https://tt-a1i.github.io/archify/guide.html)를 보거나 CLI에 물어보세요.
 
@@ -125,6 +130,81 @@ Archify로 그려 줘: Browser -> API -> Redis cache -> PostgreSQL fallback.
 node archify/bin/archify.mjs guide "Show an API request with Redis cache miss"
 node archify/bin/archify.mjs guide "Kafka 토픽, 컨슈머 그룹, 재처리, DLQ를 지도처럼 보여 줘" --json
 ```
+
+<details>
+<summary>3.1의 다섯 유형: 예제와 복사할 프롬프트</summary>
+
+이 예제는 설계 설명용이며 저장소나 데이터베이스를 실제 검사한 사실이 아닙니다. HTML을 내려받아 브라우저에서 여세요. GitHub에서는 소스가 표시됩니다. 실제 시각이나 소요 시간은 로그 또는 측정된 트레이스를 사용하세요.
+
+### ERD
+
+[![고객, 주문, 상품, 주문 항목과 키 관계를 보여 주는 설명용 주문 스키마](docs/assets/archify-erd.png)](examples/erd-orders-rendered.html)
+
+[HTML 다운로드](examples/erd-orders-rendered.html) · [편집 가능한 JSON](archify/examples/orders.erd.json)
+
+복사할 프롬프트:
+
+```text
+Archify로 설명용 주문 관리 ERD를 그려 주세요. 고객, 주문, 상품, 주문 항목을 포함하고
+제안된 모든 열의 자료형, 키 역할과 관계의 카디널리티를 보여 주세요.
+```
+
+### Class
+
+[![OrderService와 PaymentGateway 및 카드·지갑 구현을 보여 주는 개념적 클래스 모델](docs/assets/archify-class.png)](examples/class-payments-rendered.html)
+
+[HTML 다운로드](examples/class-payments-rendered.html) · [편집 가능한 JSON](archify/examples/payments.class.json)
+
+복사할 프롬프트:
+
+```text
+Archify로 개념적 Class 모델을 설명해 주세요. OrderService는 PaymentGateway에 의존하고
+CardGateway와 WalletGateway가 구현합니다. 주요 멤버를 보여 주고 의존과 구현을 구별해
+주세요.
+```
+
+### Tree
+
+[![주문, 결제, 운영 기능으로 나눈 단일 부모 계층](docs/assets/archify-tree.png)](examples/tree-payment-platform-rendered.html)
+
+[HTML 다운로드](examples/tree-payment-platform-rendered.html) · [편집 가능한 JSON](archify/examples/payment-platform.tree.json)
+
+복사할 프롬프트:
+
+```text
+Archify로 결제 플랫폼의 개념적 단일 부모 Tree를 그려 주세요. 주문, 결제, 운영 기능을
+포함하고 호출 의존성이 아닌 포함 계층을 보여 주세요.
+```
+
+### Timeline
+
+[![릴리스, 모니터링, 대응을 같은 시계에 놓은 설명용 결제 장애](docs/assets/archify-timeline.png)](examples/timeline-payment-incident-rendered.html)
+
+[HTML 다운로드](examples/timeline-payment-incident-rendered.html) · [편집 가능한 JSON](archify/examples/payment-incident.timeline.json)
+
+복사할 프롬프트:
+
+```text
+Archify로 2026-10-01의 설명용 Timeline을 그려 주세요. Asia/Shanghai(+08:00) 기준 배포
+10:00, 알림 10:05, 롤백 10:10, 복구 10:15, 종료 10:20을 릴리스, 모니터링, 대응
+레인으로 구분해 주세요.
+```
+
+### Waterfall
+
+[![재고 조회와 할인 계산의 병렬 실행을 보여 주는 설명용 결제 요청 시간](docs/assets/archify-waterfall.png)](examples/waterfall-checkout-request-rendered.html)
+
+[HTML 다운로드](examples/waterfall-checkout-request-rendered.html) · [편집 가능한 JSON](archify/examples/checkout-request.waterfall.json)
+
+복사할 프롬프트:
+
+```text
+Archify로 밀리초 단위 설명용 Waterfall을 그려 주세요. checkout 0–1200, 인증 0–100,
+재고 100–400과 할인 100–300은 병렬, 결제 400–1050, 저장 1050–1200입니다. 모든 단계를
+checkout의 자식으로 두고 부모와 자식 시간을 합산하지 마세요.
+```
+
+</details>
 
 ## Archify를 선택하는 이유
 

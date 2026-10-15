@@ -60,8 +60,16 @@ golden examples through the Viewer PNG menu. They retain embedded fonts,
 light theme, each example's preset and complete diagram, then use Lanczos
 downsampling to 2400 px RGB. Filenames and localized README links stay intact.
 The proof-set test additionally checks their PNG format, width and RGB encoding.
-The five PR946 gallery additions are outside this four-image refresh; the fork's
-existing gallery is preserved. No Skill, runtime, ZIP or live installation changes.
+The five promoted-mode previews follow upstream PR945
+(`86540fda68f1a9ff25270b76ba0661fbb21917bf`) and PR946
+(`92606fb7e47425ca48db2e5b3193d2e75cb9cb48`), credited to tt-a1i.
+The fork adds five localized copyable starters and verified links to its existing
+canonical JSON and downloadable HTML. English, Chinese, Japanese and Korean
+inventories describe ten modes; the nine previews share the same export profile.
+Timeline/Waterfall samples remain explicitly illustrative, and the other sample
+models are not presented as inspected production facts. The fork does not invent
+hosted proof IDs or publish new gallery recipes. No Skill, runtime, ZIP or live
+installation changes.
 
 ## Verification and installation
 

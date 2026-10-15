@@ -223,7 +223,7 @@ Put supporting detail in cards instead of adding more edges.
 ## 適切な図を選ぶ
 
 <details>
-<summary>5 種類の図、アーキテクチャの比較、サンプル</summary>
+<summary>10 種類の図、アーキテクチャの比較、サンプル</summary>
 
 
 | 種類 | 向いている対象 | プロンプトに含めるもの |
@@ -233,6 +233,11 @@ Put supporting detail in cards instead of adding more edges.
 | **Sequence** | API 呼び出し、キャッシュフォールバック、認証、非同期トレース | 呼び出し元、呼び出し先、戻り、タイミング |
 | **Data Flow** | パイプライン、リネージ、PII、コンシューマ | ソース、変換、ストア、境界 |
 | **Lifecycle** | 状態、リトライ、待機、終端結果 | 状態、イベント、リトライとキャンセルの経路 |
+| **ERD** | データベーススキーマ: テーブル、カラム、キー、カーディナリティ | テーブル、各カラムと型、主キー・外部キー・ユニークキー、リレーションのカーディナリティ |
+| **Class** | クラス、インターフェース、主要メンバー、型同士の関係 | 型、主要メンバー、継承とインターフェース実装、コンポジション、依存 |
+| **Tree** | 親が 1 つの階層: リポジトリ、モジュール、機能の分解 | ルート、階層、各ブランチの中身 |
+| **Timeline** | いつ何が起きたか: インシデントレビュー、リリース履歴 | タイムゾーン付きのタイムスタンプ、イベント、ソースレーン、時刻が実測か説明用か |
+| **Waterfall** | 1 つのリクエストやエージェント実行の時間の内訳 | スパン、開始時刻と所要時間、ネスト、所要時間が実測か説明用か |
 
 Architecture の任意プロファイル `deployment-ownership` は、記述されたオーナー、リージョン配置、データベースのプライベートスコープ、名前付きの境界越えが欠けている場合は fail-closed で停止します。暗黙的に有効化されることはなく、ライブのインフラを検査することもありません。[検証済みのデプロイ実証](https://archify.si/gallery.html#proof-deployment-ownership)を参照してください。
 
@@ -264,6 +269,78 @@ Data Flow はデータの移動と機密性の境界を明示します:
 Lifecycle は進行、待機、リトライ、終端結果を切り分けます:
 
 ![Lifecycle の例](docs/assets/archify-lifecycle.png)
+
+3.1 で ERD、Class、Tree、Timeline、Waterfall が追加されました。
+
+これらは設計の説明用サンプルであり、検査済みのリポジトリやデータベースの事実ではありません。HTML をダウンロードしてブラウザで開いてください。GitHub ではソースが表示されます。実際の時刻や所要時間にはログや測定トレースを使ってください。
+
+ERD は、テーブル、すべてのカラムとキー、リレーションのカーディナリティをまとめて示します:
+
+[![ERD の例: customer、order、payment、inventory、product、order_item テーブルをドメインごとにまとめた注文管理スキーマ](docs/assets/archify-erd.png)](examples/erd-orders-rendered.html)
+
+[HTML をダウンロード](examples/erd-orders-rendered.html) · [編集可能な JSON](archify/examples/orders.erd.json)
+
+コピー用プロンプト:
+
+```text
+Archify で説明用の注文管理 ERD を描いてください。顧客、注文、商品、注文明細を含め、提案する各カラムの型、
+すべてのキー役割、関係のカーディナリティを示してください。
+```
+
+Class は契約、主要メンバー、どの型がそれに依存し実装しているかを示します:
+
+[![Class の例: OrderService が PaymentGateway インターフェースに依存し、カードとウォレットのゲートウェイが実装する](docs/assets/archify-class.png)](examples/class-payments-rendered.html)
+
+[HTML をダウンロード](examples/class-payments-rendered.html) · [編集可能な JSON](archify/examples/payments.class.json)
+
+コピー用プロンプト:
+
+```text
+Archify で概念的な Class モデルを説明してください。OrderService は PaymentGateway に依存し、
+CardGateway と WalletGateway が実装します。主要メンバーを示し、依存と実装を区別してください。
+```
+
+Tree は機能の分解のような、親が 1 つの包含関係を示します:
+
+[![Tree の例: 注文、決済、運用の機能に分解された決済プラットフォーム](docs/assets/archify-tree.png)](examples/tree-payment-platform-rendered.html)
+
+[HTML をダウンロード](examples/tree-payment-platform-rendered.html) · [編集可能な JSON](archify/examples/payment-platform.tree.json)
+
+コピー用プロンプト:
+
+```text
+Archify で決済プラットフォームの概念的な単一親 Tree を描いてください。注文、決済、運用の機能を含め、
+呼び出し依存ではなく包含階層を示してください。
+```
+
+Timeline はイベントを実時間に比例した 1 本の時間軸に置き、ソースごとにレーンを分けます:
+
+[![Timeline の例: リリース、監視、対応のイベントを 1 本の時間軸に並べた説明用の決済障害](docs/assets/archify-timeline.png)](examples/timeline-payment-incident-rendered.html)
+
+[HTML をダウンロード](examples/timeline-payment-incident-rendered.html) · [編集可能な JSON](archify/examples/payment-incident.timeline.json)
+
+コピー用プロンプト:
+
+```text
+Archify で 2026-10-01 の説明用 Timeline を描いてください。Asia/Shanghai（+08:00）で 10:00
+配備、10:05 警告、10:10 ロールバック、10:15 復旧、10:20 終了。リリース、監視、対応のレーンを分けてください。
+```
+
+Waterfall はネストや重なりのあるスパンのどこで時間がかかったかを示します:
+
+[![Waterfall の例: 在庫照会と割引計算が並行して走るチェックアウトリクエストの説明用の所要時間](docs/assets/archify-waterfall.png)](examples/waterfall-checkout-request-rendered.html)
+
+[HTML をダウンロード](examples/waterfall-checkout-request-rendered.html) · [編集可能な JSON](archify/examples/checkout-request.waterfall.json)
+
+コピー用プロンプト:
+
+```text
+Archify でミリ秒単位の説明用 Waterfall を描いてください。checkout 0–1200、認証 0–100、
+在庫 100–400 と割引 100–300 は並行、決済 400–1050、保存 1050–1200。すべてを checkout
+の子とし、親子の時間を加算しないでください。
+```
+
+サンプルを開く: [`ERD`](examples/erd-orders-rendered.html) · [`Class`](examples/class-payments-rendered.html) · [`Tree`](examples/tree-payment-platform-rendered.html) · [`Timeline`](examples/timeline-payment-incident-rendered.html) · [`Waterfall`](examples/waterfall-checkout-request-rendered.html)。Timeline と Waterfall の例は説明用のデータを使用しています。ログやトレースに基づく時刻や所要時間だけを実データとして扱ってください。
 
 Architecture の例: [`web-app`](examples/web-app.html) · [`Archify pipeline`](examples/archify-repo.html) · [`grid placement`](examples/archify-repo-grid.html) · [`desktop agent`](examples/maka-architecture.html)
 
