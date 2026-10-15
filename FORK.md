@@ -50,6 +50,19 @@ the independent artifact check additionally covers HTML and compare overlays.
 manual review, while other showcase warnings and all hard errors remain blocking.
 It still verifies artifact identities, delivery provenance and the browser gate.
 
+## README preview refresh
+
+Following [MannXo's PR951](https://github.com/tt-a1i/archify/pull/951) at
+`051b275b24be7b8b36a8a5edc80914adf6230dd0` for
+[#947](https://github.com/tt-a1i/archify/issues/947), the four existing Workflow,
+Sequence, Dataflow and Lifecycle previews are exported from this fork's current
+golden examples through the Viewer PNG menu. They retain embedded fonts,
+light theme, each example's preset and complete diagram, then use Lanczos
+downsampling to 2400 px RGB. Filenames and localized README links stay intact.
+The proof-set test additionally checks their PNG format, width and RGB encoding.
+The five PR946 gallery additions are outside this four-image refresh; the fork's
+existing gallery is preserved. No Skill, runtime, ZIP or live installation changes.
+
 ## Verification and installation
 
 Install development dependencies with `npm ci` at the root and in `archify/`.

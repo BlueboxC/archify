@@ -318,6 +318,13 @@ test('README preserves the visual proof set and key content', () => {
     'archify-lifecycle.png',
   ];
 
+  for (const asset of commonAssets.filter(name => /^archify-(workflow|sequence|dataflow|lifecycle)\.png$/.test(name))) {
+    const png = fs.readFileSync(path.join(repoRoot, 'docs', 'assets', asset));
+    assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${asset}: expected PNG`);
+    assert.equal(png.readUInt32BE(16), 2400, `${asset}: preview width`);
+    assert.equal(png[25], 2, `${asset}: previews use RGB`);
+  }
+
   for (const { file: filename, noRepository } of readmeLanguages) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const supercode = readme.indexOf('https://supercode.sh/?utm_source=archify');

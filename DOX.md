@@ -15,6 +15,7 @@ Root owns distribution builders, workflows, community intake, agent integration 
 - Adapt reviewed corrections independently of upstream integration. Preserve schema-v1 inputs, explicit geometry, existing receipt failures and standard-quality compatibility.
 - Automatic GitHub Pages publishing is limited to the original repository; the fork still builds and verifies the website without provisioning hosting.
 - Keep private project data, installed backups, machine paths and local test receipts out of Git. Keep installation rollback outside the public package.
+- The four README previews for Workflow, Sequence, Dataflow and Lifecycle use light-theme Viewer PNG exports from current golden examples, scaled to 2400 px RGB. Preserve filenames and authored presets; inspect readability at README width (880 px).
 - Regenerate only artifacts affected by changed inputs. Build the canonical ZIP with Node 22 through the tracked-only stager.
 - Existing user installation changes require a preimage, checks for concurrent/local edits and a verified readback. Preserve unrelated files and settings.
 
