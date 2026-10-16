@@ -178,3 +178,38 @@ for (const horizontal of [false, true]) {
     }
   });
 }
+
+// Public CLI control for two real families; the collision-only assembler
+// boundary is covered separately because overlapping fan-in hubs are invalid.
+test('ERD public CLI preserves two disjoint bridged families in either input order', t => {
+  for (const horizontalFirst of [false, true]) {
+    const families = [false, true].map(horizontal => {
+      const document = fixture({ horizontal });
+      const prefix = horizontal ? 'h_' : 'v_';
+      document.entities = document.entities.filter(entity => ['hub', 'a', 'b'].includes(entity.id));
+      for (const entity of document.entities) {
+        entity.id = prefix + entity.id;
+        entity.label = entity.id;
+        if (!horizontal) entity.pos[0] += 500;
+      }
+      for (const relationship of document.relationships) {
+        relationship.id = prefix + relationship.id;
+        relationship.from = prefix + relationship.from;
+        relationship.to = prefix + relationship.to;
+      }
+      return document;
+    });
+    if (horizontalFirst) families.reverse();
+    const { trunks } = render(t, {
+      ...families[0],
+      entities: families.flatMap(family => family.entities),
+      relationships: families.flatMap(family => family.relationships),
+    });
+    assert.equal(trunks.length, 2, 'both valid families retain their continuous shared trunk');
+    assert.ok(trunks.some(trunk => trunk.points[0][0] === trunk.points.at(-1)[0]));
+    assert.ok(trunks.some(trunk => trunk.points[0][1] === trunk.points.at(-1)[1]));
+    for (const a of trunks[0].segments) for (const b of trunks[1].segments) {
+      assert.ok(centerlineDistance(a, b) > 1.5, 'the real emitted buses remain separate');
+    }
+  }
+});
