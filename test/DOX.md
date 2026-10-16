@@ -14,6 +14,7 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 - Cover display-clock transitions, browser-discovery precedence and current summary links without replacing historical evidence; redirected summaries retain collision and concurrent-claim protection.
 - Exercise compound note repairs as a whole, including unsafe plans and preserved message identity. Reference disclosure tests retain normative section coverage and resolvable compatibility links.
 - Selective CI must include both SVG path analysis and checker suites; intake and Hermes discovery cover all ten types.
+- ERD bridge regressions cover independent-route crossings, contact, overlap and stroke clearance plus unobstructed sharing. Timeline covers fractional cards/accessibility/axis ticks; Waterfall covers nonzero origins, finite large values and browser endpoint visibility.
 - Assert user outcomes; adapt obsolete automatic-layout expectations when a better valid result replaces an old limitation.
 - Skips and platform simulations are not runtime passes. Keep real browser and package evidence distinct.
 

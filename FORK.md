@@ -42,6 +42,10 @@ not rewritten by upgrading the Skill.
 | [PR950](https://github.com/tt-a1i/archify/pull/950) ([#883](https://github.com/tt-a1i/archify/issues/883), [#847](https://github.com/tt-a1i/archify/issues/847), [#849](https://github.com/tt-a1i/archify/issues/849)) | [tt-a1i](https://github.com/tt-a1i), `7ba389c222716e92ea5736654133d0e0debd2dcf` | Select both SVG path suites for shared changes; expose all ten types in issue/showcase intake and Hermes registration without changing integration roots. |
 | [#954](https://github.com/tt-a1i/archify/issues/954) | Fork implementation from the report | Split authoring/delivery into short indexes and bounded topics, preserve every existing rule and legacy heading link, and explain current CLI exit codes without changing them. |
 
+| [#896](https://github.com/tt-a1i/archify/issues/896) | [To3akaRin, PR897](https://github.com/tt-a1i/archify/pull/897), `3030e8c2a53880ac10147bdecf58bff5072e2bc3` | Refuse renderer-added ERD trunk bridges that cross, touch or overlap unrelated routes or earlier bridges. Clearance includes both rendered stroke widths; preserve authored ports, geometry and cardinality. |
+| [PR870](https://github.com/tt-a1i/archify/pull/870) | [cyanseek](https://github.com/cyanseek), `00a75b375961f2c4288d59312d3b301355a11b73` | Preserve nonzero milliseconds in Timeline cards, accessible labels and fallback axis ticks; whole-second output and elapsed geometry stay unchanged. |
+| [PR871](https://github.com/tt-a1i/archify/pull/871) | [cyanseek](https://github.com/cyanseek), `1ef3f8783b47ea5edf5ce4d80d588ac3b6fc9be4` | Keep distinct Waterfall tick/span times at nonzero origins, retain both endpoint labels within the canvas and avoid intermediate-label overlap. Very large finite values retain finite labels. |
+
 The upstream implementations and tests are adapted under MIT. Their inclusion
 here does not imply that upstream has reviewed or merged our adaptations.
 Archify 3.1 already rejects fully enclosed non-members during showcase rendering;

@@ -15,6 +15,8 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Checker transport failure is not an artifact verdict. Preserve previous delivered output when verification cannot complete.
 - Preview retains the last verified artifact independently of checking/failure status; same-revision state updates preserve the loaded document.
 - Migration validates complete source/final semantic contracts; group repair spans preserve exact membership and each node's effective group identity under canonical ordering, including overlapping groups with equal labels. Self-calls retain ownership, notes and identity. Raster pins undergo container checks even with matching digests.
+- ERD renderer-added trunk bridges avoid unrelated routes and prior bridges using rendered stroke widths; preserve authored routes, ports and cardinality.
+- Timeline cards, accessible labels and fallback ticks preserve nonzero milliseconds. Waterfall labels retain time resolution and visible endpoints without changing span/tick geometry.
 - Timeline ticks follow display-zone offset transitions without changing elapsed event geometry. Browser discovery keeps explicit overrides authoritative and prefers Chrome/Chromium before Edge.
 - Redirected finalize evidence retains historical full/browser receipts; the adjacent guarded summary tracks the latest attempt, including failures. `--out-dir` does not relocate the HTML or delivery provenance.
 - Note-overlap repairs describe one jointly verified translation of the affected message suffix; reject plans that create canvas, note, segment, or legend failures. Preserve authored messages and ordering.
