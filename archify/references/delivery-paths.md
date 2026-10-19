@@ -71,7 +71,7 @@ object with gate statuses, bounded actionable diagnostics, artifact identity,
 and evidence paths. The same compact object is written atomically to
 `<output-stem>.finalize-summary.json`; use that file for normal failure repair. When diagnostics are truncated, `diagnosticSummary.omittedByCode` counts the unshown entries by diagnostic code without replacing their full subject and repair evidence in the full receipt.
 Complete stage receipts and timings remain available for auditing in
-`<output-stem>.finalize.json`. With `--out-dir`, both files are written there,
+`<output-stem>.finalize.json`. With `--out-dir`, both files are written there unless an explicit `--receipt` overrides the full receipt path,
 while the requested HTML and its delivery receipt are rewritten in place.
 The adjacent `<output-stem>.finalize-summary.json` also tracks the latest attempt,
 including failures, and links that attempt's evidence directory. Prior full and

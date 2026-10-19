@@ -6,7 +6,7 @@ Own the zero-dependency installed CLI, renderers, checker, Viewer, authoring con
 
 ## Ownership
 
-This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schemas/`, `references/`, bundled examples. Root `test/` owns tests and root `viewer/` owns Viewer sources.
+This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schemas/`, `references/`, bundled examples. `explainer/` owns structured explanatory documents and chart compilation. Root `test/` owns tests and root `viewer/` owns Viewer sources.
 
 ## Local Contracts
 
@@ -35,5 +35,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Regenerate affected examples/gallery and compare source, staged package and installed bytes.
 
 ## Child DOX Index
+
+- [explainer/DOX.md](explainer/DOX.md) — structured document rendering and data-chart fidelity.
 
 - [references/DOX.md](references/DOX.md) — on-demand guidance, routing indexes and compatibility links. Runtime contracts remain owned here.

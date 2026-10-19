@@ -1177,6 +1177,7 @@
         if ((e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(e.key)) return;
         if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
         if (e.key === 'Tab')    { close(false); return; }
+        if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
 
         var available = items().filter(function (i) { return !i.hidden && !i.disabled; });
         var current = available.indexOf(document.activeElement);

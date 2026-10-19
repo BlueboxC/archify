@@ -64,6 +64,14 @@ in the font CSS carried by standalone HTML and SVG exports.
 The fork also retains the original JetBrains Mono TTF assets and their OFL
 license under `archify/assets/fonts/` (packaged as `assets/fonts/`).
 
+## Pele
+
+The explainer renders Mermaid chart fences with an unmodified subset of
+[Pele 1.3.0](https://github.com/obsidianmd/pele), copyright (c) 2026 kepano,
+distributed under the MIT License. The subset and its license text are in
+`explainer/vendor/pele/` in the packaged Skill. Charts are rendered to static
+SVG when a page is built; delivered pages contain no Pele code.
+
 ## No additional rights granted
 
 Brand names, logos, and trademarks remain the property of their respective

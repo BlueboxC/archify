@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Maintain BlueboxC's Archify fork and compatible, verified corrections to the ten-type Archify 3.1.0 release.
+Maintain BlueboxC's Archify fork and compatible, verified corrections to the Archify 3.2.0 release, including ten diagram types and Explainer documents.
 
 ## Ownership
 

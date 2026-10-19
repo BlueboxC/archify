@@ -1,8 +1,8 @@
 # Archify — BlueboxC fork
 
-This fork integrates official Archify 3.1.0 (`v3.1.0`, commit
-`1c2b42d660e4a7571813fb43839c79e3e9ca7720`) with our reviewed corrections.
-It supports ten diagram types and the release's Viewer, workflow migration,
+This fork integrates official Archify 3.2.0 (`v3.2.0`, commit
+`208acba8d412335185b2056fedf54b3405df43fb`) with our reviewed corrections.
+It supports ten diagram types, Explainer documents and the release's Viewer, workflow migration,
 Preview and verified `finalize` delivery. Existing generated user artifacts are
 not rewritten by upgrading the Skill.
 
@@ -20,6 +20,8 @@ not rewritten by upgrading the Skill.
 
 | Report | Source contribution | Fork behavior |
 | --- | --- | --- |
+| [#1000](https://github.com/tt-a1i/archify/issues/1000) | [leonkoellerwirth-arch, PR1001](https://github.com/tt-a1i/archify/pull/1001), `4ca84e4af9ef16810b0823fe6e3320b58cb733a5` | Camera clipping and panning follow the full container content box, preserving Dock padding, overview, reset and explicit geometry. |
+| [#1008](https://github.com/tt-a1i/archify/issues/1008) | [To3akaRin, PR1011](https://github.com/tt-a1i/archify/pull/1011), `30124f6c1e665f8e1c0c6dca444fc998e6565ee0` | Preserve literal chart labels, parse multiline quoted CSV records and refuse malformed or unrepresentable data without replacing prior delivery. |
 | [#395](https://github.com/tt-a1i/archify/issues/395) | [applesnort, PR501](https://github.com/tt-a1i/archify/pull/501), `5d8d9ad7a6083a53e19246722337ea03674fd6dd` | Authored boundary membership reaches the artifact checker. Showcase rejects fully enclosed non-members; partial overlap and standard-quality containment warn. Compare frames/nodes are scoped by rendered version. Older HTML without membership is explicitly unjudged. |
 | [#248](https://github.com/tt-a1i/archify/issues/248) | [robll-v1, PR260](https://github.com/tt-a1i/archify/pull/260), `b8b752ef7e34b10ba52c57266c053639bf59e0dc` | Coincident architecture routes produce an actionable showcase warning without rewriting explicit routing or accepting unrelated hard failures. Other diagram types keep their existing contract. |
 | [#590](https://github.com/tt-a1i/archify/issues/590) | [gold-beyond, PR538](https://github.com/tt-a1i/archify/pull/538), `08d057862abe5e65c72a6551d199320629ec8e82` | Piped children use a 64 MiB default. Captured checker calls accept `ARCHIFY_CHECK_MAX_BUFFER`; exhausted capture reports `artifact/check-output-limit` and preserves previous output. The direct checker streams. Natural checker shutdown also flushes complete JSON before exit. |
@@ -73,8 +75,7 @@ canonical JSON and downloadable HTML. English, Chinese, Japanese and Korean
 inventories describe ten modes; the nine previews share the same export profile.
 Timeline/Waterfall samples remain explicitly illustrative, and the other sample
 models are not presented as inspected production facts. The fork does not invent
-hosted proof IDs or publish new gallery recipes. No Skill, runtime, ZIP or live
-installation changes.
+hosted proof IDs or publish new gallery recipes. These preview changes preserve authored examples; runtime updates are qualified separately below.
 
 ## Verification and installation
 
