@@ -115,12 +115,60 @@ function addCheck(name, ok, details = []) {
   checks.push({ name, ok, details });
 }
 
-const svgMatches = [...html.matchAll(/<svg\b[\s\S]*?<\/svg>/gi)];
-addCheck('single_svg', svgMatches.length === 1, [`found ${svgMatches.length} <svg> block(s)`]);
+// Scan top-level <svg> blocks with the same quote/CDATA-aware tokenizer the
+// other static checks use, so `<svg>` text inside comments, CDATA sections, or
+// quoted attribute values never moves the depth counter. Case-insensitive like
+// the HTML parser: <SVG> is the same element as <svg>.
 
-if (svgMatches.length === 1) {
-  const svg = svgMatches[0][0];
-  const svgRoot = svg.match(/<svg\b[^>]*>/i)?.[0] || '';
+// A '/' that ends an unquoted attribute value (for example data-note=value/>)
+// is value text per HTML, not the self-closing flag: parse5 keeps it, and the
+// finite_svg tests document x1="NaN/" for <line x1=NaN/>.
+function isSelfClosingTag(token) {
+  const unquoted = token.replace(/"[^"]*"|'[^']*'/g, '""');
+  if (/=[^\s"'=<>`]*\/\s*>$/.test(unquoted)) return false;
+  return /\/\s*>$/.test(unquoted);
+}
+
+// Collect each top-level <svg> block. Matching lazily to the first </svg>
+// would cut a root short at a nested <svg> (for example inside foreignObject)
+// and drop the rest of the root from every check below; markup inside HTML
+// comments is not an element and must not count as a block either.
+function extractSvgBlocks(source) {
+  const blocks = [];
+  let depth = 0;
+  let start = -1;
+  const tokens = new RegExp(SVG_TAG_TOKEN.source, 'gi');
+  let match;
+  while ((match = tokens.exec(source)) !== null) {
+    const token = match[0];
+    if (token.startsWith('<!--') || token.startsWith('<![CDATA[')) continue;
+    const element = match[2]?.toLowerCase();
+    if (!match[1] && (element === 'script' || element === 'style') && !isSelfClosingTag(token)) {
+      const closing = new RegExp(`</${element}\\s*>`, 'gi');
+      closing.lastIndex = tokens.lastIndex;
+      const end = closing.exec(source);
+      tokens.lastIndex = end ? closing.lastIndex : source.length;
+      continue;
+    }
+    if (element !== 'svg') continue;
+    if (match[1]) {
+      if (depth > 0 && --depth === 0) blocks.push(source.slice(start, match.index + token.length));
+    } else if (isSelfClosingTag(token)) {
+      if (depth === 0) blocks.push(token);
+    } else {
+      if (depth === 0) start = match.index;
+      depth += 1;
+    }
+  }
+  return blocks;
+}
+
+const svgBlocks = extractSvgBlocks(html);
+addCheck('single_svg', svgBlocks.length === 1, [`found ${svgBlocks.length} <svg> block(s)`]);
+
+if (svgBlocks.length === 1) {
+  const svg = svgBlocks[0];
+  const svgRoot = svg.match(/<svg\b(?:[^>"']|"[^"]*"|'[^']*')*>/i)?.[0] || '';
   const svgAttrs = parseAttrs(svgRoot);
   const qualityProfile = svgAttrs['data-quality-profile'] || 'standard';
   const workflowV2 = svgAttrs['data-layout-contract'] === 'readable-v2';
@@ -1535,7 +1583,9 @@ function collectNonFiniteAttrs(svg) {
     }
     // HTML void elements do not open a context; SVG self-closing tags do not
     // either. A nested <svg> inside foreignObject restores SVG checking.
-    if (!(inSvg ? /\/\s*>$/.test(match[0]) : HTML_VOID_ELEMENTS.has(element))) {
+    // The self-closing test is attribute-aware: a '/' ending an unquoted
+    // attribute value is value text, not the self-closing flag.
+    if (!(inSvg ? isSelfClosingTag(match[0]) : HTML_VOID_ELEMENTS.has(element))) {
       stack.push({ element, inSvg });
     }
   }

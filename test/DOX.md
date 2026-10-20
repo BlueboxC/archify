@@ -17,6 +17,7 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 - ERD bridge regressions cover independent-route crossings, contact, overlap and stroke clearance plus unobstructed sharing. Timeline covers fractional cards/accessibility/axis ticks; Waterfall covers nonzero origins, finite large values and browser endpoint visibility.
 - Bridge-versus-bridge collision regressions exercise the actual post-routing assembler with controlled fragments, both processing orders and same/mixed styles; clear-bus controls remain connected. Public CLI controls use valid separated families. Keep synthetic assembler evidence distinct from complete-diagram reproduction.
 - Repository evidence covers POSIX trailing-whitespace roots and whitespace-prefixed HTTP(S) origin failures while retaining identity, revision, source-range and credential-redaction checks.
+- Large layout reports must survive redirected and stalled-pipe output in every affected renderer without writing HTML. Static SVG checks retain post-nesting geometry and distinguish root elements from comments, attributes and script/style text.
 - Assert user outcomes; adapt obsolete automatic-layout expectations when a better valid result replaces an old limitation.
 - Skips and platform simulations are not runtime passes. Keep real browser and package evidence distinct.
 
