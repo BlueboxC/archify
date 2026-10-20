@@ -1965,7 +1965,7 @@ export function variantAccent(variant) {
       : variant === 'dashed' ? 't-messagebus' : 't-muted';
 }
 
-// Relationship labels use the same theme token as their path. Keep this map
+// Colored relationship labels use their path token; neutral labels use readable ink. Keep this map
 // edge-specific: node-kind text colors only coincide with some path colors in
 // the classic preset and must not define the relationship's visual meaning.
 export function edgeLabelAccent(variant) {

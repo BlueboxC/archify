@@ -180,6 +180,19 @@ test('waterfall: invalid timing and parent cycles are refused', () => {
   assert.match(failure((d) => { d.spans[0].parent = 'auth'; }), /waterfall\/cycle/);
 });
 
+test('waterfall: epoch-sized starts keep end and duration agreement in floating point', () => {
+  const diagram = clone(small);
+  diagram.spans = [{ id: 'job', name: 'Nightly job', start: 1700000000.1, end: 1700000000.3, duration: 0.2 }];
+  const result = run(diagram);
+  assert.equal(result.status, 0, result.stderr);
+  // The same magnitude still refuses a duration that genuinely disagrees.
+  const wrong = clone(diagram);
+  wrong.spans[0].duration = 0.25;
+  const rejected = run(wrong);
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stderr, /disagree/);
+});
+
 test('waterfall: services past the five colours share a legend entry instead of a duplicated colour', () => {
   const services = ['gateway', 'auth', 'cart', 'pricing', 'tax', 'inventory', 'postgres'];
   const diagram = clone(small);
@@ -195,4 +208,22 @@ test('waterfall: services past the five colours share a legend entry instead of 
   assert.ok(labels.includes('gateway · inventory'), labels.join(' | '));
   assert.ok(labels.includes('auth · postgres'), labels.join(' | '));
   assert.ok(labels.includes('cart'), labels.join(' | '));
+});
+
+test('waterfall: the incomplete key appears only when a bar is drawn open', () => {
+  const closed = clone(small);
+  closed.spans = [
+    { id: 'a', name: 'A', start: 0, end: 100 },
+    { id: 'b', name: 'B', start: 10, end: 50, status: 'incomplete', parent: 'a' },
+  ];
+  const closedHtml = fs.readFileSync(run(closed).output, 'utf8');
+  assert.doesNotMatch(closedHtml, /Incomplete \(no recorded end\)/, 'a recorded end paints a solid bar, so no open key is claimed');
+
+  const open = clone(small);
+  open.spans = [
+    { id: 'a', name: 'A', start: 0, end: 100 },
+    { id: 'b', name: 'B', start: 10, status: 'incomplete', parent: 'a' },
+  ];
+  const openHtml = fs.readFileSync(run(open).output, 'utf8');
+  assert.match(openHtml, /Incomplete \(no recorded end\)/, 'an open incomplete bar keeps its key');
 });

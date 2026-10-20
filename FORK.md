@@ -115,3 +115,19 @@ the membership guard contributed by this fork.
 The earlier c5e1059 commit bundled ten fixes, including shared Viewer keyboard
 changes that required HTML refreshes. This isolated compiler follow-up rebuilds
 only the Skill archive; canonical example HTML and Viewer sources stay unchanged.
+
+## Timing and Viewer corrections
+
+Adapt [#1032](https://github.com/tt-a1i/archify/pull/1032),
+[#1028](https://github.com/tt-a1i/archify/pull/1028),
+[#1030](https://github.com/tt-a1i/archify/pull/1030),
+[#1029](https://github.com/tt-a1i/archify/pull/1029) and
+[#1027](https://github.com/tt-a1i/archify/pull/1027): retain timeline years,
+represent subsecond breaks, scale floating-point agreement to operand size,
+show the incomplete key only for open spans, and keep mobile controls and
+presentation overflow reachable. Neutral labels have separate readable ink
+across light/print presets ([#1017](https://github.com/tt-a1i/archify/issues/1017));
+connector strokes and semantic colors stay unchanged. Unicode export names
+use the authored heading, avoiding translated page suffixes and preserving
+NFC letters and accents ([#1024](https://github.com/tt-a1i/archify/issues/1024)).
+Existing offline fonts, camera bounds and Explainer styling are retained.

@@ -18,6 +18,7 @@
   --lane-stroke: #334155;
 
   --arrow: #94a3b8;
+  --edge-label: var(--arrow);
   --arrow-emphasis: #34d399;
 
   /* Opaque mask color used behind semi-transparent component fills
@@ -61,6 +62,7 @@
   --lane-stroke: #cbd5e1;
 
   --arrow: #64748b;
+  --edge-label: #64748b;
   --arrow-emphasis: #059669;
 
   --mask: #ffffff;
@@ -152,6 +154,7 @@
   --external-fill: rgba(100, 116, 139, 0.1);
   --external-stroke: #607a8c;
   --arrow: #7b97aa;
+  --edge-label: #4e687c;
   --arrow-emphasis: #0d9488;
 }
 
@@ -223,6 +226,7 @@
   --external-fill: rgba(79, 112, 128, 0.08);
   --external-stroke: #506f7e;
   --arrow: #6d93a5;
+  --edge-label: #385d70;
   --arrow-emphasis: #087f69;
   --toolbar-bg: rgba(247, 252, 254, 0.94);
   --toolbar-border: #8ab5c5;
@@ -300,6 +304,7 @@
   --external-fill: rgba(101, 91, 75, 0.09);
   --external-stroke: #746b5e;
   --arrow: #8a806f;
+  --edge-label: #625848;
   --arrow-emphasis: #bb4c23;
   --toolbar-bg: rgba(251, 248, 241, 0.94);
   --toolbar-border: #c4b9a6;
@@ -412,13 +417,18 @@ html[data-present="true"]:not([data-embed="true"]) .diagram-container {
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  justify-content: center;
+  /* Centring an oversized scene makes its start-side overflow unreachable.
+     Start alignment plus auto inline margins centres the scene when it fits
+     and collapses to zero when it overflows, so the first edge stays
+     scrollable without a keyword the delta validator reads as a claim. */
+  justify-content: flex-start;
   min-height: 0;
   padding: 0.75rem;
   padding-bottom: calc(0.75rem + var(--archify-nav-reserve));
 }
 html[data-present="true"]:not([data-embed="true"]) .diagram-container > svg {
   flex: 1 1 auto;
+  margin-inline: auto;
   height: 100%;
   min-height: 0;
   width: 100%;
@@ -2921,6 +2931,7 @@ html[data-reader-rail="bottom"] .node-outline-item::after {
     --lane-fill: rgba(248, 250, 252, 0.65);
     --lane-stroke: #cbd5e1;
     --arrow: #94a3b8;
+    --edge-label: #475569;
     --arrow-emphasis: #059669;
     --frontend-fill:    rgba(34, 211, 238, 0.15);
     --frontend-stroke:  #0891b2;
@@ -3728,8 +3739,9 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
     padding: 0.75rem;
     border-radius: 0.75rem;
   }
+  .diagram-container { --archify-dock-h: 6.25rem; }
   html:not([data-embed="true"]) .diagram-container {
-    padding: 0.75rem 0.75rem 4.25rem;
+    padding: 0.75rem 0.75rem calc(1rem + var(--archify-dock-h));
   }
   html:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] {
     overflow-x: auto;
@@ -3750,7 +3762,15 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
   html:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] .node-finder {
     transform: translateX(var(--archify-scroll-x, 0px));
   }
-  .diagram-nav { right: 0.5rem; bottom: 0.5rem; }
+  .diagram-nav {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    /* A single scrolling row hid the zoom-in button past the edge; wrap the
+       controls so every action stays reachable. */
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: calc(100% - 1rem);
+  }
   .diagram-nav button {
     min-width: 2.75rem;
     height: 2.75rem;
@@ -3759,7 +3779,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
   .diagram-nav [data-view="reset"][data-detail-visible] { min-width: 4.35rem; }
   .overview-map {
     right: 0.5rem;
-    bottom: 3.7rem;
+    bottom: calc(1rem + var(--archify-dock-h));
     width: min(10.25rem, calc(100% - 1rem));
   }
   .overview-map[data-docked="true"] {
@@ -3773,12 +3793,12 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
     left: var(--archify-radar-left, 0.5rem);
   }
   .overview-map-surface { height: 4rem; }
-  .overview-map-feedback { right: 0.5rem; bottom: 3.7rem; }
+  .overview-map-feedback { right: 0.5rem; bottom: calc(1rem + var(--archify-dock-h)); }
   .semantic-lens {
     right: 0.5rem;
-    bottom: 3.7rem;
+    bottom: calc(1rem + var(--archify-dock-h));
     width: calc(100% - 1rem);
-    max-height: calc(100% - 4.2rem);
+    max-height: calc(100% - var(--archify-dock-h) - 2rem);
   }
   .semantic-lens[data-dock-side] { left: auto; right: 0.5rem; }
   .semantic-lens-kinds { max-height: min(12rem, 34vh); }
@@ -3850,7 +3870,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
   .node-finder-results { max-height: min(16rem, 38vh); }
   .route-probe {
     left: 0.5rem;
-    bottom: 3.7rem;
+    bottom: calc(1rem + var(--archify-dock-h));
     width: calc(100% - 1rem);
     min-width: 0;
   }
@@ -3933,7 +3953,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
     white-space: nowrap;
   }
   
-  html[data-present="true"]:not([data-embed="true"]) .diagram-container { padding: 0.5rem 0.5rem 3.75rem; }
+  html[data-present="true"]:not([data-embed="true"]) .diagram-container { padding: 0.5rem 0.5rem calc(1rem + var(--archify-dock-h)); }
   html[data-present="true"]:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] > svg {
     width: 720px;
     height: auto;
@@ -3989,8 +4009,8 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
 .t-messagebus { fill: var(--messagebus-stroke); }
 .t-external   { fill: var(--external-stroke); }
 
-/* Relationship labels share the exact color token used by their path. */
-.t-edge-default  { fill: var(--arrow); }
+/* Neutral labels have separate readable ink; colored labels retain semantics. */
+.t-edge-default  { fill: var(--edge-label, var(--arrow)); }
 .t-edge-emphasis { fill: var(--arrow-emphasis); }
 .t-edge-security { fill: var(--security-stroke); }
 .t-edge-dashed   { fill: var(--database-stroke); }

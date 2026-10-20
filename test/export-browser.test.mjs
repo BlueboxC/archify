@@ -108,6 +108,19 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
   const route = `Archify.routeProbe.begin({source:'users',focusNode:false});if(!Archify.routeProbe.choose('db',{updateUrl:false}))throw new Error('route fixture failed');`;
   const reach = `Archify.focus.set('api',{toggle:false,updateUrl:false});if(!Archify.focus.reach('downstream',{toggle:false,updateUrl:false,reveal:false}))throw new Error('reach fixture failed');`;
 
+  await t.test('Unicode titles survive export filename sanitization', async () => {
+    await load();
+    for (const [title, expected] of [
+      ['支付系统', '支付系统'], ['Checkout Platform Diagram', 'checkout-platform-diagram'], ['Pagos', 'pagos'], ['Checkout 다이어그램', 'checkout-다이어그램'], ['日本語の設計', '日本語の設計'],
+      ['خريطة النظام', 'خريطة-النظام'], ['Café Résumé', 'café-résumé'],
+      ['Cafe\u0301 Re\u0301sume\u0301', 'café-résumé'], ['../unsafe: title?', 'unsafe-title'],
+    ]) {
+      await run(`document.title=${JSON.stringify(title+' · Diagrama')}; document.querySelector('.header h1').textContent=${JSON.stringify(title)}; Archify.exportMenu.run('svg-light')`);
+      const name = await run('exportDownloads.at(-1).name');
+      assert.equal(name, expected + '-light.svg');
+    }
+  });
+
   await t.test('removed share actions cannot be invoked through the menu or old API', async () => {
     await load();
     assert.equal(await run(`document.querySelector('[data-format="share-card"], [data-action="copy-share-card"]') === null`), true);

@@ -194,4 +194,31 @@ test('workflow default labels and lane headings remain readable without recolori
         `classic normal headings must have at least 4.5:1 flat and CSS dot peak contrast: ${JSON.stringify(observed.lanes.slice(0, 2))}`);
     });
   }
+  const contrastArtifact=path.join(scratch,'architecture.html');
+  execFileSync(process.execPath,[cli,'render','architecture',path.join(path.dirname(cli),'../examples/web-app.architecture.json'),contrastArtifact]);
+  for (const preset of ['classic','signal-flow','blueprint','editorial']) {
+    for (const print of [false,true]) {
+      await t.test(`${preset} light${print ? ' print' : ''} default label contrast`, async () => {
+        await browser.inspect({artifactPath:contrastArtifact,width:1440,height:1100,theme:'light'});
+        await browser.cdp.send('Emulation.setEmulatedMedia',{media:print?'print':'screen'},session);
+        const value=await browser.cdp.send('Runtime.evaluate', {returnByValue:true,awaitPromise:true,expression:`(async()=>{
+          document.documentElement.dataset.preset=${JSON.stringify(preset)};
+          await new Promise(resolve=>requestAnimationFrame(resolve));
+          const text=document.querySelector('.diagram-container .t-edge-default');
+          const mask=text.parentElement.querySelector('rect.c-mask');
+          const path=document.querySelector('path.a-default');
+          const l=c=>c.match(/[\\d.]+/g).slice(0,3).map(Number).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0);
+          const a=l(getComputedStyle(text).fill),b=l(getComputedStyle(mask).fill);
+          const stroke=getComputedStyle(path).stroke;
+          const before=getComputedStyle(text).fill;
+          Archify.focus.set('api',{toggle:false,updateUrl:false,reveal:false});
+          return {ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05),before,after:getComputedStyle(text).fill,stroke};
+        })()`},session);
+        assert.equal(value.exceptionDetails,undefined,value.exceptionDetails?.text);
+        assert.ok(value.result.value.ratio>=4.5,JSON.stringify(value.result.value));
+        assert.equal(value.result.value.before,value.result.value.after,'focus preserves label ink');
+      });
+    }
+  }
+
 });

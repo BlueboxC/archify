@@ -21,6 +21,8 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 - Assert user outcomes; adapt obsolete automatic-layout expectations when a better valid result replaces an old limitation.
 - Skips and platform simulations are not runtime passes. Keep real browser and package evidence distinct.
 
+- Protect multi-year and subsecond timeline labels, large-origin waterfall timing and actual open-bar legends. Real browser checks cover mobile hit targets/overflow, generic light/print contrast with focus preservation, and localized Unicode export names.
+
 ## Work Guidance
 
 Use existing runners; add tests only for meaningful uncovered outcomes.

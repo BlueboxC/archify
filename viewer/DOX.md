@@ -16,6 +16,8 @@ Viewer modules own UI state, navigation, keyboard behavior, themes and export. T
 - Camera clipping and panning use the container content box, excluding reserved Dock padding, without shrinking the SVG viewport. Preserve overview, reset and authored geometry.
 - Preserve offline fonts, authored identity/geometry, accessibility and last-verified Preview recovery.
 
+- Mobile dock clearance follows its measured wrapped height; all actions and route overlays remain reachable. Presentation overflow keeps its leading edge scrollable. Default-label ink has its own token in light/print presets, while dark and semantic colors retain their contracts. Export filenames prefer the authored heading over translated page suffixes and preserve normalized Unicode.
+
 ## Work Guidance
 
 Use existing module interfaces and avoid introducing parallel state owners.

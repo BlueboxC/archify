@@ -187,6 +187,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --lane-stroke: #334155;
 
       --arrow: #94a3b8;
+      --edge-label: var(--arrow);
       --arrow-emphasis: #34d399;
 
       /* Opaque mask color used behind semi-transparent component fills
@@ -230,6 +231,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --lane-stroke: #cbd5e1;
 
       --arrow: #64748b;
+      --edge-label: #64748b;
       --arrow-emphasis: #059669;
 
       --mask: #ffffff;
@@ -321,6 +323,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-fill: rgba(100, 116, 139, 0.1);
       --external-stroke: #607a8c;
       --arrow: #7b97aa;
+      --edge-label: #4e687c;
       --arrow-emphasis: #0d9488;
     }
 
@@ -392,6 +395,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-fill: rgba(79, 112, 128, 0.08);
       --external-stroke: #506f7e;
       --arrow: #6d93a5;
+      --edge-label: #385d70;
       --arrow-emphasis: #087f69;
       --toolbar-bg: rgba(247, 252, 254, 0.94);
       --toolbar-border: #8ab5c5;
@@ -469,6 +473,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-fill: rgba(101, 91, 75, 0.09);
       --external-stroke: #746b5e;
       --arrow: #8a806f;
+      --edge-label: #625848;
       --arrow-emphasis: #bb4c23;
       --toolbar-bg: rgba(251, 248, 241, 0.94);
       --toolbar-border: #c4b9a6;
@@ -581,13 +586,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       display: flex;
       flex: 1 1 auto;
       align-items: center;
-      justify-content: center;
+      /* Centring an oversized scene makes its start-side overflow unreachable.
+         Start alignment plus auto inline margins centres the scene when it fits
+         and collapses to zero when it overflows, so the first edge stays
+         scrollable without a keyword the delta validator reads as a claim. */
+      justify-content: flex-start;
       min-height: 0;
       padding: 0.75rem;
       padding-bottom: calc(0.75rem + var(--archify-nav-reserve));
     }
     html[data-present="true"]:not([data-embed="true"]) .diagram-container > svg {
       flex: 1 1 auto;
+      margin-inline: auto;
       height: 100%;
       min-height: 0;
       width: 100%;
@@ -3090,6 +3100,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         --lane-fill: rgba(248, 250, 252, 0.65);
         --lane-stroke: #cbd5e1;
         --arrow: #94a3b8;
+        --edge-label: #475569;
         --arrow-emphasis: #059669;
         --frontend-fill:    rgba(34, 211, 238, 0.15);
         --frontend-stroke:  #0891b2;
@@ -3897,8 +3908,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         padding: 0.75rem;
         border-radius: 0.75rem;
       }
+      .diagram-container { --archify-dock-h: 6.25rem; }
       html:not([data-embed="true"]) .diagram-container {
-        padding: 0.75rem 0.75rem 4.25rem;
+        padding: 0.75rem 0.75rem calc(1rem + var(--archify-dock-h));
       }
       html:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] {
         overflow-x: auto;
@@ -3919,7 +3931,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       html:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] .node-finder {
         transform: translateX(var(--archify-scroll-x, 0px));
       }
-      .diagram-nav { right: 0.5rem; bottom: 0.5rem; }
+      .diagram-nav {
+        right: 0.5rem;
+        bottom: 0.5rem;
+        /* A single scrolling row hid the zoom-in button past the edge; wrap the
+           controls so every action stays reachable. */
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: calc(100% - 1rem);
+      }
       .diagram-nav button {
         min-width: 2.75rem;
         height: 2.75rem;
@@ -3928,7 +3948,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       .diagram-nav [data-view="reset"][data-detail-visible] { min-width: 4.35rem; }
       .overview-map {
         right: 0.5rem;
-        bottom: 3.7rem;
+        bottom: calc(1rem + var(--archify-dock-h));
         width: min(10.25rem, calc(100% - 1rem));
       }
       .overview-map[data-docked="true"] {
@@ -3942,12 +3962,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         left: var(--archify-radar-left, 0.5rem);
       }
       .overview-map-surface { height: 4rem; }
-      .overview-map-feedback { right: 0.5rem; bottom: 3.7rem; }
+      .overview-map-feedback { right: 0.5rem; bottom: calc(1rem + var(--archify-dock-h)); }
       .semantic-lens {
         right: 0.5rem;
-        bottom: 3.7rem;
+        bottom: calc(1rem + var(--archify-dock-h));
         width: calc(100% - 1rem);
-        max-height: calc(100% - 4.2rem);
+        max-height: calc(100% - var(--archify-dock-h) - 2rem);
       }
       .semantic-lens[data-dock-side] { left: auto; right: 0.5rem; }
       .semantic-lens-kinds { max-height: min(12rem, 34vh); }
@@ -4019,7 +4039,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       .node-finder-results { max-height: min(16rem, 38vh); }
       .route-probe {
         left: 0.5rem;
-        bottom: 3.7rem;
+        bottom: calc(1rem + var(--archify-dock-h));
         width: calc(100% - 1rem);
         min-width: 0;
       }
@@ -4102,7 +4122,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         white-space: nowrap;
       }
       
-      html[data-present="true"]:not([data-embed="true"]) .diagram-container { padding: 0.5rem 0.5rem 3.75rem; }
+      html[data-present="true"]:not([data-embed="true"]) .diagram-container { padding: 0.5rem 0.5rem calc(1rem + var(--archify-dock-h)); }
       html[data-present="true"]:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] > svg {
         width: 720px;
         height: auto;
@@ -4158,8 +4178,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
-    /* Relationship labels share the exact color token used by their path. */
-    .t-edge-default  { fill: var(--arrow); }
+    /* Neutral labels have separate readable ink; colored labels retain semantics. */
+    .t-edge-default  { fill: var(--edge-label, var(--arrow)); }
     .t-edge-emphasis { fill: var(--arrow-emphasis); }
     .t-edge-security { fill: var(--security-stroke); }
     .t-edge-dashed   { fill: var(--database-stroke); }
@@ -6231,11 +6251,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function diagramFilename() {
-        var title = (document.title || 'diagram')
-          .replace(/\s+Architecture(\s+Diagram)?$/i, '')
-          .replace(/\s+Diagram$/i, '')
-          .trim();
-        return title.replace(/[^a-z0-9_\-]+/gi, '-')
+        var heading = document.querySelector && document.querySelector('.header h1');
+        var title = heading && heading.textContent.trim();
+        if (!title) {
+          title = (document.title || 'diagram')
+            .replace(/\s+Architecture(\s+Diagram)?$/i, '')
+            .replace(/\s+Diagram$/i, '')
+            .trim();
+        }
+        return title.normalize('NFC').replace(/[^\p{L}\p{M}\p{N}_-]+/gu, '-')
                     .toLowerCase()
                     .replace(/^-+|-+$/g, '') || 'diagram';
       }
@@ -11123,6 +11147,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           height: height
         };
       }
+      /* The mobile dock can wrap to more than one row, so its height is a
+         measured value, not a constant. Publish it before the desktop-only
+         stage-rail gate so every phone surface (stage pad, probe, lens, finder)
+         can clear the real dock instead of guessing a row count. */
+      var dockHeight = -1;
+      function publishDockHeight() {
+        if (!nav || !container) return;
+        var height = visible(nav) ? Math.ceil(nav.getBoundingClientRect().height) : 0;
+        if (height === dockHeight) return;
+        dockHeight = height;
+        container.style.setProperty('--archify-dock-h', height + 'px');
+      }
       function eligible() {
         return Boolean(
           container && svg && nav &&
@@ -11214,6 +11250,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function measure() {
         frame = 0;
+        publishDockHeight();
         scheduleLift();
         if (probingBaseline) return null;
         if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });
