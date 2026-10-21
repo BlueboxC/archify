@@ -114,6 +114,7 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
       ['支付系统', '支付系统'], ['Checkout Platform Diagram', 'checkout-platform-diagram'], ['Pagos', 'pagos'], ['Checkout 다이어그램', 'checkout-다이어그램'], ['日本語の設計', '日本語の設計'],
       ['خريطة النظام', 'خريطة-النظام'], ['Café Résumé', 'café-résumé'],
       ['Cafe\u0301 Re\u0301sume\u0301', 'café-résumé'], ['../unsafe: title?', 'unsafe-title'],
+      ['❤️', 'diagram'], ['My ❤️ Board', 'my-board'], ['\u0301', 'diagram'], ['___', 'diagram'],
     ]) {
       await run(`document.title=${JSON.stringify(title+' · Diagrama')}; document.querySelector('.header h1').textContent=${JSON.stringify(title)}; Archify.exportMenu.run('svg-light')`);
       const name = await run('exportDownloads.at(-1).name');

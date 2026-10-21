@@ -11,6 +11,89 @@ import { desktopBrowser, desktopPointerCheck } from './helpers/desktop-browser.m
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
 
+test('Passport and Finder small text remains readable across themes and presets', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser contrast checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-passport-contrast-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const artifact = path.join(scratch, 'web-app.html');
+  execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'architecture',
+    path.join(skillRoot, 'examples/web-app.architecture.json'), artifact]);
+  const browser = desktopBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  await send('Emulation.setFocusEmulationEnabled', { enabled: true });
+  async function run(expression) {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result?.value;
+  }
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: pathToFileURL(artifact).href });
+  await loaded;
+  await run('document.fonts.ready');
+  const measurements = [];
+  const inspect = `(selector => {
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    function rgba(color) {
+      ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = color; ctx.fillRect(0, 0, 1, 1);
+      return Array.from(ctx.getImageData(0, 0, 1, 1).data).map(value => value / 255);
+    }
+    function over(fg, bg) {
+      const alpha = fg[3] + bg[3] * (1 - fg[3]);
+      return [0, 1, 2].map(i => (fg[i] * fg[3] + bg[i] * bg[3] * (1 - fg[3])) / alpha).concat(alpha);
+    }
+    function luminance(color) {
+      const linear = color.slice(0, 3).map(v => v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+      return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+    }
+    return [...document.querySelectorAll(selector)].filter(el => el.getClientRects().length &&
+      el.textContent.trim() && !el.closest('[hidden], button:disabled')).map(el => {
+      const ancestors = []; for (let parent = el; parent; parent = parent.parentElement) ancestors.unshift(parent);
+      const bg = ancestors.reduce((color, parent) => over(rgba(getComputedStyle(parent).backgroundColor), color), [1, 1, 1, 1]);
+      const fg = over(rgba(getComputedStyle(el).color), bg);
+      const a = luminance(fg), b = luminance(bg);
+      return { id: el.id || el.className || el.tagName, text: el.textContent.trim(), ratio: (Math.max(a,b) + 0.05) / (Math.min(a,b) + 0.05) };
+    });
+  })`;
+  for (const theme of ['light', 'dark']) {
+    for (const preset of ['classic', 'signal-flow', 'blueprint', 'editorial']) {
+      await run(`document.documentElement.setAttribute('data-theme', ${JSON.stringify(theme)});
+        document.documentElement.setAttribute('data-preset', ${JSON.stringify(preset)});
+        Archify.finder.close(); Archify.focus.set('api', { toggle: false });`);
+      await run('Archify.layoutStability.whenStable()');
+      const passport = await run(`${inspect}('.relationship-lens-eyebrow, .semantic-passport-meta span, .semantic-passport-meta code, .semantic-passport-reach-label, .semantic-passport-reach-actions span, .semantic-passport-reach-actions strong, .semantic-passport-reach-status')`);
+      assert.ok(passport.length >= 5, 'the visible Passport contains meaningful metadata and reachability');
+      measurements.push(...passport.map(value => ({ theme, preset, surface: 'passport', ...value })));
+      await run(`document.getElementById('btn-reach-downstream').click()`);
+      await run('Archify.layoutStability.whenStable()');
+      const reach = await run(`${inspect}('.semantic-passport-reach-actions span, .semantic-passport-reach-actions strong, .semantic-passport-reach-status')`);
+      assert.ok(reach.length >= 3, 'directed Reach retains its visible controls and status');
+      measurements.push(...reach.map(value => ({ theme, preset, surface: 'reach', ...value })));
+      await run(`Archify.focus.set('auth', { toggle: false })`);
+      const tag = await run(`${inspect}('#focus-tag')`);
+      assert.equal(tag.length, 1, 'authored tags remain visible');
+      measurements.push(...tag.map(value => ({ theme, preset, surface: 'tag', ...value })));
+      await run('Archify.finder.open()');
+      await run('Archify.layoutStability.whenStable()');
+      const finder = await run(`${inspect}('.node-finder-result strong, .node-finder-result small, .node-finder-result em')`);
+      assert.ok(finder.length >= 10, 'Finder has rendered the real diagram results');
+      measurements.push(...finder.map(value => ({ theme, preset, surface: 'finder', ...value })));
+      await run(`document.querySelector('.node-finder-result').focus()`);
+      const selected = await run(`${inspect}('.node-finder-result:focus strong, .node-finder-result:focus small, .node-finder-result:focus em')`);
+      assert.ok(selected.length >= 2, 'keyboard selection keeps the result readable');
+      measurements.push(...selected.map(value => ({ theme, preset, surface: 'finder-focus', ...value })));
+    }
+  }
+  const failures = measurements.filter(value => value.ratio < 4.5);
+  t.diagnostic(JSON.stringify({ measurements: measurements.length, minimumContrast: Math.min(...measurements.map(value => value.ratio)) }));
+  assert.deepEqual(failures, [], JSON.stringify(failures, null, 2));
+});
+
 test('Focus preserves semantic selection, relationships, reachability and shared flow tokens', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser Focus checks.',
 }, async (t) => {

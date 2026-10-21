@@ -19,6 +19,8 @@
       var autoScrollUntil = 0;
       var originalFlowHeight = container.style.getPropertyValue('height');
       var originalFlowHeightPriority = container.style.getPropertyPriority('height');
+      var originalFlowAlign = container.style.getPropertyValue('align-items');
+      var originalFlowAlignPriority = container.style.getPropertyPriority('align-items');
       var compactPageFlow = false;
 
       var viewBox = svg.viewBox && svg.viewBox.baseVal;
@@ -202,10 +204,14 @@
             .reduce(function (total, key) { return total + (parseFloat(style[key]) || 0); }, 0);
           var flowHeight = Math.ceil(height * camera.scale + Math.max(0, camera.y) + chrome) + 'px';
           if (container.style.getPropertyValue('height') !== flowHeight) container.style.setProperty('height', flowHeight);
+          // The SVG retains its full layout box while its page-flow box shrinks.
+          container.style.setProperty('align-items', 'flex-start');
           compactPageFlow = true;
         } else if (compactPageFlow) {
           if (originalFlowHeight) container.style.setProperty('height', originalFlowHeight, originalFlowHeightPriority);
           else container.style.removeProperty('height');
+          if (originalFlowAlign) container.style.setProperty('align-items', originalFlowAlign, originalFlowAlignPriority);
+          else container.style.removeProperty('align-items');
           compactPageFlow = false;
         }
       }

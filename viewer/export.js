@@ -40,9 +40,11 @@
             .replace(/\s+Diagram$/i, '')
             .trim();
         }
-        return title.normalize('NFC').replace(/[^\p{L}\p{M}\p{N}_-]+/gu, '-')
-                    .toLowerCase()
-                    .replace(/^-+|-+$/g, '') || 'diagram';
+        var name = title.normalize('NFC').replace(/([\p{L}\p{N}])(\p{M}+)|\p{M}+/gu, '$1$2')
+                        .replace(/[^\p{L}\p{M}\p{N}_-]+/gu, '-')
+                        .toLowerCase()
+                        .replace(/^-+|-+$/g, '');
+        return /[\p{L}\p{N}]/u.test(name) ? name : 'diagram';
       }
 
       function currentBg() {

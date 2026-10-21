@@ -1817,7 +1817,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .relationship-lens-eyebrow {
       display: block;
       margin-bottom: 0.18rem;
-      color: var(--frontend-stroke);
+      color: color-mix(in srgb, var(--text) 70%, var(--frontend-stroke));
       font-size: 0.5rem;
       font-weight: 800;
       letter-spacing: 0.14em;
@@ -1857,7 +1857,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       border: 1px solid color-mix(in srgb, var(--toolbar-border) 82%, transparent);
       border-radius: 999px;
       background: color-mix(in srgb, var(--panel) 68%, transparent);
-      color: var(--text-faint);
+      color: var(--text-muted);
       font: inherit;
       font-size: 0.5rem;
       letter-spacing: 0.04em;
@@ -1866,14 +1866,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     .semantic-passport-meta [data-passport="kind"] {
       border-color: color-mix(in srgb, var(--frontend-stroke) 50%, var(--toolbar-border));
-      color: var(--frontend-stroke);
+      color: color-mix(in srgb, var(--text) 70%, var(--frontend-stroke));
       font-weight: 800;
       text-transform: uppercase;
     }
-    .semantic-passport-meta [data-passport="tag"] { color: var(--cloud-stroke); }
+    .semantic-passport-meta [data-passport="tag"] { color: color-mix(in srgb, var(--text) 70%, var(--cloud-stroke)); }
     .semantic-passport-meta [data-passport="brand"] {
       border-color: color-mix(in srgb, var(--messagebus-stroke) 52%, var(--toolbar-border));
-      color: var(--messagebus-stroke);
+      color: color-mix(in srgb, var(--text) 70%, var(--messagebus-stroke));
       font-weight: 700;
     }
     .semantic-passport-meta [hidden] { display: none; }
@@ -1976,7 +1976,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     .semantic-passport-reach[hidden] { display: none; }
     .semantic-passport-reach-label {
-      color: var(--text-faint);
+      color: var(--text-muted);
       font-size: 0.5rem;
       font-weight: 800;
       letter-spacing: 0.1em;
@@ -2027,11 +2027,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --reach-fill: var(--backend-fill);
     }
     .semantic-passport-reach-actions strong {
-      color: var(--reach-color, var(--frontend-stroke));
+      color: color-mix(in srgb, var(--text) 70%, var(--reach-color, var(--frontend-stroke)));
       font-size: 0.625rem;
     }
     .semantic-passport-reach-status {
-      color: var(--text-faint);
+      color: var(--text-muted);
       font-size: 0.525rem;
       line-height: 1.4;
     }
@@ -2503,7 +2503,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .node-finder-result small {
       grid-column: 1 / -1;
       overflow: hidden;
-      color: var(--text-faint);
+      color: var(--text-muted);
       font-size: 0.5625rem;
       letter-spacing: 0.015em;
       text-overflow: ellipsis;
@@ -2511,12 +2511,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     .node-finder-result em {
       align-self: center;
-      color: var(--frontend-stroke);
+      color: color-mix(in srgb, var(--text) 70%, var(--frontend-stroke));
       font-size: 0.625rem;
       font-style: normal;
     }
-    /* A zero count is absence, not information — let it recede. */
-    .node-finder-result em[data-zero] { color: var(--text-faint); }
+    .node-finder-result em[data-zero] { color: var(--text-muted); }
     .node-finder[data-context^="route-"] .node-finder-result em {
       padding: 0.1rem 0.3rem;
       border: 1px solid color-mix(in srgb, currentColor 52%, transparent);
@@ -2526,7 +2525,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
-    .node-finder[data-context="route-target"] .node-finder-result em { color: var(--security-stroke); }
+    .node-finder[data-context="route-target"] .node-finder-result em { color: color-mix(in srgb, var(--text) 70%, var(--security-stroke)); }
     .node-finder-empty {
       padding: 1.1rem 0.75rem 1.25rem;
       color: var(--text-faint);
@@ -6218,9 +6217,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             .replace(/\s+Diagram$/i, '')
             .trim();
         }
-        return title.normalize('NFC').replace(/[^\p{L}\p{M}\p{N}_-]+/gu, '-')
-                    .toLowerCase()
-                    .replace(/^-+|-+$/g, '') || 'diagram';
+        var name = title.normalize('NFC').replace(/([\p{L}\p{N}])(\p{M}+)|\p{M}+/gu, '$1$2')
+                        .replace(/[^\p{L}\p{M}\p{N}_-]+/gu, '-')
+                        .toLowerCase()
+                        .replace(/^-+|-+$/g, '');
+        return /[\p{L}\p{N}]/u.test(name) ? name : 'diagram';
       }
 
       function currentBg() {
@@ -11455,6 +11456,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var autoScrollUntil = 0;
       var originalFlowHeight = container.style.getPropertyValue('height');
       var originalFlowHeightPriority = container.style.getPropertyPriority('height');
+      var originalFlowAlign = container.style.getPropertyValue('align-items');
+      var originalFlowAlignPriority = container.style.getPropertyPriority('align-items');
       var compactPageFlow = false;
 
       var viewBox = svg.viewBox && svg.viewBox.baseVal;
@@ -11638,10 +11641,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             .reduce(function (total, key) { return total + (parseFloat(style[key]) || 0); }, 0);
           var flowHeight = Math.ceil(height * camera.scale + Math.max(0, camera.y) + chrome) + 'px';
           if (container.style.getPropertyValue('height') !== flowHeight) container.style.setProperty('height', flowHeight);
+          // The SVG retains its full layout box while its page-flow box shrinks.
+          container.style.setProperty('align-items', 'flex-start');
           compactPageFlow = true;
         } else if (compactPageFlow) {
           if (originalFlowHeight) container.style.setProperty('height', originalFlowHeight, originalFlowHeightPriority);
           else container.style.removeProperty('height');
+          if (originalFlowAlign) container.style.setProperty('align-items', originalFlowAlign, originalFlowAlignPriority);
+          else container.style.removeProperty('align-items');
           compactPageFlow = false;
         }
       }
