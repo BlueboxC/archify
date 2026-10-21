@@ -14,6 +14,7 @@ This directory owns document parsing, rendering, dependency freezing and the ven
 - Parse quoted CSV records across line endings. Reject malformed or ambiguous selected data before publishing; preserve the previous delivered artifact on failure.
 - Keep file-scope validation, finite values, row limits, frozen dependencies and atomic delivery unchanged. Vendored chart code keeps its license and notices.
 - Explainer does not change global agent instructions or activate proactive output during installation.
+- Cyclic shorthand can try one alternate placement through the existing native renderer and validator. Keep authored nodes, relations, input bytes and explicit/edited geometry intact; publish only a validated candidate. Preview lane classes follow the selected rendering without changing the retained source model.
 
 ## Work Guidance
 

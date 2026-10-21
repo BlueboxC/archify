@@ -134,3 +134,7 @@ connector strokes and semantic colors stay unchanged. Unicode export names
 use the authored heading, avoiding translated page suffixes and preserving
 NFC letters and accents ([#1024](https://github.com/tt-a1i/archify/issues/1024)).
 Existing offline fonts, camera bounds and Explainer styling are retained.
+
+## Cyclic Explainer placement
+
+Adapt the cyclic-layout portion of [PR #997](https://github.com/tt-a1i/archify/pull/997) by @goatliamia, tracked in [#1050](https://github.com/tt-a1i/archify/issues/1050). Shorthand retry flows can try one alternate placement through the existing native renderer and checker. Preserve every authored node and relationship, stable source bytes and explicit or edited geometry. Preview lanes follow the selected rendering. Optional paragraph-reference features and the unrelated shared-router extraction are not part of this adaptation. Existing Viewer, Unicode, source-evidence and chart-data corrections remain in place.

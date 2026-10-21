@@ -23,6 +23,31 @@ test('common public HTML QA measures real keyboard, references, themes and horiz
  }finally{await browser.close();}
 });
 function formalDocument(){return {schema_version:1,diagram_type:'explainer',meta:{id:'browser-case',title:'A test explanation',locale:'en'},answer:{summary:'Read the cache first.',reasons:['Fewer database queries'],scope:'Illustrative request path'},panels:[{id:'why',title:'Why does it work?',blocks:[{id:'claim',type:'prose',text:'A cached read takes [5ms](typical:Illustrative timing only, not measured).'}]}],sources:[{id:'example',title:'Example'}]};}
+test('cyclic shorthand keeps its native preview readable and opens the Viewer',{skip:!chrome},async()=>{
+ const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const spec=compileExplainerDiagram('workflow',['enter | Enter','check | Check?','verify | Verify?','record | Record','done | Done','revise | Revise','enter > check','check > verify | yes','verify > record | yes','record > done','check > revise | no','verify > revise | no','record > revise | error','revise > enter | retry | dashed'],{id:'retry',title:'Review and retry'});
+ const document=formalDocument();document.meta.id='cyclic-preview';
+ document.panels.push({id:'retry-panel',title:'How does a rejected review return?',blocks:[{id:'retry',type:'diagram',diagramType:'workflow',spec}]});
+ const preparedDiagrams=await prepareExplainerDiagrams(document);
+ const file=artifact('cyclic-preview',renderExplainer(document,{preparedDiagrams,preparedSources:{sources:{example:{title:'Example'}}}}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try {
+  for(const width of [1280,1440])for(const theme of ['light','dark']){
+   const metrics=await inspectExplainerBrowser(browser,{artifactPath:file,width,height:900,theme});
+   assert.deepEqual(metrics.interactionFailures,[],JSON.stringify(metrics));
+   assert.equal(metrics.nativeText.length,1);assert.ok(metrics.nativeText[0].ratio>=.75,JSON.stringify(metrics.nativeText));
+  }
+  await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width:1440,keyboard:false});
+  await keyboardActivate(browser,'[data-open-diagram="retry"]');
+  let viewer;
+  for(let attempt=0;attempt<40;attempt++){
+   viewer=await inspectNativeViewer(browser);if(viewer.available&&viewer.hasViewer)break;
+   await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  assert.equal(viewer.available,true,JSON.stringify(viewer));assert.equal(viewer.hasViewer,true,JSON.stringify(viewer));assert.deepEqual(viewer.errors,[]);
+ } finally {await browser.close();}
+});
 test('formal renderer retains keyboard navigation, static reading and print modes',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');
  const document=formalDocument();
