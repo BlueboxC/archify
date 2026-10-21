@@ -551,3 +551,16 @@ test('compare artifact: the shipped delta overlays two memberships and is judged
   assert.equal(result.composition.metrics.boundaryMembershipIssues, 0);
   assert.equal(result.ok, true);
 });
+
+test('boundary membership retains node ancestry when an unquoted value ends with a slash', () => {
+  for (const value of ['value', "it's", 'x"']) {
+    const { result } = checkHtml('unquoted-node-slash', `
+      ${frame({ members: 'member' })}
+      ${node('member', 260, 40)}
+      <g data-node-id="third_party" data-note=${value}/><rect x="260" y="180" width="150" height="60"/></g>
+    `, 'showcase');
+    const issues = result.composition.issues.filter(item => item.code === 'composition/boundary-membership');
+    assert.equal(issues.length, 1, value);
+    assert.equal(issues[0].node.id, 'third_party');
+  }
+});

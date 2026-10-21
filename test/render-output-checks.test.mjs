@@ -1065,6 +1065,18 @@ test('render output check: single_svg does not self-close a root on an unquoted 
   assert.deepEqual(finite.details, ['rect x="NaN"']);
 });
 
+test('render output check: single_svg does not self-close a root on a spaced slash', () => {
+  const { result } = checkRawHtml('spaced-slash-root', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154" / ><rect x="NaN" y="0" width="10" height="10"/></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, true);
+  assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
+  const finite = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(finite.ok, false);
+  assert.deepEqual(finite.details, ['rect x="NaN"']);
+});
+
 test('render output check: single_svg ignores svg-like text inside CDATA', () => {
   const { result } = checkRawHtml('cdata-svg', `<!doctype html><html><body>
 <svg viewBox="0 0 240 154"><![CDATA[<svg>]]><rect x="0" y="0" width="10" height="10"/></svg>
@@ -1074,6 +1086,20 @@ test('render output check: single_svg ignores svg-like text inside CDATA', () =>
   assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
 });
 
+test('render output check: single_svg stays fast on a truncated candidate of unterminated quoted tags', () => {
+  // A truncated candidate can end inside thousands of unterminated quoted
+  // tags (~360 KB here, no <svg> anywhere). A tokenizer that retries its tag
+  // pattern at every '<' rescans the remaining suffix per candidate and
+  // needs ~50s; a single-pass scan returns at once.
+  const startedAt = Date.now();
+  const { result } = checkRawHtml('unterminated-quoted-tags', '<x a="'.repeat(60000));
+  const elapsedMs = Date.now() - startedAt;
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, false);
+  assert.deepEqual(single.details, ['found 0 <svg> block(s)']);
+  assert.ok(elapsedMs < 10000, `block scan took ${elapsedMs}ms`);
+});
+
 test('render output check: single_svg ignores svg-like text in a quoted child attribute', () => {
   const { result } = checkRawHtml('quoted-attr-svg', `<!doctype html><html><body>
 <svg viewBox="0 0 240 154"><text data-x="<svg>">hi</text></svg>
@@ -1081,6 +1107,144 @@ test('render output check: single_svg ignores svg-like text in a quoted child at
   const single = result.checks.find(item => item.name === 'single_svg');
   assert.equal(single.ok, true);
   assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
+});
+
+test('render output check: single_svg does not treat a non-breaking space as a tag delimiter', () => {
+  // HTML tag names end only at ASCII whitespace, '/' or '>'. A U+00A0 after
+  // the name joins the tag name, so the document holds no svg element even
+  // though JavaScript \s accepts the character as whitespace.
+  const { result } = checkRawHtml('nbsp-tag-delimiter', '<!doctype html><html><body>\n<svg\u00a0viewBox="0 0 240 154"><rect x="0" y="0" width="10" height="10"/></svg>\n</body></html>');
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, false);
+  assert.deepEqual(single.details, ['found 0 <svg> block(s)']);
+});
+
+test('render output check: single_svg ends a comment on the HTML bang close', () => {
+  // A comment also ends at --!> per the HTML tokenizer, so the svg after it
+  // is real markup and a second root must still be counted.
+  const { result } = checkRawHtml('bang-close-comment-svg', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154"></svg><!-- note --!><svg viewBox="0 0 240 154"></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, false);
+  assert.deepEqual(single.details, ['found 2 <svg> block(s)']);
+});
+
+test('render output check: single_svg ends an abruptly closed empty comment', () => {
+  // <!--> is a complete (empty) comment per the HTML tokenizer; the svg
+  // after it is real markup, not comment text.
+  const { result } = checkRawHtml('abrupt-comment-svg', `<!doctype html><html><body>
+<!--><svg viewBox="0 0 240 154"><rect x="0" y="0" width="10" height="10"/></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, true);
+  assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
+});
+
+test('render output check: single_svg stays fast on many ordinary comments', () => {
+  // Probing each comment for a --!> close must stay bounded by the comment
+  // itself: with no --!> anywhere, an unbounded probe rescans the remaining
+  // suffix per comment (~256 KB of comments took tens of seconds that way).
+  const startedAt = Date.now();
+  const { result } = checkRawHtml('many-comments', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154"></svg>${'<!--x-->'.repeat(32000)}
+</body></html>`);
+  const elapsedMs = Date.now() - startedAt;
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, true);
+  assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
+  assert.ok(elapsedMs < 10000, `block scan took ${elapsedMs}ms`);
+});
+
+test('render output check: single_svg counts an svg after top-level CDATA text', () => {
+  // Outside foreign content, <![CDATA[ is a bogus comment that ends at the
+  // first '>' per the HTML tokenizer; the svg after it is real markup, not
+  // CDATA text, so a second root must still be counted.
+  const { result } = checkRawHtml('toplevel-cdata-svg', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154"></svg><![CDATA[x><svg viewBox="0 0 240 154"><rect x="NaN"/></svg>]]>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, false);
+  assert.deepEqual(single.details, ['found 2 <svg> block(s)']);
+});
+
+test('render output check: single_svg is not hidden by a quote in an unquoted attribute value', () => {
+  // A quote inside an unquoted attribute value is literal text per the HTML
+  // tokenizer and the tag still ends at its '>'; quote mode starts only on a
+  // quote that opens a value after '='.
+  const { result } = checkRawHtml('unquoted-attr-quote-svg', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154"></svg><div data=x"><svg viewBox="0 0 240 154"><rect x="NaN"/></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, false);
+  assert.deepEqual(single.details, ['found 2 <svg> block(s)']);
+});
+
+test('render output check: single_svg does not self-close a root on a slash after an apostrophe in an unquoted value', () => {
+  // The apostrophe in data-note=it's is literal text inside an unquoted
+  // value, so the '/' after it is value text too, not the self-closing
+  // flag; the root runs to its </svg> and the rect stays in scope.
+  const { result } = checkRawHtml('apostrophe-slash-root', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154" data-note=it's/><rect x="NaN" y="0" width="10" height="10"/></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, true);
+  assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
+  const finite = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(finite.ok, false);
+  assert.deepEqual(finite.details, ['rect x="NaN"']);
+});
+
+test('render output check: single_svg counts an svg after a bogus declaration holding a comment opener', () => {
+  // A <! that opens neither a comment nor a CDATA section is a bogus
+  // comment per the HTML tokenizer and ends at the first '>'; the <!--
+  // inside it opens nothing, so the svg after that '>' is real markup.
+  const { result } = checkRawHtml('bogus-declaration-svg', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154"></svg><!x<!--y><svg viewBox="0 0 240 154"><rect x="NaN"/></svg>-->
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, false);
+  assert.deepEqual(single.details, ['found 2 <svg> block(s)']);
+});
+
+test('render output check: root attributes survive a lone quote in an unquoted value', () => {
+  // A quote inside an unquoted attribute value is literal text per the HTML
+  // tokenizer; only a quote right after '=' opens a quoted value. Reading
+  // the root opener with a quoted-spans pattern loses everything past the
+  // lone quote, so data-quality-profile never reaches the composition
+  // profile and a showcase artifact silently degrades to standard.
+  const { result } = checkRawHtml('lone-quote-root', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154" data-note=x" data-quality-profile="showcase"><rect x="10" y="10" width="10" height="10"/></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, true);
+  assert.equal(result.composition.profile, 'showcase');
+});
+
+test('render output check: single_svg treats a processing instruction as a bogus comment', () => {
+  // <?...> is a bogus comment in HTML and ends at the first '>', so the
+  // <svg> inside it opens no element; parse5 reads the input below as two
+  // sibling svg elements, and the block scan must agree.
+  const { result } = checkRawHtml('pi-nested-svg', `<!doctype html><html><body>
+<svg><?x <svg>></svg><svg></svg></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, false);
+  assert.deepEqual(single.details, ['found 2 <svg> block(s)']);
+});
+
+test('render output check: single_svg counts an svg after a top-level processing instruction', () => {
+  // The bogus comment ends at the first '>' (the one closing the <svg text
+  // inside it), so the real root after it stays in scope for every check.
+  const { result } = checkRawHtml('pi-toplevel-svg', `<!doctype html><html><body>
+<?x <svg>><svg viewBox="0 0 240 154"><rect x="NaN" y="0" width="10" height="10"/></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, true);
+  assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
+  const finite = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(finite.ok, false);
+  assert.deepEqual(finite.details, ['rect x="NaN"']);
 });
 
 test('render output check: finite_svg ignores prose that mentions NaN or Infinity', () => {
@@ -1193,6 +1357,107 @@ for (const [name, markup] of [
   });
 }
 
+test('render output check: single_svg ends a doctype at a quoted greater-than', () => {
+  // Per the HTML tokenizer (13.2.5.59), a '>' inside a quoted DOCTYPE public
+  // identifier is an abrupt-doctype-public-identifier parse error: the
+  // doctype ends there instead of continuing to the closing quote. parse5
+  // reads the input below as one svg root (the <svg> exposed by the abrupt
+  // end) with two nested svgs, and the block scan must agree instead of
+  // treating the quoted '>' as ending the declaration early in a different
+  // way. The scanner already ends the declaration at the first '>', which
+  // matches the spec; this test locks that behavior in.
+  const { result } = checkRawHtml('doctype-quoted-identifier-svg', `<!doctype html><html><body>
+<!doctype html PUBLIC "x><svg>"><svg></svg><svg></svg></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, true);
+  assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
+});
+
+test('render output check: single_svg treats a leading equals sign as an attribute name', () => {
+  // Per the HTML tokenizer (13.2.5.32), '=' while waiting for an attribute
+  // name starts an attribute whose name is '=' rather than opening a value.
+  // The quote after it is literal text inside the name (13.2.5.33), so the
+  // tag ends at the '>' and the first tag is <svg =">. The </svg> after it
+  // closes that root, and the <svg></svg> following is a second sibling
+  // root. parse5 reads two svg elements here, and the block scan must not
+  // treat the '=' as opening a quoted value that would swallow the </svg>
+  // into the opener and merge both roots into one block.
+  const { result } = checkRawHtml('equals-attribute-name-svg', `<!doctype html><html><body>
+<svg ="></svg>"><svg></svg></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, false);
+  assert.deepEqual(single.details, ['found 2 <svg> block(s)']);
+});
+
+test('render output check: single_svg treats a slash-terminated tag name as self-closing', () => {
+  // Per the HTML tokenizer, '/' in tag-name state moves to the self-closing
+  // start tag state, so <svg/> is a self-closed root. The attribute-value
+  // tracker used to clear the slash flag while still in the tag name, which
+  // made a nested <svg/> open a depth level that never closed and the whole
+  // document reported zero blocks.
+  const { result } = checkRawHtml('self-closing-tag-name-svg', `<!doctype html><html><body>
+<svg/>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, true);
+  assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
+});
+
+test('render output check: single_svg keeps a nested self-closing svg inside its root', () => {
+  const { result } = checkRawHtml('nested-self-closing-svg', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154"><svg/></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, true);
+  assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
+});
+
+test('render output check: finite_svg still sees through a self-closing foreignObject', () => {
+  // <foreignObject/> is self-closing, so it must not stay on the element
+  // stack: it is an HTML integration point, and leaving it open hid the
+  // following rect from the SVG context, letting a NaN coordinate pass.
+  const { result } = checkRawHtml('foreignobject-self-closing-finite', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154"><foreignObject/><rect x="NaN" y="0" width="10" height="10"/></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, true);
+  assert.deepEqual(single.details, ['found 1 <svg> block(s)']);
+  const finite = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(finite.ok, false);
+  assert.deepEqual(finite.details, ['rect x="NaN"']);
+});
+
+test('render output check: single_svg consumes a closing bogus declaration through its >', () => {
+  // Per the HTML tokenizer, '</!' is not a tag at all: the '/' puts the
+  // tokenizer in end-tag-open state and '!' is an invalid first character,
+  // so it becomes a bogus comment that runs to its first '>'. The <svg>
+  // inside it is comment text, not an element; the scanner used to resume
+  // one byte past the '<' and count that inner svg as a real root, merging
+  // what HTML parses as two sibling roots into one block.
+  const { result } = checkRawHtml('closing-bogus-declaration-svg', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154"></! <svg>></svg><svg viewBox="0 0 240 154"></svg></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, false);
+  assert.deepEqual(single.details, ['found 2 <svg> block(s)']);
+});
+
+test('render output check: single_svg swallows an inner svg inside a malformed tag name', () => {
+  // In tag-name state a quote is literal text, so <x"<svg>> is a single
+  // malformed start tag whose name swallows the inner <svg>; HTML never sees
+  // that inner svg as an element. The scanner used to reject the '<' and
+  // resume one byte later, exposing the swallowed svg as a real root.
+  const { result } = checkRawHtml('malformed-tag-name-svg', `<!doctype html><html><body>
+<svg viewBox="0 0 240 154"><x"<svg>></svg><svg viewBox="0 0 240 154"></svg></svg>
+</body></html>`);
+  const single = result.checks.find(item => item.name === 'single_svg');
+  assert.equal(single.ok, false);
+  assert.deepEqual(single.details, ['found 2 <svg> block(s)']);
+});
+
+
 for (const tag of ['script', 'style']) {
   test(`render output check: single_svg ignores svg-like text in ${tag}`, () => {
     const { result } = checkRawHtml(`raw-text-${tag}`, `<!doctype html><html><body>
@@ -1205,3 +1470,28 @@ for (const tag of ['script', 'style']) {
     assert.deepEqual(finite.details, ['rect x="NaN"']);
   });
 }
+
+test('render output check: SVG root discovery agrees with the independent HTML parser', () => {
+  const cases = [
+    '<svg></svg><!--x--!><svg></svg>',
+    '<!--><svg></svg>',
+    '<svg></svg><div data=x"><svg></svg>',
+    '<svg><?x <svg>></svg><svg></svg></svg>',
+    '<svg ="></svg>"><svg></svg></svg>',
+    '<svg><svg/></svg>',
+    '<script>const value = "<svg></svg>";</script><svg></svg>',
+    '<style>.icon::after {content:"<svg></svg>"}</style><svg></svg>',
+  ];
+  function rootCount(node, insideSvg = false) {
+    const svg = node.nodeName === 'svg' && node.namespaceURI === 'http://www.w3.org/2000/svg';
+    return (svg && !insideSvg ? 1 : 0) + (node.childNodes || [])
+      .reduce((sum, child) => sum + rootCount(child, insideSvg || svg), 0);
+  }
+  for (const [i, markup] of cases.entries()) {
+    const expected = rootCount(parseFragment(markup));
+    const { result } = checkRawHtml('html-parser-oracle-' + i, markup);
+    const actual = result.checks.find(item => item.name === 'single_svg');
+    assert.equal(actual.ok, expected === 1, markup);
+    assert.deepEqual(actual.details, ['found ' + expected + ' <svg> block(s)'], markup);
+  }
+});

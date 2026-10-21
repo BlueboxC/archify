@@ -1215,6 +1215,8 @@ html[data-preset="blueprint"] .overview-map-surface { border-radius: 0.1rem; }
    direct authored relationships. Geometry and the canonical SVG stay put. */
 .semantic-lens {
   position: absolute;
+  display: flex;
+  flex-direction: column;
   right: 1rem;
   bottom: calc(4.15rem + var(--archify-nav-reserve));
   z-index: 24;
@@ -1281,6 +1283,8 @@ html[data-preset="blueprint"] .semantic-lens { border-radius: 0.28rem; }
 .semantic-lens-kinds {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 0.3rem;
   max-height: min(15rem, 40vh);
   padding: 0 0.5rem 0.5rem;
@@ -2806,7 +2810,7 @@ html[data-reader-rail]:not([data-reader-rail="bottom"]) .header { min-height: 0;
 .node-outline-item[aria-current="true"] strong { font-weight: 600; }
 .node-outline-item small {
   overflow: hidden;
-  color: var(--text-faint);
+  color: var(--text);
   font-size: 0.6875rem;
   text-align: right;
   text-overflow: ellipsis;
@@ -2815,7 +2819,7 @@ html[data-reader-rail]:not([data-reader-rail="bottom"]) .header { min-height: 0;
 }
 .node-outline-item:hover small,
 .node-outline-item[data-previewing] small,
-.node-outline-item[aria-current="true"] small { color: var(--text-muted); }
+.node-outline-item[aria-current="true"] small { color: var(--text); }
 
 /* The desktop bottom rail is an index: compact rows keep related nodes
    together while allowing full names and descriptions to wrap naturally. */

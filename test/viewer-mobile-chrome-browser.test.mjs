@@ -89,7 +89,7 @@ test('Mobile Viewer chrome stays reachable, clear of the dock, and the stage scr
   // 3. An overlay opened from the dock must clear the dock and leave its
   //    actions clickable; only the header visible behind the dock is the defect.
   for (const [trigger, panelSelector, closeSelector] of [
-    ['#btn-route-probe', '#route-probe', '#route-probe-close'],
+    ['#btn-route-probe', '#route-probe', '#route-probe-clear'],
     ['#btn-semantic-lens', '.semantic-lens', '.semantic-lens-close'],
   ]) {
     const triggerFound = await run(`Boolean(document.querySelector('${trigger}'))`);
@@ -144,6 +144,32 @@ test('Mobile Viewer chrome stays reachable, clear of the dock, and the stage scr
   assert.ok(tall.top >= tall.containerTop - 0.5, `lens top ${tall.top} must stay inside the stage ${tall.containerTop}`);
   assert.equal(tall.closeInside, true, 'the lens close control must stay inside the stage');
   assert.equal(tall.closeHit, true, 'the lens close control must be hit-testable');
+
+  // The lens actions are pinned below the scrollable kinds list; at a large
+  // root font they must stay inside the panel, not clipped by its height cap.
+  const lensActions = await run(`(() => {
+    const panel = document.querySelector('.semantic-lens');
+    const kind = document.querySelector('.semantic-lens-kinds button');
+    if (kind) kind.click();
+    const check = (element) => {
+      if (!element || element.hidden) return { visible: false, hittable: false };
+      const rect = element.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return {
+        visible: rect.height > 0 && rect.bottom <= panelRect.bottom + 0.5,
+        hittable: Boolean(hit && (hit === element || element.contains(hit))),
+      };
+    };
+    return {
+      clear: check(document.querySelector('#semantic-lens-clear')),
+      copy: check(document.querySelector('#semantic-lens-copy')),
+    };
+  })()`);
+  assert.equal(lensActions.clear.visible, true, 'the lens clear action must stay inside the panel');
+  assert.equal(lensActions.clear.hittable, true, 'the lens clear action must be hit-testable');
+  assert.equal(lensActions.copy.visible, true, 'the lens copy action must stay inside the panel');
+  assert.equal(lensActions.copy.hittable, true, 'the lens copy action must be hit-testable');
   await run(`document.querySelector('.semantic-lens-close').click()`);
   await run(`document.documentElement.style.fontSize = ''`);
   await settle();

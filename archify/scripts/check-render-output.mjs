@@ -84,8 +84,6 @@ let composition = {
 };
 
 const NON_FINITE_TOKEN = /\b(?:NaN|undefined|Infinity)\b/;
-// Consume comments/CDATA as whole tokens, including any tag-like prose.
-const SVG_TAG_TOKEN = /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<(\/?)([A-Za-z][\w:-]*)(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>/g;
 const AUTOMATIC_CROSSOVER_UNDERLAY_TAG = /<path\b[^>]*\bdata-graph-role="automatic-crossover-underlay"[^>]*\/>/i;
 const HTML_VOID_ELEMENTS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
 const SVG_HTML_INTEGRATION_POINTS = new Set(['foreignobject', 'desc', 'title']);
@@ -115,60 +113,134 @@ function addCheck(name, ok, details = []) {
   checks.push({ name, ok, details });
 }
 
-// Scan top-level <svg> blocks with the same quote/CDATA-aware tokenizer the
-// other static checks use, so `<svg>` text inside comments, CDATA sections, or
-// quoted attribute values never moves the depth counter. Case-insensitive like
-// the HTML parser: <SVG> is the same element as <svg>.
-
-// A '/' that ends an unquoted attribute value (for example data-note=value/>)
-// is value text per HTML, not the self-closing flag: parse5 keeps it, and the
-// finite_svg tests document x1="NaN/" for <line x1=NaN/>.
-function isSelfClosingTag(token) {
-  const unquoted = token.replace(/"[^"]*"|'[^']*'/g, '""');
-  if (/=[^\s"'=<>`]*\/\s*>$/.test(unquoted)) return false;
-  return /\/\s*>$/.test(unquoted);
+// Attribute names and unquoted values may contain literal quotes. Keep one
+// state machine for tag boundaries and the SVG self-closing flag.
+function scanTagEnd(source, from) {
+  let quote = null;
+  let state = 'none';
+  let slash = false;
+  for (let i = from; i < source.length; i += 1) {
+    const ch = source[i];
+    if (quote !== null) {
+      if (ch === quote) { quote = null; state = 'none'; }
+      slash = false;
+    } else if (ch === '>') {
+      return { end: i, selfClosing: slash };
+    } else if (state === 'name') {
+      if (ch === '=') state = 'pending';
+      else if (/[ \t\n\f\r/]/.test(ch)) state = 'none';
+      slash = ch === '/';
+    } else if (state === 'pending') {
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (!/[ \t\n\f\r]/.test(ch)) state = 'unquoted';
+      slash = false;
+    } else if (state === 'unquoted') {
+      if (/[ \t\n\f\r]/.test(ch)) state = 'none';
+      slash = false;
+    } else {
+      if (!/[ \t\n\f\r/]/.test(ch)) state = 'name';
+      slash = ch === '/';
+    }
+  }
+  return null;
 }
 
-// Collect each top-level <svg> block. Matching lazily to the first </svg>
-// would cut a root short at a nested <svg> (for example inside foreignObject)
-// and drop the rest of the root from every check below; markup inside HTML
-// comments is not an element and must not count as a block either.
+// Shared by root discovery and geometry consumers; consume each position once.
+// Match fields retain the previous tag-consumer interface: text, slash, name.
+function* svgTagTokens(source) {
+  let i = 0;
+  let depth = 0;
+  let rawText = null;
+  while (i < source.length) {
+    let lt;
+    if (rawText) {
+      const close = new RegExp('</' + rawText + '[ \\t\\n\\f\\r]*>', 'gi');
+      close.lastIndex = i;
+      const found = close.exec(source);
+      if (!found) return;
+      lt = found.index;
+      rawText = null;
+    } else {
+      lt = source.indexOf('<', i);
+    }
+    if (lt < 0) return;
+    if (source.startsWith('<!--', lt)) {
+      let end = -1;
+      if (source[lt + 4] === '>') end = lt + 5;
+      else if (source.startsWith('->', lt + 4)) end = lt + 6;
+      else {
+        let p = lt + 4;
+        while ((p = source.indexOf('--', p)) !== -1) {
+          if (source[p + 2] === '>') { end = p + 3; break; }
+          if (source[p + 2] === '!' && source[p + 3] === '>') { end = p + 4; break; }
+          p += 1;
+        }
+      }
+      i = end < 0 ? source.length : end;
+      continue;
+    }
+    if (source.startsWith('<![CDATA[', lt) && depth > 0) {
+      const end = source.indexOf(']]>', lt + 9);
+      i = end < 0 ? source.length : end + 3;
+      continue;
+    }
+    if (source.startsWith('<!', lt) || source.startsWith('<?', lt) || source.startsWith('</!', lt)) {
+      const end = source.indexOf('>', lt + 2);
+      i = end < 0 ? source.length : end + 1;
+      continue;
+    }
+    let j = lt + 1;
+    const closing = source[j] === '/';
+    if (closing) j += 1;
+    const nameStart = j;
+    while (j < source.length && /[\w:-]/.test(source[j])) j += 1;
+    const name = source.slice(nameStart, j);
+    const after = source[j];
+    if (!/^[A-Za-z]/.test(name) || (after !== undefined && !/[ \t\n\f\r/>]/.test(after))) {
+      if (/[A-Za-z]/.test(source[lt + 1] || '')) {
+        const tag = scanTagEnd(source, lt + 1);
+        i = tag ? tag.end + 1 : source.length;
+      } else i = lt + 1;
+      continue;
+    }
+    const tag = scanTagEnd(source, lt + 1);
+    if (!tag) return;
+    i = tag.end + 1;
+    const match = [source.slice(lt, i), closing ? '/' : '', name];
+    match.index = lt;
+    match.selfClosing = tag.selfClosing;
+    yield match;
+    const element = name.toLowerCase();
+    if (element === 'svg') depth = Math.max(0, depth + (closing ? -1 : tag.selfClosing ? 0 : 1));
+    if (!closing && !tag.selfClosing && (element === 'script' || element === 'style')) rawText = element;
+  }
+}
+
 function extractSvgBlocks(source) {
   const blocks = [];
   let depth = 0;
   let start = -1;
-  const tokens = new RegExp(SVG_TAG_TOKEN.source, 'gi');
-  let match;
-  while ((match = tokens.exec(source)) !== null) {
-    const token = match[0];
-    if (token.startsWith('<!--') || token.startsWith('<![CDATA[')) continue;
-    const element = match[2]?.toLowerCase();
-    if (!match[1] && (element === 'script' || element === 'style') && !isSelfClosingTag(token)) {
-      const closing = new RegExp(`</${element}\\s*>`, 'gi');
-      closing.lastIndex = tokens.lastIndex;
-      const end = closing.exec(source);
-      tokens.lastIndex = end ? closing.lastIndex : source.length;
-      continue;
-    }
-    if (element !== 'svg') continue;
-    if (match[1]) {
-      if (depth > 0 && --depth === 0) blocks.push(source.slice(start, match.index + token.length));
-    } else if (isSelfClosingTag(token)) {
-      if (depth === 0) blocks.push(token);
+  for (const tag of svgTagTokens(source)) {
+    if (tag[2].toLowerCase() !== 'svg') continue;
+    if (tag[1]) {
+      if (depth > 0 && --depth === 0) blocks.push(source.slice(start, tag.index + tag[0].length));
+    } else if (tag.selfClosing) {
+      if (depth === 0) blocks.push(tag[0]);
     } else {
-      if (depth === 0) start = match.index;
+      if (depth === 0) start = tag.index;
       depth += 1;
     }
   }
   return blocks;
 }
 
+
 const svgBlocks = extractSvgBlocks(html);
 addCheck('single_svg', svgBlocks.length === 1, [`found ${svgBlocks.length} <svg> block(s)`]);
 
 if (svgBlocks.length === 1) {
   const svg = svgBlocks[0];
-  const svgRoot = svg.match(/<svg\b(?:[^>"']|"[^"]*"|'[^']*')*>/i)?.[0] || '';
+  const svgRoot = svgTagTokens(svg).next().value?.[0] || '';
   const svgAttrs = parseAttrs(svgRoot);
   const qualityProfile = svgAttrs['data-quality-profile'] || 'standard';
   const workflowV2 = svgAttrs['data-layout-contract'] === 'readable-v2';
@@ -558,7 +630,7 @@ function collectArrows(fragment, useActualPoints = false) {
   let previousTag = null;
   let previousTagEnd = 0;
 
-  for (const tag of fragment.matchAll(SVG_TAG_TOKEN)) {
+  for (const tag of svgTagTokens(fragment)) {
     const name = tag[2]?.toLowerCase();
     if (tag[1] || !['path', 'line'].includes(name)) continue;
     if (name === 'path') pathIndex += 1;
@@ -877,12 +949,12 @@ function relationshipName(arrow) {
 function collectUntransformedNodeRects(fragment) {
   const groups = [];
   const nodes = new Map();
-  for (const token of fragment.matchAll(SVG_TAG_TOKEN)) {
+  for (const token of svgTagTokens(fragment)) {
     if (!token[2]) continue;
     const name = token[2].toLowerCase();
     if (name === 'g') {
       if (token[1]) groups.pop();
-      else if (!/\/\s*>$/.test(token[0])) groups.push(parseAttrs(token[0]));
+      else if (!token.selfClosing) groups.push(parseAttrs(token[0]));
       continue;
     }
     if (name !== 'rect' || token[1] || groups.some((group) => group.transform)) continue;
@@ -962,7 +1034,7 @@ function relationshipRecord(arrow) {
 function collectCompositionFrames(fragment) {
   const frames = [];
   let pathIndex = 0;
-  for (const match of fragment.matchAll(SVG_TAG_TOKEN)) {
+  for (const match of svgTagTokens(fragment)) {
     const name = match[2]?.toLowerCase();
     if (match[1] || !['rect', 'path', 'line'].includes(name)) continue;
     if (name === 'path') pathIndex += 1;
@@ -1066,7 +1138,7 @@ function collectSequenceColumnSpace({ svgAttrs, fragment, nodeRects, arrows }) {
   // Brand badges stay inside their participant box. Ignore only that subtree's
   // transforms, including the preset path or nested fallback icon's scale.
   const brandGroups = [];
-  for (const token of fragment.matchAll(SVG_TAG_TOKEN)) {
+  for (const token of svgTagTokens(fragment)) {
     if (!token[2]) continue;
     const name = token[2].toLowerCase();
     if (token[1]) {
@@ -1079,7 +1151,7 @@ function collectSequenceColumnSpace({ svgAttrs, fragment, nodeRects, arrows }) {
       && String(attrs.class || '').split(/\s+/).includes('brand-mark'));
     if (!inBrand && attrs.transform && ['g', 'path', 'line', 'rect', 'text'].includes(name)
         && !(name === 'g' && attrs['data-semantic-sigil'])) return evidence;
-    if (name === 'g' && !/\/\s*>$/.test(token[0])) brandGroups.push(inBrand);
+    if (name === 'g' && !token.selfClosing) brandGroups.push(inBrand);
   }
   const [originX, , width, height] = viewBoxRect(svgAttrs);
   if (![originX, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return evidence;
@@ -1143,7 +1215,7 @@ function collectSequenceNoteBorders({ svgAttrs, fragment, frames, arrows }) {
   const segments = frames.filter(frame => frame.kind === 'segment' && !frame.shape);
   if (!segments.length) return [];
   const issues = [], stack = [];
-  for (const tag of fragment.matchAll(SVG_TAG_TOKEN)) {
+  for (const tag of svgTagTokens(fragment)) {
     const name = tag[2]?.toLowerCase();
     if (name === 'g') {
       if (tag[1]) stack.pop();
@@ -1217,7 +1289,7 @@ function collectComponentBoxes(fragment) {
   const boxes = [];
   const stack = [];
   let active = null;
-  for (const match of fragment.matchAll(SVG_TAG_TOKEN)) {
+  for (const match of svgTagTokens(fragment)) {
     if (!match[2]) continue;
     const element = match[2].toLowerCase();
     if (match[1]) {
@@ -1246,7 +1318,7 @@ function collectComponentBoxes(fragment) {
     }
     // An element that cannot have children cannot hold a rectangle either, so
     // it never opens a node.
-    const childless = /\/>$/.test(match[0]) || HTML_VOID_ELEMENTS.has(element);
+    const childless = match.selfClosing || HTML_VOID_ELEMENTS.has(element);
     const nodeId = attrs['data-node-id'];
     // No dedupe by id: a compare artifact draws a moved node twice, and both
     // drawn positions are real geometry that can sit inside the wrong frame.
@@ -1564,7 +1636,7 @@ function padBox(box, padding) {
 function collectNonFiniteAttrs(svg) {
   const details = [];
   const stack = [];
-  for (const match of svg.matchAll(SVG_TAG_TOKEN)) {
+  for (const match of svgTagTokens(svg)) {
     if (!match[2]) continue;
     const element = match[2].toLowerCase();
     if (match[1]) {
@@ -1585,7 +1657,7 @@ function collectNonFiniteAttrs(svg) {
     // either. A nested <svg> inside foreignObject restores SVG checking.
     // The self-closing test is attribute-aware: a '/' ending an unquoted
     // attribute value is value text, not the self-closing flag.
-    if (!(inSvg ? isSelfClosingTag(match[0]) : HTML_VOID_ELEMENTS.has(element))) {
+    if (!(inSvg ? match.selfClosing : HTML_VOID_ELEMENTS.has(element))) {
       stack.push({ element, inSvg });
     }
   }

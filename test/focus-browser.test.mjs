@@ -11,7 +11,7 @@ import { desktopBrowser, desktopPointerCheck } from './helpers/desktop-browser.m
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
 
-test('Passport and Finder small text remains readable across themes and presets', {
+test('Passport, Finder and Figure index small text remains readable across themes and presets', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser contrast checks.',
 }, async (t) => {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-passport-contrast-'));
@@ -66,6 +66,10 @@ test('Passport and Finder small text remains readable across themes and presets'
         document.documentElement.setAttribute('data-preset', ${JSON.stringify(preset)});
         Archify.finder.close(); Archify.focus.set('api', { toggle: false });`);
       await run('Archify.layoutStability.whenStable()');
+      await run('Promise.all(document.getAnimations().filter(a => Number.isFinite(a.effect.getTiming().iterations)).map(a => a.finished.catch(() => {})))');
+      const outline = await run(`${inspect}('.node-outline-item small')`);
+      assert.ok(outline.length >= 5, 'Figure index retains secondary text for the real diagram nodes');
+      measurements.push(...outline.map(value => ({ theme, preset, surface: 'figure-index', ...value })));
       const passport = await run(`${inspect}('.relationship-lens-eyebrow, .semantic-passport-meta span, .semantic-passport-meta code, .semantic-passport-reach-label, .semantic-passport-reach-actions span, .semantic-passport-reach-actions strong, .semantic-passport-reach-status')`);
       assert.ok(passport.length >= 5, 'the visible Passport contains meaningful metadata and reachability');
       measurements.push(...passport.map(value => ({ theme, preset, surface: 'passport', ...value })));

@@ -20,7 +20,8 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 - Large layout reports must survive redirected and stalled-pipe output in every affected renderer without writing HTML. Static SVG checks retain post-nesting geometry and distinguish root elements from comments, attributes and script/style text.
 - Assert user outcomes; adapt obsolete automatic-layout expectations when a better valid result replaces an old limitation.
 - Skips and platform simulations are not runtime passes. Keep real browser and package evidence distinct.
-- Browser regressions protect tall-diagram top visibility and restoration of inline alignment priorities. Passport/Finder contrast checks composite actual HTML background colors across themes/presets; they do not certify every product surface.
+- Browser regressions protect tall-diagram top visibility and restoration of inline alignment priorities. Passport/Finder/Figure-index contrast checks composite actual HTML background colors across themes/presets and selected rows; they do not certify every product surface. Mobile Lens tests assert that Clear/Copy are inside the capped panel and hit-testable with a 24px root font.
+- SVG scanner regressions retain the contributor's malformed/truncated markup cases, raw script/style controls and independent parse5 root-count comparisons. Keep boundary-membership and coincident-route checks intact.
 
 - Protect multi-year and subsecond timeline labels, large-origin waterfall timing and actual open-bar legends. Real browser checks cover mobile hit targets/overflow, generic light/print contrast with focus preservation, and localized Unicode export names.
 

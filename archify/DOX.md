@@ -12,7 +12,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 
 - Preserve authored topology and explicit routing. Coincident relationships may be intentional; use an actionable showcase warning instead of automatically rerouting them.
 - Boundary membership is authored data. Older HTML without membership metadata remains readable and explicitly unjudged by that rule; never infer membership from labels.
-- Layout JSON mode drains stdout without creating or replacing HTML. SVG checks cover the full root after nested SVG elements, ignoring comment/CDATA and script/style text when locating roots.
+- Layout JSON mode drains stdout without creating or replacing HTML. SVG root discovery and geometry readers share a single-pass tokenizer with attribute-aware tag endings and self-closing flags. Preserve comment/CDATA context, script/style text exclusion, ASCII tag delimiters and the full root after nested SVG elements; this is a scoped artifact scanner rather than a general HTML validator.
 - Checker transport failure is not an artifact verdict. Preserve previous delivered output when verification cannot complete.
 - Preview retains the last verified artifact independently of checking/failure status; same-revision state updates preserve the loaded document.
 - Migration validates complete source/final semantic contracts; group repair spans preserve exact membership and each node's effective group identity under canonical ordering, including overlapping groups with equal labels. Self-calls retain ownership, notes and identity. Raster pins undergo container checks even with matching digests.
