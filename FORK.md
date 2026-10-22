@@ -6,6 +6,10 @@ It supports ten diagram types, Explainer documents and the release's Viewer, wor
 Preview and verified `finalize` delivery. Existing generated user artifacts are
 not rewritten by upgrading the Skill.
 
+## Input-preserving Explainer evidence
+
+For [#1060](https://github.com/tt-a1i/archify/issues/1060), reported by To3akaRin, discover declared chart-data and external native-diagram paths before preparing resource contents. Delivery, failed redelivery and finalize refuse physical-path aliases between those inputs and their artifacts or evidence sidecars. Preserve previous data, HTML and evidence on rejection; ordinary repeated delivery remains supported. No renderer, Viewer or dependency changes are needed.
+
 ## Preserved customizations
 
 - Offline licensed JetBrains Mono: 3.1's six embedded WOFF2 subsets replace the

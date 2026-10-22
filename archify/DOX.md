@@ -20,6 +20,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Timeline cards, accessible labels and fallback ticks preserve nonzero milliseconds. Waterfall labels retain time resolution and visible endpoints without changing span/tick geometry.
 - Timeline ticks follow display-zone offset transitions without changing elapsed event geometry. Browser discovery keeps explicit overrides authoritative and prefers Chrome/Chromium before Edge.
 - Redirected finalize evidence retains historical full/browser receipts; the adjacent guarded summary tracks the latest attempt, including failures. `--out-dir` does not relocate the HTML or delivery provenance.
+- Delivery and finalize protect declared local Explainer chart and native-diagram inputs from artifact, provenance, journal, lock and receipt aliases before publication. Discover paths before resource preparation so invalid-data redelivery also preserves inputs; uninspectable drafts withhold failure-sidecar writes.
 - Note-overlap repairs describe one jointly verified translation of the affected message suffix; reject plans that create canvas, note, segment, or legend failures. Preserve authored messages and ordering.
 - Authoring and delivery references use short topic indexes; keep legacy heading links reachable and current exit-code semantics documented.
 - Repository evidence preserves the exact Git top-level filesystem spelling; normalize remote origins separately before identity comparison and credential redaction.

@@ -57,6 +57,8 @@ node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality sho
 
 Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`.
 
+Explainer chart-data files and external native-diagram JSON are also protected inputs. Choose artifact, delivery sidecar and finalize receipt/summary paths that do not alias them. A collision refuses publication while preserving the input and previous output/evidence, including when resource preparation fails. If the draft cannot be inspected, failure provenance is withheld rather than risking an input overwrite.
+
 For the ordinary agent handoff path, prefer the finalizer:
 
 ```bash

@@ -18,6 +18,7 @@ import {
   VISUAL_CHECK_VIEWPORTS,
 } from './visual-check.mjs';
 import { startDeliveryUpdateCheck } from './delivery-update.mjs';
+import { declaredExplainerInputPaths } from '../explainer/prepare.mjs';
 
 export const FINALIZE_STAGES = Object.freeze(['validate', 'deliver', 'check', 'browser-check']);
 const FINALIZE_UPDATE_DEADLINE_MS = 4_000;
@@ -565,9 +566,9 @@ function defaultDeliveryPaths(output) {
   };
 }
 
-function reservedFinalizePaths({ input, output, outDir, deliveryPaths }) {
+function reservedFinalizePaths({ input, output, outDir, deliveryPaths, inputPaths = [] }) {
   const browser = browserCheckSidecarPaths(output, { outDir });
-  return [path.resolve(input), path.resolve(output), ...Object.values(deliveryPaths(output)), browser.receipt];
+  return [path.resolve(input), ...inputPaths, path.resolve(output), ...Object.values(deliveryPaths(output)), browser.receipt];
 }
 
 // Node moves that remove the measured crossings and detours, most specific
@@ -759,7 +760,10 @@ export async function runFinalize({
   const started = process.hrtime.bigint();
   const startedAt = new Date().toISOString();
   const resolvedInput = path.resolve(input);
-  const resolvedOutput = resolveOutputPath({ requestedOutput: output, inputPaths: [resolvedInput] }).outputPath;
+  const inputPaths = type === 'explainer'
+    ? declaredExplainerInputPaths(fs.readFileSync(resolvedInput, 'utf8'), resolvedInput)
+    : [resolvedInput];
+  const resolvedOutput = resolveOutputPath({ requestedOutput: output, inputPaths }).outputPath;
   const resolvedOutDir = outDir === undefined ? undefined : resolveNativeOutputDirectory(outDir);
   const specification = identity(resolvedInput);
   if (candidateSha256 && specification.sha256 !== candidateSha256) {
@@ -791,7 +795,10 @@ export async function runFinalize({
     if (!pathsAlias(adjacent, resolvedSummary)) summaryPaths.push(adjacent);
   }
   const assertReceiptPaths = () => {
-    const reserved = reservedFinalizePaths({ input: resolvedInput, output: resolvedOutput, outDir: resolvedOutDir, deliveryPaths });
+    for (const target of Object.values(deliveryPaths(resolvedOutput))) {
+      resolveOutputPath({requestedOutput:target,inputPaths,requiredExtension:'.json',inputDescription:'an Explainer input'});
+    }
+    const reserved = reservedFinalizePaths({ input: resolvedInput, output: resolvedOutput, outDir: resolvedOutDir, deliveryPaths, inputPaths });
     const receiptCollision = reserved.find((file) => pathsAlias(resolvedReceipt, file));
     if (receiptCollision) throw new Error(`The finalize receipt must be distinct from the specification, artifact, and gate sidecars: "${receiptCollision}".`);
     for (const summary of summaryPaths) {
