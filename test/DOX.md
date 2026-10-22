@@ -25,6 +25,8 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 
 - Protect multi-year and subsecond timeline labels, large-origin waterfall timing and actual open-bar legends. Real browser checks cover mobile hit targets/overflow, generic light/print contrast with focus preservation, and localized Unicode export names.
 
+- Real Chrome print-media checks cover narrow/wide output with scripts enabled/disabled and return-to-screen clearance.
+
 ## Work Guidance
 
 Use existing runners; add tests only for meaningful uncovered outcomes.

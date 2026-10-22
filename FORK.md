@@ -143,3 +143,7 @@ Existing offline fonts, camera bounds and Explainer styling are retained.
 ## Cyclic Explainer placement
 
 Adapt the cyclic-layout portion of [PR #997](https://github.com/tt-a1i/archify/pull/997) by @goatliamia, tracked in [#1050](https://github.com/tt-a1i/archify/issues/1050). Shorthand retry flows can try one alternate placement through the existing native renderer and checker. Preserve every authored node and relationship, stable source bytes and explicit or edited geometry. Preview lanes follow the selected rendering. Optional paragraph-reference features and the unrelated shared-router extraction are not part of this adaptation. Existing Viewer, Unicode, source-evidence and chart-data corrections remain in place.
+
+## Narrow print clearance (#1027 follow-up)
+
+Adapt CodeRabbit's inline observation on PR #1027 at `4342092890`: clear `--archify-dock-h` in the authored print rule. With scripts disabled, a 360px document retained 100px of hidden-navigation padding; ordinary scripted printing already clears it through the size observer. Keep CSS printing independent of that observer and preserve mobile screen clearance. Real Chrome controls cover 360/1440px, scripts on/off and return to screen; this does not certify hardware-printer pagination. Existing user HTML is not rewritten.

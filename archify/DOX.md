@@ -28,6 +28,8 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 
 - Timeline dates retain years across year boundaries; subsecond omitted intervals state milliseconds. Waterfall timing agreement accounts for binary64 magnitude, and the incomplete legend describes only open bars. Neutral relationship text uses readable theme-specific ink without recoloring connectors or semantic variants. Exports use the authored heading and NFC Unicode letters/numbers with attached marks to retain localized titles; detached marks are removed and names without a letter or number use the existing fallback.
 
+- Print CSS clears hidden navigation clearance independently of JavaScript; screen/mobile dock behavior stays measured.
+
 ## Work Guidance
 
 - Reuse the shared geometry, diagnostic and tracked-package interfaces. Keep upstream-derived tests and attribution with adaptations.
