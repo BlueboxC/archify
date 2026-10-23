@@ -1,0 +1,134 @@
+{
+  "manifest": {
+    "schemaVersion": 1,
+    "skillId": "archify",
+    "channel": "stable",
+    "version": "3.2.2",
+    "publishedAt": "2026-10-23T00:00:00Z",
+    "source": {
+      "repository": "https://github.com/tt-a1i/archify",
+      "ref": "v3.2.2",
+      "treeSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "artifact": {
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "summary": "Controlled UI-state fixture, not a published release.",
+    "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.2.2",
+    "severity": "normal"
+  },
+  "fixtures": [
+    {
+      "locale": "en",
+      "style": "clean",
+      "original": "artifacts/pr1066-en-clean.html",
+      "fixture": "artifacts/pr1066-fixture-en-clean.html",
+      "original_sha256": "185f94b812f7f58a235b23166fcf41c6ea3740298dba8f191de043918b2af958",
+      "fixture_sha256": "c05c97294896a31864bd6fddc96f9a4d1da4a2d6ed66c18781e663b378370557",
+      "only_change": {
+        "generatorVersion": {
+          "from": "3.2.1-dev.1",
+          "to": "3.2.1"
+        }
+      }
+    },
+    {
+      "locale": "en",
+      "style": "editorial",
+      "original": "artifacts/pr1066-en-editorial.html",
+      "fixture": "artifacts/pr1066-fixture-en-editorial.html",
+      "original_sha256": "e0eb616c51cc592f31c828cfee0c8f702a4d9f63c8b44826e70869f6b5a48f03",
+      "fixture_sha256": "bf5bf912862521a869f1914b1c095bcb5fb037c729ba39601f22f555bf932f93",
+      "only_change": {
+        "generatorVersion": {
+          "from": "3.2.1-dev.1",
+          "to": "3.2.1"
+        }
+      }
+    },
+    {
+      "locale": "en",
+      "style": "product",
+      "original": "artifacts/pr1066-en-product.html",
+      "fixture": "artifacts/pr1066-fixture-en-product.html",
+      "original_sha256": "5529d186a1b6f8addbd11a1e6ce9bf17b4533981e1726e9584daf20a5b7b98d7",
+      "fixture_sha256": "3e11f8fb0b26dc1424ef59f3fb8e9b815e9dfd76d0747a633440991977377f17",
+      "only_change": {
+        "generatorVersion": {
+          "from": "3.2.1-dev.1",
+          "to": "3.2.1"
+        }
+      }
+    },
+    {
+      "locale": "en",
+      "style": "swiss",
+      "original": "artifacts/pr1066-en-swiss.html",
+      "fixture": "artifacts/pr1066-fixture-en-swiss.html",
+      "original_sha256": "b6fff519d15028466f35623faa93e08d6744f9d52a44bcb14e0c8d4d3b0a0e50",
+      "fixture_sha256": "f9fe41c38307e995eb7e2886c0cfa0284033965c07f546118fa611a77fa90c0d",
+      "only_change": {
+        "generatorVersion": {
+          "from": "3.2.1-dev.1",
+          "to": "3.2.1"
+        }
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "style": "clean",
+      "original": "artifacts/pr1066-zh-CN-clean.html",
+      "fixture": "artifacts/pr1066-fixture-zh-CN-clean.html",
+      "original_sha256": "1bbc99982baa0215a6ebc791936b2e255f810c9b8799d10ea517564969639730",
+      "fixture_sha256": "71cfba7f5c95d9dd53063a623a1c42961d2e4de176009160e4ad2b80d00c01d6",
+      "only_change": {
+        "generatorVersion": {
+          "from": "3.2.1-dev.1",
+          "to": "3.2.1"
+        }
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "style": "editorial",
+      "original": "artifacts/pr1066-zh-CN-editorial.html",
+      "fixture": "artifacts/pr1066-fixture-zh-CN-editorial.html",
+      "original_sha256": "e7c115836bd0e4caa8b2c8ac9a006bd27a5a4185ecb0748da370674be8001bbd",
+      "fixture_sha256": "0ac4b7af6c3359310e8f9a9222e9092ca3f968582d8b33b7ac5b79d4a27fed08",
+      "only_change": {
+        "generatorVersion": {
+          "from": "3.2.1-dev.1",
+          "to": "3.2.1"
+        }
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "style": "product",
+      "original": "artifacts/pr1066-zh-CN-product.html",
+      "fixture": "artifacts/pr1066-fixture-zh-CN-product.html",
+      "original_sha256": "a38801d664e527031187cce4b97d5474237e13f29633c78b6a49bbd31d7a54ab",
+      "fixture_sha256": "6f05ddfc5e60fc7088b040c22e58139c2c1e062621b6a84c432caf043765635f",
+      "only_change": {
+        "generatorVersion": {
+          "from": "3.2.1-dev.1",
+          "to": "3.2.1"
+        }
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "style": "swiss",
+      "original": "artifacts/pr1066-zh-CN-swiss.html",
+      "fixture": "artifacts/pr1066-fixture-zh-CN-swiss.html",
+      "original_sha256": "e4c91bf4d15dde94d23d4ef1fc42ce719bd251087bb9912d38935e939d2a0c04",
+      "fixture_sha256": "3c01424e73f407e722a9db135bfb8cad858bade64e510af798b5883a230538ac",
+      "only_change": {
+        "generatorVersion": {
+          "from": "3.2.1-dev.1",
+          "to": "3.2.1"
+        }
+      }
+    }
+  ]
+}

@@ -6,7 +6,7 @@ Maintain BlueboxC's Archify fork and compatible, verified corrections to the Arc
 
 ## Ownership
 
-Root owns distribution builders, workflows, community intake, agent integration metadata, generated public examples, licensing and fork policy. `archify/` owns the installed Skill runtime. `viewer/` owns authored Viewer sources; `test/` owns repository regression tests.
+Root owns distribution builders, workflows, community intake, agent integration metadata, generated public examples, public research evidence, licensing and fork policy. `archify/` owns the installed Skill runtime. `viewer/` owns authored Viewer sources; `test/` owns repository regression tests.
 
 ## Local Contracts
 
@@ -24,6 +24,7 @@ Root owns distribution builders, workflows, community intake, agent integration 
 
 - Read CONTRIBUTING.md and the applicable DOX chain before editing. Keep changes small and credit adapted upstream contributions.
 - Record tasks and verified evidence in the owner's initialized Beads workspace; do not initialize other projects implicitly.
+- Public research evidence pins immutable source revisions and separates untouched outputs from deliberately modified UI fixtures; keep machine paths and private records out of it.
 
 ## Verification
 
