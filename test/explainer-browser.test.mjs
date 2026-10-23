@@ -57,6 +57,32 @@ test('formal renderer retains keyboard navigation, static reading and print mode
 });
 test.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
 
+test('Explainer toolbar and menus remain inside narrow viewports',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const browser=new ChromeVisualBrowser(chrome);
+ try {
+  for(const locale of ['en','zh-CN']) {
+   const document=formalDocument();document.meta.locale=locale;
+   const file=artifact('toolbar-'+locale,renderExplainer(document));
+   for(const width of [320,390,1440])for(const style of ['clean','editorial','product','swiss']) {
+    await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width,height:900,keyboard:false});
+    await pageValue(browser,`document.documentElement.dataset.style=${JSON.stringify(style)}`);
+    const containment=await pageValue(browser,`({width:innerWidth,scroll:document.documentElement.scrollWidth,controls:[...document.querySelectorAll('.tools button')].filter(e=>e.getBoundingClientRect().width).map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right}})})`);
+    assert.equal(containment.scroll,width,JSON.stringify({locale,width,style,containment}));
+    assert.ok(containment.controls.every(r=>r.left>=0&&r.right<=width),JSON.stringify(containment));
+    for(const menu of ['.style-menu','.export-menu']) {
+     await keyboardActivate(browser,menu+' [aria-haspopup]');
+     const popup=await pageValue(browser,`(()=>{const e=document.querySelector(${JSON.stringify(menu+' .menu-options')});const r=e.getBoundingClientRect();return {left:r.left,right:r.right,visible:getComputedStyle(e).display!=='none',scroll:document.documentElement.scrollWidth}})()`);
+     assert.equal(popup.visible,true);assert.ok(popup.left>=0&&popup.right<=width,JSON.stringify({locale,width,style,menu,popup}));assert.equal(popup.scroll,width);
+     await keyboardActivate(browser,menu+' [aria-haspopup]','Escape');
+    }
+    await browser.cdp.send('Emulation.setEmulatedMedia',{media:'print'},await browser.sessionPromise);
+    assert.equal(await pageValue(browser,"getComputedStyle(document.querySelector('.tools')).display"),'none');
+   }
+  }
+ } finally { await browser.close(); }
+});
+
 async function pageValue(browser,expression){const result=await browser.cdp.send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},await browser.sessionPromise);if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result.value;}
 async function keyboardActivate(browser,selector,key='Enter') {assert.equal(await pageValue(browser,`(function(){const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.scrollIntoView({block:'center'});e.focus();return document.activeElement===e;})()`),true,selector);for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key,code:key,windowsVirtualKeyCode:key==='Escape'?27:13,...(key==='Enter'&&type==='keyDown'?{text:'\r',unmodifiedText:'\r'}:{})},await browser.sessionPromise);await pageValue(browser,'new Promise(resolve=>setTimeout(resolve,0))');}
 test('native step opens the complete Viewer and focuses exact nodes and edges with readable graph text',{skip:!chrome},async()=>{

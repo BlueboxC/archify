@@ -25,7 +25,7 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 
 - Protect multi-year and subsecond timeline labels, large-origin waterfall timing and actual open-bar legends. Real browser checks cover mobile hit targets/overflow, generic light/print contrast with focus preservation, and localized Unicode export names.
 
-- Real Chrome print-media checks cover narrow/wide output with scripts enabled/disabled and return-to-screen clearance.
+- Real Chrome print-media checks cover narrow/wide output with scripts enabled/disabled and return-to-screen clearance. Explainer toolbar regressions cover English/Chinese at 320, 390 and 1440 px across every style, including keyboard-opened menus and print-hidden controls.
 
 - CJK punctuation regressions exercise emitted SVG text through the CLI in Tree, Timeline and Sequence; preserve all characters and reject prohibited punctuation boundaries without freezing a particular valid wrap.
 
