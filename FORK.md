@@ -153,3 +153,15 @@ Adapt CodeRabbit's inline observation on PR #1027 at `4342092890`: clear `--arch
 ## CJK punctuation at wrap boundaries
 
 Independently address b84330808’s synthetic CLI report [#1067](https://github.com/tt-a1i/archify/issues/1067) with one shared wrap-piece grouping rule. Tree labels/sublabels, Timeline titles and Sequence notes keep closing punctuation, iteration marks and ellipses with their preceding text, and opening brackets with the next piece. Fold the previous Sequence-only closing-punctuation case into the helper. Width estimation, fonts, schemas and English/Korean wrapping remain unchanged; this is not a complete UAX #14/JIS implementation.
+
+### Finite workflow port probing (#1072)
+
+Automatic port probing stops when the spacing no longer changes the floating-point coordinate. Preserve authored finite dimensions, topology and normal-size routing; do not introduce an arbitrary schema maximum. The public CLI regression covers the reported enormous widths and an ordinary-width control with a bounded child timeout. Based on MBrekhof's report in [#1072](https://github.com/tt-a1i/archify/issues/1072).
+
+### Indeterminate sidecar namespaces (#1071)
+
+Read-only provenance inspection reports an unknown state with the typed namespace reason. Failure-evidence persistence returns viewer/evidence-write when its namespace cannot be resolved, without attempting an unsafe alternative path. Preserve the artifact, declared inputs and existing sidecars; do not treat unknown provenance as verified. Public CLI tests exercise denied case probes and regular-file output directories for check/browser-check/visual-check. Based on MBrekhof's [#1071](https://github.com/tt-a1i/archify/issues/1071).
+
+### Native tree chart guidance (#1070)
+
+Match Pele's treeView detector ID when redirecting treeView-beta chart fences to the native tree shorthand. Keep mindmap guidance and ordinary chart rendering. Regression coverage exercises these public compiler results. Based on MBrekhof's [#1070](https://github.com/tt-a1i/archify/issues/1070).

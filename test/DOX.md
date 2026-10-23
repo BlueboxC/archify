@@ -29,6 +29,10 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 
 - CJK punctuation regressions exercise emitted SVG text through the CLI in Tree, Timeline and Sequence; preserve all characters and reject prohibited punctuation boundaries without freezing a particular valid wrap.
 
+- Cover finite extreme workflow dimensions with bounded public CLI timeouts and ordinary-size controls.
+- Denied namespace probes and non-directory evidence targets must return structured failures while preserving artifacts and inputs.
+- Chart guidance regressions retain native tree redirects and ordinary rendered charts.
+
 ## Work Guidance
 
 Use existing runners; add tests only for meaningful uncovered outcomes.

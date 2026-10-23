@@ -32,6 +32,9 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 
 - Tree label/sublabel, Timeline title and Sequence note wrapping keep closing CJK punctuation, iteration marks and ellipses with the preceding piece, and opening brackets with the following piece. Keep width measurement, fonts and non-CJK wrapping; this is a scoped punctuation rule, not complete Unicode line breaking.
 
+- Automatic workflow port probing stops when the configured spacing cannot produce a distinct floating-point coordinate; preserve finite authored dimensions and ordinary routing.
+- Indeterminate sidecar namespaces produce structured provenance/evidence failures without an alternative write path or treating unknown provenance as verified.
+
 ## Work Guidance
 
 - Reuse the shared geometry, diagnostic and tracked-package interfaces. Keep upstream-derived tests and attribution with adaptations.
