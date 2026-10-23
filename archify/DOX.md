@@ -30,6 +30,8 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 
 - Print CSS clears hidden navigation clearance independently of JavaScript; screen/mobile dock behavior stays measured.
 
+- Tree label/sublabel, Timeline title and Sequence note wrapping keep closing CJK punctuation, iteration marks and ellipses with the preceding piece, and opening brackets with the following piece. Keep width measurement, fonts and non-CJK wrapping; this is a scoped punctuation rule, not complete Unicode line breaking.
+
 ## Work Guidance
 
 - Reuse the shared geometry, diagnostic and tracked-package interfaces. Keep upstream-derived tests and attribution with adaptations.

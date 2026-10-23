@@ -27,6 +27,8 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 
 - Real Chrome print-media checks cover narrow/wide output with scripts enabled/disabled and return-to-screen clearance.
 
+- CJK punctuation regressions exercise emitted SVG text through the CLI in Tree, Timeline and Sequence; preserve all characters and reject prohibited punctuation boundaries without freezing a particular valid wrap.
+
 ## Work Guidance
 
 Use existing runners; add tests only for meaningful uncovered outcomes.

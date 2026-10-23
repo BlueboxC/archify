@@ -147,3 +147,7 @@ Adapt the cyclic-layout portion of [PR #997](https://github.com/tt-a1i/archify/p
 ## Narrow print clearance (#1027 follow-up)
 
 Adapt CodeRabbit's inline observation on PR #1027 at `4342092890`: clear `--archify-dock-h` in the authored print rule. With scripts disabled, a 360px document retained 100px of hidden-navigation padding; ordinary scripted printing already clears it through the size observer. Keep CSS printing independent of that observer and preserve mobile screen clearance. Real Chrome controls cover 360/1440px, scripts on/off and return to screen; this does not certify hardware-printer pagination. Existing user HTML is not rewritten.
+
+## CJK punctuation at wrap boundaries
+
+Independently address b84330808’s synthetic CLI report [#1067](https://github.com/tt-a1i/archify/issues/1067) with one shared wrap-piece grouping rule. Tree labels/sublabels, Timeline titles and Sequence notes keep closing punctuation, iteration marks and ellipses with their preceding text, and opening brackets with the next piece. Fold the previous Sequence-only closing-punctuation case into the helper. Width estimation, fonts, schemas and English/Korean wrapping remain unchanged; this is not a complete UAX #14/JIS implementation.
