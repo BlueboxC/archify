@@ -1,0 +1,326 @@
+{
+  "original_input_sha256": "188cf8777816ac034dd5a92b04bf427b0f1a8dbfa0956ae072b2d4091427806c",
+  "node_version": "v26.0.0",
+  "records": [
+    {
+      "revision": "dev",
+      "locale": "en",
+      "style": "clean",
+      "input": "inputs/delivery-en-clean.json",
+      "artifact": "artifacts/dev-en-clean.html",
+      "input_sha256": "4640c98807356cce9c068e38cd39f673a4742a23b4943d05d91d511674924393",
+      "artifact_sha256": "2ba824f7c547de80867d17a201186b8b2f494ff8bdfb580e218c8693e4a55f14",
+      "exit": 0
+    },
+    {
+      "revision": "dev-patched",
+      "locale": "en",
+      "style": "clean",
+      "input": "inputs/delivery-en-clean.json",
+      "artifact": "artifacts/dev-patched-en-clean.html",
+      "input_sha256": "4640c98807356cce9c068e38cd39f673a4742a23b4943d05d91d511674924393",
+      "artifact_sha256": "afe6f86a1b3f53ff5991dbee235c4be5357fd488caf56d6f5f4c76800795a818",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066",
+      "locale": "en",
+      "style": "clean",
+      "input": "inputs/delivery-en-clean.json",
+      "artifact": "artifacts/pr1066-en-clean.html",
+      "input_sha256": "4640c98807356cce9c068e38cd39f673a4742a23b4943d05d91d511674924393",
+      "artifact_sha256": "185f94b812f7f58a235b23166fcf41c6ea3740298dba8f191de043918b2af958",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066-patched",
+      "locale": "en",
+      "style": "clean",
+      "input": "inputs/delivery-en-clean.json",
+      "artifact": "artifacts/pr1066-patched-en-clean.html",
+      "input_sha256": "4640c98807356cce9c068e38cd39f673a4742a23b4943d05d91d511674924393",
+      "artifact_sha256": "eb88bcdf4c1eabcbcb71de7d8c92b60a22e185c5a99b417bc50342c1c523cd3a",
+      "exit": 0
+    },
+    {
+      "revision": "dev",
+      "locale": "en",
+      "style": "editorial",
+      "input": "inputs/delivery-en-editorial.json",
+      "artifact": "artifacts/dev-en-editorial.html",
+      "input_sha256": "cf1f843f9fa246d2a36fd265f29d9c5eed5d4aeb77fb33efac7fff7794779729",
+      "artifact_sha256": "9b246232766fac1551ed3c86dde7c49ee3e8193bd722c3bf8f21738cbc23945c",
+      "exit": 0
+    },
+    {
+      "revision": "dev-patched",
+      "locale": "en",
+      "style": "editorial",
+      "input": "inputs/delivery-en-editorial.json",
+      "artifact": "artifacts/dev-patched-en-editorial.html",
+      "input_sha256": "cf1f843f9fa246d2a36fd265f29d9c5eed5d4aeb77fb33efac7fff7794779729",
+      "artifact_sha256": "05f5585090b89d85856e6651a4640d31d5040d8f1f813dca3db554acbc669df4",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066",
+      "locale": "en",
+      "style": "editorial",
+      "input": "inputs/delivery-en-editorial.json",
+      "artifact": "artifacts/pr1066-en-editorial.html",
+      "input_sha256": "cf1f843f9fa246d2a36fd265f29d9c5eed5d4aeb77fb33efac7fff7794779729",
+      "artifact_sha256": "e0eb616c51cc592f31c828cfee0c8f702a4d9f63c8b44826e70869f6b5a48f03",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066-patched",
+      "locale": "en",
+      "style": "editorial",
+      "input": "inputs/delivery-en-editorial.json",
+      "artifact": "artifacts/pr1066-patched-en-editorial.html",
+      "input_sha256": "cf1f843f9fa246d2a36fd265f29d9c5eed5d4aeb77fb33efac7fff7794779729",
+      "artifact_sha256": "0b791b9fc01c0dc3991e05caf7954994f462481cae987a53e897dfe891ac9ef6",
+      "exit": 0
+    },
+    {
+      "revision": "dev",
+      "locale": "en",
+      "style": "product",
+      "input": "inputs/delivery-en-product.json",
+      "artifact": "artifacts/dev-en-product.html",
+      "input_sha256": "6f89663febfa31606671508d92e348f2c8b3bdf63233abb865cdef58017ed54e",
+      "artifact_sha256": "853877c8ab28e7eec8348ab0eb73ae01473dc636f89c7a5ce7a5e255b8370032",
+      "exit": 0
+    },
+    {
+      "revision": "dev-patched",
+      "locale": "en",
+      "style": "product",
+      "input": "inputs/delivery-en-product.json",
+      "artifact": "artifacts/dev-patched-en-product.html",
+      "input_sha256": "6f89663febfa31606671508d92e348f2c8b3bdf63233abb865cdef58017ed54e",
+      "artifact_sha256": "10b23d2844393caa51e65baec50873b33486b1c2674652ab8d69873ec78002dc",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066",
+      "locale": "en",
+      "style": "product",
+      "input": "inputs/delivery-en-product.json",
+      "artifact": "artifacts/pr1066-en-product.html",
+      "input_sha256": "6f89663febfa31606671508d92e348f2c8b3bdf63233abb865cdef58017ed54e",
+      "artifact_sha256": "5529d186a1b6f8addbd11a1e6ce9bf17b4533981e1726e9584daf20a5b7b98d7",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066-patched",
+      "locale": "en",
+      "style": "product",
+      "input": "inputs/delivery-en-product.json",
+      "artifact": "artifacts/pr1066-patched-en-product.html",
+      "input_sha256": "6f89663febfa31606671508d92e348f2c8b3bdf63233abb865cdef58017ed54e",
+      "artifact_sha256": "6d98f0deb9419cec665ecdc55dc5a208171a4bf9528689eb6b1d7efca76a90dd",
+      "exit": 0
+    },
+    {
+      "revision": "dev",
+      "locale": "en",
+      "style": "swiss",
+      "input": "inputs/delivery-en-swiss.json",
+      "artifact": "artifacts/dev-en-swiss.html",
+      "input_sha256": "9d55b35cd99e26b2873f4e1eac49a2677c07c33841049c488e352c473abeb1e9",
+      "artifact_sha256": "8a2fa1495c099481eab25ef5efd8ab926e4706b96ad3d231009c9f9661c490bf",
+      "exit": 0
+    },
+    {
+      "revision": "dev-patched",
+      "locale": "en",
+      "style": "swiss",
+      "input": "inputs/delivery-en-swiss.json",
+      "artifact": "artifacts/dev-patched-en-swiss.html",
+      "input_sha256": "9d55b35cd99e26b2873f4e1eac49a2677c07c33841049c488e352c473abeb1e9",
+      "artifact_sha256": "ad85b652de3dce958a0837332dd01073aaa50911bc3de34bb95c39079f5bb8ae",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066",
+      "locale": "en",
+      "style": "swiss",
+      "input": "inputs/delivery-en-swiss.json",
+      "artifact": "artifacts/pr1066-en-swiss.html",
+      "input_sha256": "9d55b35cd99e26b2873f4e1eac49a2677c07c33841049c488e352c473abeb1e9",
+      "artifact_sha256": "b6fff519d15028466f35623faa93e08d6744f9d52a44bcb14e0c8d4d3b0a0e50",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066-patched",
+      "locale": "en",
+      "style": "swiss",
+      "input": "inputs/delivery-en-swiss.json",
+      "artifact": "artifacts/pr1066-patched-en-swiss.html",
+      "input_sha256": "9d55b35cd99e26b2873f4e1eac49a2677c07c33841049c488e352c473abeb1e9",
+      "artifact_sha256": "451e09ebc61a4aba13ce21fe1c5adab99703b6fd79f87d304ad560a937bead74",
+      "exit": 0
+    },
+    {
+      "revision": "dev",
+      "locale": "zh-CN",
+      "style": "clean",
+      "input": "inputs/delivery-zh-CN-clean.json",
+      "artifact": "artifacts/dev-zh-CN-clean.html",
+      "input_sha256": "6a2c4c42145473563e6fe01a3087c1aa3740c5342b159c39fd59d96d3eec0740",
+      "artifact_sha256": "e582e89e9761fb810e8c18be4f64dc80d05616cf1f1dd5c97fafd2f77ba46c5b",
+      "exit": 0
+    },
+    {
+      "revision": "dev-patched",
+      "locale": "zh-CN",
+      "style": "clean",
+      "input": "inputs/delivery-zh-CN-clean.json",
+      "artifact": "artifacts/dev-patched-zh-CN-clean.html",
+      "input_sha256": "6a2c4c42145473563e6fe01a3087c1aa3740c5342b159c39fd59d96d3eec0740",
+      "artifact_sha256": "73cb70a8a6b01c3d53c250eecf7c83ea6b809d8f4159878f8cc0dc6f673ea4b9",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066",
+      "locale": "zh-CN",
+      "style": "clean",
+      "input": "inputs/delivery-zh-CN-clean.json",
+      "artifact": "artifacts/pr1066-zh-CN-clean.html",
+      "input_sha256": "6a2c4c42145473563e6fe01a3087c1aa3740c5342b159c39fd59d96d3eec0740",
+      "artifact_sha256": "1bbc99982baa0215a6ebc791936b2e255f810c9b8799d10ea517564969639730",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066-patched",
+      "locale": "zh-CN",
+      "style": "clean",
+      "input": "inputs/delivery-zh-CN-clean.json",
+      "artifact": "artifacts/pr1066-patched-zh-CN-clean.html",
+      "input_sha256": "6a2c4c42145473563e6fe01a3087c1aa3740c5342b159c39fd59d96d3eec0740",
+      "artifact_sha256": "00ee0b5165bf3a903c4923d19469b28cbfa4ff8caecf16761508a6a970fc3ee5",
+      "exit": 0
+    },
+    {
+      "revision": "dev",
+      "locale": "zh-CN",
+      "style": "editorial",
+      "input": "inputs/delivery-zh-CN-editorial.json",
+      "artifact": "artifacts/dev-zh-CN-editorial.html",
+      "input_sha256": "c0d62e9364dccb9c6e29437754bf97d4534f186be37a1aa36d585569dcb58d96",
+      "artifact_sha256": "e5e798f31861ae09a008292c5db456298e5d110a56ad02acd27780b5c3147bba",
+      "exit": 0
+    },
+    {
+      "revision": "dev-patched",
+      "locale": "zh-CN",
+      "style": "editorial",
+      "input": "inputs/delivery-zh-CN-editorial.json",
+      "artifact": "artifacts/dev-patched-zh-CN-editorial.html",
+      "input_sha256": "c0d62e9364dccb9c6e29437754bf97d4534f186be37a1aa36d585569dcb58d96",
+      "artifact_sha256": "423827ddd5b0a7cb6be7888108f1793ea56017a898496b87aab60aa3af95721b",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066",
+      "locale": "zh-CN",
+      "style": "editorial",
+      "input": "inputs/delivery-zh-CN-editorial.json",
+      "artifact": "artifacts/pr1066-zh-CN-editorial.html",
+      "input_sha256": "c0d62e9364dccb9c6e29437754bf97d4534f186be37a1aa36d585569dcb58d96",
+      "artifact_sha256": "e7c115836bd0e4caa8b2c8ac9a006bd27a5a4185ecb0748da370674be8001bbd",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066-patched",
+      "locale": "zh-CN",
+      "style": "editorial",
+      "input": "inputs/delivery-zh-CN-editorial.json",
+      "artifact": "artifacts/pr1066-patched-zh-CN-editorial.html",
+      "input_sha256": "c0d62e9364dccb9c6e29437754bf97d4534f186be37a1aa36d585569dcb58d96",
+      "artifact_sha256": "517f96ee71967d88863c504d04f32db48b36a68d77692daae57e4ff413d62995",
+      "exit": 0
+    },
+    {
+      "revision": "dev",
+      "locale": "zh-CN",
+      "style": "product",
+      "input": "inputs/delivery-zh-CN-product.json",
+      "artifact": "artifacts/dev-zh-CN-product.html",
+      "input_sha256": "f076b16a0937b0cecfde3e21ac63864153da9a7faf627397daff92ae0029031d",
+      "artifact_sha256": "91f1bb2588112a033262e5074e4c80f0ae6d6f08eeec3eadd8123166b5da1a34",
+      "exit": 0
+    },
+    {
+      "revision": "dev-patched",
+      "locale": "zh-CN",
+      "style": "product",
+      "input": "inputs/delivery-zh-CN-product.json",
+      "artifact": "artifacts/dev-patched-zh-CN-product.html",
+      "input_sha256": "f076b16a0937b0cecfde3e21ac63864153da9a7faf627397daff92ae0029031d",
+      "artifact_sha256": "dd22646d1e90c71c10e5ce86fd97b3945d3fbd165b66aba18f83393ef2d3b8c4",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066",
+      "locale": "zh-CN",
+      "style": "product",
+      "input": "inputs/delivery-zh-CN-product.json",
+      "artifact": "artifacts/pr1066-zh-CN-product.html",
+      "input_sha256": "f076b16a0937b0cecfde3e21ac63864153da9a7faf627397daff92ae0029031d",
+      "artifact_sha256": "a38801d664e527031187cce4b97d5474237e13f29633c78b6a49bbd31d7a54ab",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066-patched",
+      "locale": "zh-CN",
+      "style": "product",
+      "input": "inputs/delivery-zh-CN-product.json",
+      "artifact": "artifacts/pr1066-patched-zh-CN-product.html",
+      "input_sha256": "f076b16a0937b0cecfde3e21ac63864153da9a7faf627397daff92ae0029031d",
+      "artifact_sha256": "d0e9ed51c4e4565a67fef62639fd521287449ef7dc76e06474969d6a82b0954a",
+      "exit": 0
+    },
+    {
+      "revision": "dev",
+      "locale": "zh-CN",
+      "style": "swiss",
+      "input": "inputs/delivery-zh-CN-swiss.json",
+      "artifact": "artifacts/dev-zh-CN-swiss.html",
+      "input_sha256": "13ad4b2ffe53769e61e4a6f0e8cf8eb6bce09029f2d7a322b10443942bb4ab8f",
+      "artifact_sha256": "b47991c1b4c67f6cae2ccff2233a08c1e8f550ded0dfd48468c403cff3f501ae",
+      "exit": 0
+    },
+    {
+      "revision": "dev-patched",
+      "locale": "zh-CN",
+      "style": "swiss",
+      "input": "inputs/delivery-zh-CN-swiss.json",
+      "artifact": "artifacts/dev-patched-zh-CN-swiss.html",
+      "input_sha256": "13ad4b2ffe53769e61e4a6f0e8cf8eb6bce09029f2d7a322b10443942bb4ab8f",
+      "artifact_sha256": "0a81d43e4885c342cd880585dccc90be1567fbc183fc98879064753ed4712101",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066",
+      "locale": "zh-CN",
+      "style": "swiss",
+      "input": "inputs/delivery-zh-CN-swiss.json",
+      "artifact": "artifacts/pr1066-zh-CN-swiss.html",
+      "input_sha256": "13ad4b2ffe53769e61e4a6f0e8cf8eb6bce09029f2d7a322b10443942bb4ab8f",
+      "artifact_sha256": "e4c91bf4d15dde94d23d4ef1fc42ce719bd251087bb9912d38935e939d2a0c04",
+      "exit": 0
+    },
+    {
+      "revision": "pr1066-patched",
+      "locale": "zh-CN",
+      "style": "swiss",
+      "input": "inputs/delivery-zh-CN-swiss.json",
+      "artifact": "artifacts/pr1066-patched-zh-CN-swiss.html",
+      "input_sha256": "13ad4b2ffe53769e61e4a6f0e8cf8eb6bce09029f2d7a322b10443942bb4ab8f",
+      "artifact_sha256": "72ddfaee805b2a686bbb01f5858604c1088c1beb2ca3bf83cddc293eac885d4d",
+      "exit": 0
+    }
+  ]
+}

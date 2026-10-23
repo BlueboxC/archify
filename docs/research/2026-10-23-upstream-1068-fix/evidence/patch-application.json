@@ -1,0 +1,21 @@
+{
+  "patch_sha256": "fee55db48972f1e7ccc85c67333b020971740485787160ec4528984d169f59d2",
+  "variants": [
+    {
+      "revision": "dev",
+      "changed_files": [
+        "archify/explainer/reader.css"
+      ],
+      "before_css_sha256": "1f2a0b589b39f08af36012e9fadad79a7939ec8c52e2e0cb53018d9431aee1fd",
+      "after_css_sha256": "15d5d507e7a3f17652398056ad6a07adede382e47cadec19cea25aaed2796c2c"
+    },
+    {
+      "revision": "pr1066",
+      "changed_files": [
+        "archify/explainer/reader.css"
+      ],
+      "before_css_sha256": "1d0fbf064e3e08d5e3c1048bb61076fc6179447ac8c3a61e700085ea72a712ac",
+      "after_css_sha256": "098dc807ea42d9ab446d509271237c3ddc593140916cfb1500ffd406e4ef51ee"
+    }
+  ]
+}
