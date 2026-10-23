@@ -35,6 +35,8 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Automatic workflow port probing stops when the configured spacing cannot produce a distinct floating-point coordinate; preserve finite authored dimensions and ordinary routing.
 - Indeterminate sidecar namespaces produce structured provenance/evidence failures without an alternative write path or treating unknown provenance as verified.
 
+- Windows native realpath EPERM may fall back to Node JS realpath only for an existing non-link directory ancestor. Require matching stable filesystem identity after resolution; leaves, roots, other errors and unresolved identities remain strict. Preserve destination/containment checks; injected tests do not establish native Windows sandbox acceptance.
+
 ## Work Guidance
 
 - Reuse the shared geometry, diagnostic and tracked-package interfaces. Keep upstream-derived tests and attribution with adaptations.

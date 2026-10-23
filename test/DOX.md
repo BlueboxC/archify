@@ -33,6 +33,8 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 - Denied namespace probes and non-directory evidence targets must return structured failures while preserving artifacts and inputs.
 - Chart guidance regressions retain native tree redirects and ordinary rendered charts.
 
+- Windows sandbox ancestor EPERM regressions retain leaf/root/other-error and POSIX refusals, failed JS resolution and changed/link/missing postimage identity. Report injected platform behavior separately from actual Windows execution.
+
 ## Work Guidance
 
 Use existing runners; add tests only for meaningful uncovered outcomes.

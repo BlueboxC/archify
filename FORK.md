@@ -8,6 +8,16 @@ It supports ten diagram types, Explainer documents and the release's Viewer, wor
 Preview and verified `finalize` delivery. Existing generated user artifacts are
 not rewritten by upgrading the Skill.
 
+## Windows restricted-sandbox ancestor resolution
+
+For [#1073](https://github.com/tt-a1i/archify/issues/1073), allow a narrowly
+verified JS realpath fallback when Windows native realpath returns EPERM on a
+non-link directory ancestor. Its resolved identity must match the inspected
+directory; leaves, roots, other errors and unknown identities still refuse.
+The regression uses injected Windows filesystem behavior on macOS. Actual
+Windows restricted-sandbox acceptance remains a platform qualification gap;
+ordinary rendering, output preservation and offline customizations remain.
+
 ## Input-preserving Explainer evidence
 
 For [#1060](https://github.com/tt-a1i/archify/issues/1060), reported by To3akaRin, discover declared chart-data and external native-diagram paths before preparing resource contents. Delivery, failed redelivery and finalize refuse physical-path aliases between those inputs and their artifacts or evidence sidecars. Preserve previous data, HTML and evidence on rejection; ordinary repeated delivery remains supported. No renderer, Viewer or dependency changes are needed.
