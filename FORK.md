@@ -14,9 +14,9 @@ For [#1073](https://github.com/tt-a1i/archify/issues/1073), allow a narrowly
 verified JS realpath fallback when Windows native realpath returns EPERM on a
 non-link directory ancestor. Its resolved identity must match the inspected
 directory; leaves, roots, other errors and unknown identities still refuse.
-The regression uses injected Windows filesystem behavior on macOS. Actual
-Windows restricted-sandbox acceptance remains a platform qualification gap;
-ordinary rendering, output preservation and offline customizations remain.
+The original regression uses injected Windows filesystem behavior on macOS.
+The later native Windows qualification and required temporary-ancestor follow-up
+are recorded below; ordinary rendering, output preservation and offline customizations remain.
 
 ## Input-preserving Explainer evidence
 
@@ -179,3 +179,28 @@ Match Pele's treeView detector ID when redirecting treeView-beta chart fences to
 ### Native Windows sandbox follow-up (#1073)
 
 The scoped realpath fallback is qualified on Windows Server 2025, Node22.23.2 and Codex0.164.0's elevated sandbox. Native ancestor realpath EPERM remains observable; JavaScript resolution must prove the same directory identity. Owned temporary ancestry additionally retains sameEntry and, only for Windows EPERM, compares stable non-link directory dev/inode/birthtime before and after inspection. Full ancestor bindings and replacement refusal remain intact. The reported three suites pass26/26, sandbox refusal controls pass18/18, and ordinary native Windows path/cleanup tests pass64 with one POSIX skip. This qualifies the recorded environment, not every Windows ACL layout. The public qualification is [run40091996255](https://github.com/BlueboxC/archify/actions/runs/40091996255); its predecessor preserves the failing result.
+
+
+## Bounded crossing inspection (#876 / #683)
+
+Adapt outlier27-cell's [PR #876](https://github.com/tt-a1i/archify/pull/876),
+reviewed at `debee8786174558a041b0379f3421953163f28bf`, without replacing this
+fork's SVG scanner, boundary membership, route geometry or diagnostic handling.
+The checker counts eligible relationship pairs (50,000 default) and their inner
+segment comparisons (3,000,000 default). If either limit is exhausted, inspection
+fails explicitly as incomplete; check/deliver/finalize retain the relevant
+`ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS` or
+`ARCHIFY_CHECK_MAX_CROSSING_SEGMENT_PAIR_CHECKS` recovery instruction. A known-large
+artifact can be rechecked with a positive safe-integer override.
+
+Fifteen maintained golden artifacts and the dense 10x10/11x11 fixtures keep
+byte-identical complete checker receipts on the comparison base and candidate.
+The supplied 120-relationship/100-segment synthetic stress case stops at exactly
+3,000,000 comparisons rather than finishing all pair work. That is an explicit
+defensive early stop, not an equivalent-work speedup or a total-checker deadline.
+Existing user HTML is not rewritten; authored geometry and complete inspection
+remain authoritative.
+
+The #1076 toolbar test also selects real style-menu choices and checks Escape
+closure/focus return from the panel. That is a test-evidence correction; the
+already-qualified toolbar CSS and runtime handlers are unchanged.
