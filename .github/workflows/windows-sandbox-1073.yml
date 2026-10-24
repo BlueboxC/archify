@@ -1,0 +1,26 @@
+name: Windows sandbox 1073 qualification
+on:
+  push:
+    branches: [codex/windows-sandbox-1073-20261024]
+permissions:
+  contents: read
+jobs:
+  native-windows:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 22.23.2
+      - name: Native sandbox, reported suites and refusal controls
+        shell: pwsh
+        run: ./test/fixtures/windows-sandbox-1073/run.ps1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: native-windows-1073-evidence
+          path: ${{ runner.temp }}/archify-1073-results
+          retention-days: 14
