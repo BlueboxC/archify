@@ -212,3 +212,10 @@ For MBrekhof's [#1083](https://github.com/tt-a1i/archify/issues/1083), allow lit
 For [#1084](https://github.com/tt-a1i/archify/issues/1084), retain the actual `archifyDiagnostics` payload errors and the legacy diagnostic field. Missing/duplicate embedded payloads and invalid JSON keep their specific repair advice; corrupt gzip still uses the inflation failure. Failed patches preserve input and previously delivered output.
 
 For [#1082](https://github.com/tt-a1i/archify/issues/1082), pass the page locale to workflow shorthand compilation. Generated branch labels use Chinese for zh-prefixed/default pages and `Branch N` otherwise, without changing authored lane labels, wrapped-band titles, identities or topology. No dependencies, schemas, versions, Viewer behavior or existing user HTML are changed.
+
+
+## Explainer patch identity and constrained Workflow routing
+
+For [#1085](https://github.com/tt-a1i/archify/issues/1085), exclude the execution-only `inputPath` from published prepared bundles and recompute their digest. The private temporary-input binding and source/resource validation remain intact. Retain original source origins, immutable inputs, dependency checks and output-preserving failure behavior; repeated patches at one destination produce identical HTML. Windows path simulations are distinct from native Windows evidence.
+
+Adapt Momoyeyu's [PR #1086](https://github.com/tt-a1i/archify/pull/1086), head `83a109027936927cc65d212280ee1b6d28cabb38`: on eligible failed relative drop forks, try opposite source-port order and short endpoint corridors, keeping only a complete validated result. Stable fork ordering precedes the four-fork selection. This is at most four additional compiles per invocation, not a global retry or wall-clock bound across outer feedback. Preserve explicit geometry, topology, existing successful scenes and the fork's finite probing/crossing protections.

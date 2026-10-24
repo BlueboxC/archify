@@ -24,6 +24,7 @@ This directory owns document parsing, rendering, dependency freezing and the ven
 
 - Heading parsing retains literal CR and Unicode line/paragraph separators without a null-match crash. Preserve original source offsets and LF/CRLF behavior; malformed CR-only drafts still fail through existing diagnostics and input-publication guards.
 - Panel patching preserves structured payload diagnostics and their repair advice; reserve the inflation fallback for genuine unpacking errors. Preserve the original artifact and prior output on failure.
+- Published page bundles omit the private execution inputPath and recompute their digest. Keep the original source/resource origins, immutable private bundle and all preparation checks; repeated patches at the same output produce identical HTML.
 - Automatic workflow branch labels use the page locale: Chinese for zh-prefixed/default pages, English fallback otherwise. Keep authored lane labels, wrapped-band labels, node identities and routing unchanged.
 
 ## Work Guidance

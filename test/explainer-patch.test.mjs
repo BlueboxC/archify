@@ -9,6 +9,8 @@ import { createHash } from 'node:crypto';
 import { preparePanelPatch } from '../archify/explainer/patch.mjs';
 import { packPageBundle, unpackPageBundle } from '../archify/explainer/page-bundle.mjs';
 import { compileExplainerDiagram } from '../archify/explainer/diagrams.mjs';
+import { prepareExplainer, rebindPreparedBundle } from '../archify/explainer/prepare.mjs';
+import { renderExplainer } from '../archify/explainer/render.mjs';
 const cli=path.resolve('archify/bin/archify.mjs');
 const run=args=>spawnSync(process.execPath,[cli,...args],{encoding:'utf8',maxBuffer:64*1024*1024,env:{...process.env,ARCHIFY_UPDATE_CHECK_DISABLED:'1'}});
 const read=file=>unpackPageBundle(JSON.parse(scanHtml(fs.readFileSync(file,'utf8')).scripts.find(s=>s.attrs.id==='archify-explainer-prepared').text));
@@ -168,4 +170,49 @@ test('patching a native page reports missing Explainer payload without replacing
   assert.equal(receipt.diagnostics[0].message,'The artifact must contain one original draft and prepared resource payload.');
   assert.deepEqual(fs.readFileSync(artifact),previous);
   assert.equal(fs.readFileSync(output,'utf8'),'previous verified artifact');
+});
+
+
+test('patch output excludes temporary execution paths and is reproducible (#1085)', t => {
+  const dir = temp(t), {artifact, input} = deliver(dir);
+  const replacement = path.join(dir, 'replacement.json'), output = path.join(dir, 'patched.html');
+  fs.writeFileSync(replacement, JSON.stringify({...fixture().panels[0], title:'A stable replacement'}));
+  const original = fs.readFileSync(artifact), source = fs.readFileSync(input);
+  let previous;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const patched = run(['patch','explainer',artifact,'first',replacement,output,'--json']);
+    assert.equal(patched.status, 0, patched.stdout + patched.stderr);
+    const bundle = read(output), bytes = fs.readFileSync(output);
+    assert.equal(Object.hasOwn(bundle, 'inputPath'), false);
+    assert.equal(path.resolve(dir, bundle.sourcePath), input);
+    assert.doesNotMatch(JSON.stringify(bundle), /archify-explainer-patch-[^/\\]*[/\\]patched-draft\.json/);
+    assert.equal(bundle.digest, createHash('sha256').update(JSON.stringify({...bundle,digest:undefined})).digest('hex'));
+    if (previous) assert.deepEqual(bytes, previous, 'same original/replacement/output gives identical HTML');
+    previous = bytes;
+    const checked = run(['check',output,'--json','--require-provenance']);
+    assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  }
+  assert.deepEqual(fs.readFileSync(artifact), original);
+  assert.deepEqual(fs.readFileSync(input), source);
+});
+
+test('reader serialization omits private bindings for Windows paths and missing origins (#1085)', async t => {
+  const dir = temp(t), sourceText = JSON.stringify(fixture());
+  const prepared = await prepareExplainer(sourceText, {inputPath:path.join(dir,'draft.json')});
+  for (const origin of [true, false]) {
+    const bundle = rebindPreparedBundle({...prepared,
+      sourcePath:origin ? 'C:\\project\\draft.json' : null,
+      baseDir:origin ? 'C:\\project' : null,
+      inputPath:'C:\\Users\\FixtureUser\\AppData\\Local\\Temp\\archify-explainer-patch-random\\patched-draft.json'}, {sourceText:prepared.sourceText,document:prepared.document,sourceMap:prepared.sourceMap,format:prepared.format,diagnostics:prepared.diagnostics});
+    const before = JSON.stringify(bundle);
+    const html = renderExplainer(bundle.document, {preparedBundle:bundle, sourceText:bundle.sourceText,
+      sourceMap:bundle.sourceMap, preparedSources:bundle.preparedSources, preparedDiagrams:bundle.preparedDiagrams,
+      ...(origin ? {pageDirectory:'C:\\project\\output'} : {})});
+    const page = unpackPageBundle(JSON.parse(scanHtml(html).scripts.find(s=>s.attrs.id==='archify-explainer-prepared').text));
+    assert.equal(Object.hasOwn(page, 'inputPath'), false);
+    assert.doesNotMatch(JSON.stringify(page), /FixtureUser|patched-draft|archify-explainer-patch-random/);
+    assert.equal(page.sourcePath, origin ? '..\\draft.json' : null);
+    assert.equal(page.digest, createHash('sha256').update(JSON.stringify({...page,digest:undefined})).digest('hex'));
+    assert.equal(JSON.stringify(bundle), before, 'private validated bundle must stay unchanged');
+  }
 });

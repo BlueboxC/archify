@@ -39,6 +39,8 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 
 - Explainer regressions cover literal CR/U+2028/U+2029 heading text and unchanged source ranges, structured public-command failures, distinct missing/duplicate/invalid/inflation payload errors and prior-output preservation. Locale cases verify generated lane labels in the delivered model, node context, titles and accessible labels while preserving authored lanes and topology.
 
+- Patch regressions compare repeated public-command HTML bytes and private/public bundle identities, including missing origins and simulated Windows paths. Routing regressions preserve source constraints and stable fork selection beyond the retry limit; compare complete maintained receipts on the same inputs.
+
 ## Work Guidance
 
 Use existing runners; add tests only for meaningful uncovered outcomes.
