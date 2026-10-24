@@ -40,16 +40,20 @@ foreach($kind in @('before','candidate')){
  $caseTemp=Join-Path $case '.test-tmp'
  New-Item -ItemType Directory $caseTemp | Out-Null
  $env:TEMP=$caseTemp;$env:TMP=$caseTemp
- & $codex sandbox -c windows.sandbox=elevated --permission-profile ':workspace' -C $case -- $node test/fixtures/windows-sandbox-1073/probe.mjs 2>&1 | Tee-Object (Join-Path $results ($kind+'-probe.log'))
+ & $codex sandbox -c windows.sandbox=elevated --permission-profile ':workspace' -C $case -- $node --input-type=module -e "await import('./test/fixtures/windows-sandbox-1073/probe.mjs')" 2>&1 | Tee-Object (Join-Path $results ($kind+'-probe.log'))
  $probeExit=$LASTEXITCODE
  & $codex sandbox -c windows.sandbox=elevated --permission-profile ':workspace' -C $case -- $node --test test/timeline-dst-ticks.test.mjs test/workflow-migration-semantics.test.mjs test/explainer-charts.test.mjs 2>&1 | Tee-Object (Join-Path $results ($kind+'-suite.log'))
  $suiteExit=$LASTEXITCODE
  if($kind -eq 'candidate'){
-  & $codex sandbox -c windows.sandbox=elevated --permission-profile ':workspace' -C $case -- $node --test test/path-semantics.test.mjs 2>&1 | Tee-Object (Join-Path $results 'candidate-refusal-controls.log')
+  & $codex sandbox -c windows.sandbox=elevated --permission-profile ':workspace' -C $case -- $node --test --test-name-pattern 'Windows sandbox|Windows owned temporary|cleanup refuses|relative temp parent' test/path-semantics.test.mjs test/temp-cleanup.test.mjs 2>&1 | Tee-Object (Join-Path $results 'candidate-refusal-controls.log')
   $controlsExit=$LASTEXITCODE
- }else{$controlsExit=$null}
- $summary+=@{kind=$kind;probe_exit=$probeExit;suite_exit=$suiteExit;controls_exit=$controlsExit}
+  Push-Location $case
+  & $node --test test/path-semantics.test.mjs test/temp-cleanup.test.mjs 2>&1 | Tee-Object (Join-Path $results 'candidate-native-windows-controls.log')
+  $nativeControlsExit=$LASTEXITCODE
+  Pop-Location
+ }else{$controlsExit=$null;$nativeControlsExit=$null}
+ $summary+=@{kind=$kind;probe_exit=$probeExit;suite_exit=$suiteExit;controls_exit=$controlsExit;native_controls_exit=$nativeControlsExit}
 }
 $summary | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $results 'summary.json')
 $candidate=$summary | Where-Object kind -eq 'candidate'
-if($candidate.probe_exit -ne 0 -or $candidate.suite_exit -ne 0 -or $candidate.controls_exit -ne 0){throw 'Candidate native sandbox qualification failed'}
+if($candidate.probe_exit -ne 0 -or $candidate.suite_exit -ne 0 -or $candidate.controls_exit -ne 0 -or $candidate.native_controls_exit -ne 0){throw 'Candidate native sandbox qualification failed'}
