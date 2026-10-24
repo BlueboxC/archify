@@ -22,6 +22,10 @@ This directory owns document parsing, rendering, dependency freezing and the ven
 
 - Match Pele detector IDs when redirecting chart fences to native modes, including treeView-beta to the native tree shorthand.
 
+- Heading parsing retains literal CR and Unicode line/paragraph separators without a null-match crash. Preserve original source offsets and LF/CRLF behavior; malformed CR-only drafts still fail through existing diagnostics and input-publication guards.
+- Panel patching preserves structured payload diagnostics and their repair advice; reserve the inflation fallback for genuine unpacking errors. Preserve the original artifact and prior output on failure.
+- Automatic workflow branch labels use the page locale: Chinese for zh-prefixed/default pages, English fallback otherwise. Keep authored lane labels, wrapped-band labels, node identities and routing unchanged.
+
 ## Work Guidance
 
 Reuse the document diagnostic and publication paths; keep chart errors located at the authored block.

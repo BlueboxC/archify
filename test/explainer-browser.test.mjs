@@ -221,3 +221,24 @@ test('text names light their diagram nodes and walk-throughs step through steps 
   assert.equal(image.type,'image/png');assert.ok(image.size>20000,'the long image carries the rendered page');
  }finally{await browser.close();}
 });
+
+test('workflow branch context and accessible labels retain the page locale in Chrome (#1082)',{skip:!chrome},async()=>{
+ const {parseExplainer}=await import('../archify/explainer/parse.mjs');
+ const {prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const browser=new ChromeVisualBrowser(chrome);
+ try {
+  for(const [locale,label] of [['en','Branch 1'],['zh-CN','分支 1']]) {
+   const source=`# Release flow\n\nA build ships or rolls back.\n\n@meta locale=${locale}\n\n## What happens? {#question}\n\n@workflow id=flow\n| a | Build | backend |\n| b | Ship | backend |\n| c | Roll back | backend |\n| a > b | green |\n| a > c | red |\n`;
+   const parsed=parseExplainer(source);
+   assert.ok(parsed.document,JSON.stringify(parsed.diagnostics));
+   const preparedDiagrams=await prepareExplainerDiagrams(parsed.document,{quality:'standard'});
+   const file=artifact('branch-locale-'+locale,renderExplainer(parsed.document,{preparedDiagrams}));
+   await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width:390,height:900,keyboard:false});
+   const actual=await pageValue(browser,`(()=>{const node=document.querySelector('[data-node-context="${label}"]');return node&&{context:node.dataset.nodeContext,label:node.getAttribute('aria-label'),title:node.querySelector('title')?.textContent}})()`);
+   assert.ok(actual,locale);assert.equal(actual.context,label);
+   assert.ok(actual.label.includes('Roll back')&&actual.label.includes(label),JSON.stringify(actual));
+   assert.equal(actual.title,`Roll back · ${label}`);
+  }
+ }finally{await browser.close();}
+});

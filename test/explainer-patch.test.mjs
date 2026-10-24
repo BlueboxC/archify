@@ -132,3 +132,40 @@ test('a page without its source directory can patch prose but cannot read unrela
   panel.blocks.push({id:'new-image',type:'image',path:'asset.png',alt:'New image'});fs.writeFileSync(replacementPath,JSON.stringify(panel));
   await assert.rejects(preparePanelPatch({artifactPath:artifact,panelId:'first',replacementPath}),{message:'Local images require an input directory.'});
 });
+
+test('payload failures retain their original diagnostic while genuine inflation failures stay distinct (#1084)',async t=>{
+  const dir=temp(t),artifact=path.join(dir,'original.html'),replacement=path.join(dir,'replacement.md');
+  fs.writeFileSync(replacement,'## Question {#question}\n\nReplacement.\n');
+  const script=text=>`<script type="application/json" id="archify-explainer-prepared">${text}</script>`;
+  const cases=[
+    ['', 'The artifact must contain one original draft and prepared resource payload.', 'Use an artifact produced by the formal explainer CLI.'],
+    [script('{}')+script('{}'),'The artifact must contain one original draft and prepared resource payload.','Use an artifact produced by the formal explainer CLI.'],
+    [script('{invalid'),'Embedded draft payload is invalid.','Rebuild the artifact from its original draft.'],
+    [script(JSON.stringify({preparedDiagrams:{diagrams:{flow:{htmlGzip:'not-gzip'}}}})),'Embedded native diagram payload cannot be inflated.','Rebuild the original artifact before patching.'],
+  ];
+  for(const [html,message,fix] of cases) {
+    fs.writeFileSync(artifact,html);
+    await assert.rejects(preparePanelPatch({artifactPath:artifact,panelId:'question',replacementPath:replacement}),error=>{
+      assert.equal(error.message,message);
+      assert.equal(error.archifyDiagnostics[0].code,'explainer/patch-payload');
+      assert.deepEqual(error.archifyDiagnostics[0].supportedFixes,[fix]);
+      return true;
+    });
+    assert.equal(fs.readFileSync(artifact,'utf8'),html);
+  }
+});
+
+test('patching a native page reports missing Explainer payload without replacing output (#1084)',t=>{
+  const dir=temp(t),artifact=path.join(dir,'native.html'),replacement=path.join(dir,'replacement.md'),output=path.join(dir,'patched.html');
+  const delivered=run(['deliver','lifecycle',path.resolve('archify/examples/agent-run.lifecycle.json'),artifact,'--json']);
+  assert.equal(delivered.status,0,delivered.stdout+delivered.stderr);
+  const previous=fs.readFileSync(artifact);
+  fs.writeFileSync(replacement,'## Question {#question}\n\nReplacement.\n');fs.writeFileSync(output,'previous verified artifact');
+  const result=run(['patch','explainer',artifact,'question',replacement,output,'--json']);
+  assert.equal(result.status,1,result.stdout+result.stderr);
+  const receipt=JSON.parse(result.stdout);
+  assert.equal(receipt.diagnostics[0].code,'explainer/patch-payload');
+  assert.equal(receipt.diagnostics[0].message,'The artifact must contain one original draft and prepared resource payload.');
+  assert.deepEqual(fs.readFileSync(artifact),previous);
+  assert.equal(fs.readFileSync(output,'utf8'),'previous verified artifact');
+});

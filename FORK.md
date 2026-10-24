@@ -204,3 +204,11 @@ remain authoritative.
 The #1076 toolbar test also selects real style-menu choices and checks Escape
 closure/focus return from the panel. That is a test-evidence correction; the
 already-qualified toolbar CSS and runtime handlers are unchanged.
+
+## Explainer heading, payload and locale corrections
+
+For MBrekhof's [#1083](https://github.com/tt-a1i/archify/issues/1083), allow literal CR and Unicode line/paragraph separators in heading text without a null-match crash. Preserve source offsets and LF/CRLF parsing; CR-only malformed drafts retain structured diagnostics and the fork's publication guards.
+
+For [#1084](https://github.com/tt-a1i/archify/issues/1084), retain the actual `archifyDiagnostics` payload errors and the legacy diagnostic field. Missing/duplicate embedded payloads and invalid JSON keep their specific repair advice; corrupt gzip still uses the inflation failure. Failed patches preserve input and previously delivered output.
+
+For [#1082](https://github.com/tt-a1i/archify/issues/1082), pass the page locale to workflow shorthand compilation. Generated branch labels use Chinese for zh-prefixed/default pages and `Branch N` otherwise, without changing authored lane labels, wrapped-band titles, identities or topology. No dependencies, schemas, versions, Viewer behavior or existing user HTML are changed.

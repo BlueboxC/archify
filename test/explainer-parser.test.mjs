@@ -185,3 +185,20 @@ test('a badge-only comparison cell and a route written in the node column are ac
   assert.deepEqual(document.panels[0].blocks[0].rows[0].cells[0],{text:'Drop',assessment:'bad',verdict:'Drop'});
   assert.deepEqual(document.panels[0].blocks[2].items[0].target,{diagram:'flow',route:['a','b']});
 });
+
+test('heading line terminators remain literal text without crashing the parser (#1083)',()=>{
+  for(const separator of ['\r','\u2028','\u2029']) {
+    const source=`# Title${separator}continued {#heading}\n\nAnswer.\n\n## Question${separator}continued {#question}\n\nText.\n`;
+    const result=parse(source);
+    assert.equal(result.document.meta.title,`Title${separator}continued`);
+    assert.equal(result.document.panels[0].title,`Question${separator}continued`);
+    assert.equal(result.document.panels[0].id,'question');
+    const range=result.sourceMap['/panels/0'];
+    assert.equal(range.line,5);
+    assert.equal(source.slice(range.start,range.end),`## Question${separator}continued {#question}\n\nText.\n`);
+  }
+  const malformed=parseExplainer('# Title\r\rAnswer.\r\r## Question\r\rText.\r');
+  assert.equal(malformed.document,null);
+  assert.ok(malformed.diagnostics.length);
+  assert.ok(malformed.diagnostics.every(entry=>entry.code.startsWith('explainer/parse-')));
+});
