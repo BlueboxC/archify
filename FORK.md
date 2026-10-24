@@ -175,3 +175,7 @@ Read-only provenance inspection reports an unknown state with the typed namespac
 ### Native tree chart guidance (#1070)
 
 Match Pele's treeView detector ID when redirecting treeView-beta chart fences to the native tree shorthand. Keep mindmap guidance and ordinary chart rendering. Regression coverage exercises these public compiler results. Based on MBrekhof's [#1070](https://github.com/tt-a1i/archify/issues/1070).
+
+### Native Windows sandbox follow-up (#1073)
+
+The scoped realpath fallback is qualified on Windows Server 2025, Node22.23.2 and Codex0.164.0's elevated sandbox. Native ancestor realpath EPERM remains observable; JavaScript resolution must prove the same directory identity. Owned temporary ancestry additionally retains sameEntry and, only for Windows EPERM, compares stable non-link directory dev/inode/birthtime before and after inspection. Full ancestor bindings and replacement refusal remain intact. The reported three suites pass26/26, sandbox refusal controls pass18/18, and ordinary native Windows path/cleanup tests pass64 with one POSIX skip. This qualifies the recorded environment, not every Windows ACL layout. The public qualification is [run40091996255](https://github.com/BlueboxC/archify/actions/runs/40091996255); its predecessor preserves the failing result.

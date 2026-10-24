@@ -36,6 +36,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Indeterminate sidecar namespaces produce structured provenance/evidence failures without an alternative write path or treating unknown provenance as verified.
 
 - Windows native realpath EPERM may fall back to Node JS realpath only for an existing non-link directory ancestor. Require matching stable filesystem identity after resolution; leaves, roots, other errors and unresolved identities remain strict. Preserve destination/containment checks; injected tests do not establish native Windows sandbox acceptance.
+- Owned temporary-directory ancestor comparisons keep sameEntry first. On Windows EPERM only, a fallback comparison requires non-link directory identities with nonzero inode and stable dev/inode/birthtime before and after inspection. Preserve the full bound ancestor chain and replacement refusal during creation and cleanup.
 
 ## Work Guidance
 
