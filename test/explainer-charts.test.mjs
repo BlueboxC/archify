@@ -77,3 +77,35 @@ test('a blank data cell is missing data, never drawn as zero', async () => {
   }
   assert.match(chartFromData(Buffer.from('k,v\nA,60\nB,40\n'), 'a.csv', { kind: 'pie', x: 'k', y: ['v'] }).text, /"A" : 60\n {2}"B" : 40/);
 });
+
+
+test('pie diagnostics retain authored blank and showData lines', async () => {
+  const { compileExplainerChart } = await import('../archify/explainer/charts.mjs');
+  for (const newline of ['\n', '\r\n']) {
+    for (const lines of [
+      ['pie', '  "a" : 1', '', '  "b": x'],
+      ['pie', 'showData', '  "a": 1', '  "b": x'],
+      ['pie showData', '  "a": 1', '', '  "b": x'],
+      ['pie', '  "a": 1', '', '', '  "b": x'],
+      ['pie', '  "a":', '1', '  "b": x'],
+      ['pie', '  "a"', ': 1', '  "b": x'],
+    ]) {
+      const result = compileExplainerChart(lines.join(newline));
+      assert.equal(result.line, lines.length, JSON.stringify(lines));
+      assert.match(result.error, new RegExp(`line ${lines.length}\\b`));
+      assert.equal(result.svg, undefined);
+    }
+  }
+  const canonical = compileExplainerChart('pie\n  "A":60\n  "B":40').svg;
+  assert.equal(typeof canonical, 'string');
+  for (const input of [
+    'pie showData\n  "A":60\n  "B":40',
+    'pie\nshowData\n  "A":60\n  "B":40',
+    'pie\n  "A":60\n\n  "B":40',
+    'pie\n  "A":\n60\n  "B":40',
+    'pie\n  "A"\n:60\n  "B":40',
+  ]) {
+    assert.equal(compileExplainerChart(input).svg, canonical);
+    assert.equal(compileExplainerChart(input.replaceAll('\n', '\r\n')).svg, canonical);
+  }
+});

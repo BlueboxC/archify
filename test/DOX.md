@@ -31,7 +31,7 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 
 - Cover finite extreme workflow dimensions with bounded public CLI timeouts and ordinary-size controls.
 - Denied namespace probes and non-directory evidence targets must return structured failures while preserving artifacts and inputs.
-- Chart guidance regressions retain native tree redirects and ordinary rendered charts.
+- Chart guidance regressions retain native tree redirects and ordinary rendered charts. Pie diagnostics keep authored error lines across blank lines, standalone showData and LF/CRLF endings.
 
 - Windows sandbox ancestor EPERM regressions retain leaf/root/other-error and POSIX refusals, failed JS resolution and changed/link/missing postimage identity. Report injected platform behavior separately from actual Windows execution.
 

@@ -18,6 +18,8 @@ This directory owns document parsing, rendering, dependency freezing and the ven
 - At narrow widths the existing toolbar wraps within its page column. Style and Export menus anchor below the complete toolbar so wrapped controls cannot place a popup outside the viewport. Preserve desktop layout, keyboard handlers, print exclusion and offline loading; no version-check control or network feature is introduced.
 - Cyclic shorthand can try one alternate placement through the existing native renderer and validator. Keep authored nodes, relations, input bytes and explicit/edited geometry intact; publish only a validated candidate. Preview lane classes follow the selected rendering without changing the retained source model.
 
+- Pie legend normalization preserves diagnostic line counts, including blank lines and standalone showData. Retain accepted multiline slice whitespace and rendered SVGs.
+
 - Match Pele detector IDs when redirecting chart fences to native modes, including treeView-beta to the native tree shorthand.
 
 ## Work Guidance
