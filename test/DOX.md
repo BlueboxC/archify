@@ -35,7 +35,7 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 
 - Windows sandbox ancestor EPERM regressions retain leaf/root/other-error and POSIX refusals, failed JS resolution and changed/link/missing postimage identity. Report injected platform behavior separately from actual Windows execution.
 
-- Crossing-budget regressions cover both counters, safe-integer overrides, public recovery diagnostics and retained delivery output. Maintained dense 10x10/11x11 fixtures use production defaults, not test-only raised budgets; compare complete base/candidate receipts before claiming compatibility.
+- Crossing-budget regressions exclude empty projected pure-Q routes and cover both counters, safe-integer overrides, public recovery diagnostics and retained delivery output. Maintained dense 10x10/11x11 fixtures use production defaults, not test-only raised budgets; compare complete base/candidate receipts before claiming compatibility.
 
 - Explainer regressions cover literal CR/U+2028/U+2029 heading text and unchanged source ranges, structured public-command failures, distinct missing/duplicate/invalid/inflation payload errors and prior-output preservation. Locale cases verify generated lane labels in the delivered model, node context, titles and accessible labels while preserving authored lanes and topology.
 

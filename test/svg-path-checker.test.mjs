@@ -482,3 +482,18 @@ await import(${JSON.stringify(pathToFileURL(cli).href)});
   assert.ok(issue.supportedFixes.length > 0);
   assert.deepEqual(fs.readFileSync(output), previous);
 });
+
+
+test('readable-v2 pure quadratic relationships do not consume the crossing-pair budget', async t => {
+  const body = [
+    arrow('M20 20Q40 40 60 20', { id: 'curve-one', from: 'a', to: 'b' }),
+    arrow('M20 60Q40 80 60 60', { id: 'curve-two', from: 'c', to: 'd' }),
+    arrow('M20 100Q40 120 60 100', { id: 'curve-three', from: 'e', to: 'f' }),
+  ].join('');
+  const result = await check(t, body, {
+    rootAttrs: 'data-layout-contract="readable-v2"',
+    env: { ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS: '1' },
+  });
+  assertPass(result);
+  assert.equal(result.receipt.composition.metrics.properCrossings, 0);
+});

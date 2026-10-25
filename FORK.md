@@ -219,3 +219,7 @@ For [#1082](https://github.com/tt-a1i/archify/issues/1082), pass the page locale
 For [#1085](https://github.com/tt-a1i/archify/issues/1085), exclude the execution-only `inputPath` from published prepared bundles and recompute their digest. The private temporary-input binding and source/resource validation remain intact. Retain original source origins, immutable inputs, dependency checks and output-preserving failure behavior; repeated patches at one destination produce identical HTML. Windows path simulations are distinct from native Windows evidence.
 
 Adapt Momoyeyu's [PR #1086](https://github.com/tt-a1i/archify/pull/1086), head `83a109027936927cc65d212280ee1b6d28cabb38`: on eligible failed relative drop forks, try opposite source-port order and short endpoint corridors, keeping only a complete validated result. Stable fork ordering precedes the four-fork selection. This is at most four additional compiles per invocation, not a global retry or wall-clock bound across outer feedback. Preserve explicit geometry, topology, existing successful scenes and the fork's finite probing/crossing protections.
+
+### Crossing-budget pure-Q follow-up
+
+Adapt the empty-projection correction from outlier27-cell's PR #876 (`5ba198fd`): select crossing pairs after visible-route projection. A readable-v2 pure quadratic path has no straight segment pairs to inspect and must not consume the relationship-pair budget. Preserve both limits, complete-inspection refusals and existing supported geometry.
