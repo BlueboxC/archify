@@ -227,3 +227,7 @@ Adapt the empty-projection correction from outlier27-cell's PR #876 (`5ba198fd`)
 ### Authored and fallback export titles (#1024)
 
 Use the authored heading consistently across localized templates. Older/custom pages without that heading retain their complete document title: a suffix-like word cannot be identified safely as generated metadata. Keep NFC/Unicode sanitization, format and semantic-card suffixes, and the empty-name fallback. Real Chrome downloads cover English, Spanish, Korean, Arabic and Chinese plus SVG/PNG/route-card names.
+
+### Speculative routing follow-up (PR #1086)
+
+Carry Momoyeyu's `a7be6dc1` refinement: speculative reversed-port candidates suppress optional repair-hint discovery, while complete compile validation and acceptance remain unchanged. The per-invocation retry limit is distinct from total outer feedback work. Fixed-input comparisons include maintained fixtures and the contributor's exact public task4 input; supplied artifacts retain their original revision labels.
