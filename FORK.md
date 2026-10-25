@@ -231,3 +231,5 @@ Use the authored heading consistently across localized templates. Older/custom p
 ### Speculative routing follow-up (PR #1086)
 
 Carry Momoyeyu's `a7be6dc1` refinement: speculative reversed-port candidates suppress optional repair-hint discovery, while complete compile validation and acceptance remain unchanged. The per-invocation retry limit is distinct from total outer feedback work. Fixed-input comparisons include maintained fixtures and the contributor's exact public task4 input; supplied artifacts retain their original revision labels.
+
+The supplied task4 artifact (`83a109027936927cc65d212280ee1b6d28cabb38`, HTML SHA-256 `30aea889225e0c79c50fe762f466e410639ed43b21f3987538dd6caf9992f3d2`) was captured and inspected in [light](docs/assets/pr1086-task4-light.png) and [dark](docs/assets/pr1086-task4-dark.png). The dashed `ineligible` branch takes a longer outside-left corridor and reaches Reject without crossing the refund path; its label and arrowhead remain visible. This assisted visual inspection is not a contributor's personal human approval or a shortest-route guarantee.

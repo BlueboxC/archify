@@ -10923,10 +10923,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var heading = document.querySelector &amp;&amp; document.querySelector(&#39;.header h1&#39;);
         var title = heading &amp;&amp; heading.textContent.trim();
         if (!title) {
-          title = (document.title || &#39;diagram&#39;)
-            .replace(/\s+Architecture(\s+Diagram)?$/i, &#39;&#39;)
-            .replace(/\s+Diagram$/i, &#39;&#39;)
-            .trim();
+          title = (document.title || &#39;diagram&#39;).trim();
         }
         var name = title.normalize(&#39;NFC&#39;).replace(/([\p{L}\p{N}])(\p{M}+)|\p{M}+/gu, &#39;$1$2&#39;)
                         .replace(/[^\p{L}\p{M}\p{N}_-]+/gu, &#39;-&#39;)
@@ -26179,10 +26176,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var heading = document.querySelector &amp;&amp; document.querySelector(&#39;.header h1&#39;);
         var title = heading &amp;&amp; heading.textContent.trim();
         if (!title) {
-          title = (document.title || &#39;diagram&#39;)
-            .replace(/\s+Architecture(\s+Diagram)?$/i, &#39;&#39;)
-            .replace(/\s+Diagram$/i, &#39;&#39;)
-            .trim();
+          title = (document.title || &#39;diagram&#39;).trim();
         }
         var name = title.normalize(&#39;NFC&#39;).replace(/([\p{L}\p{N}])(\p{M}+)|\p{M}+/gu, &#39;$1$2&#39;)
                         .replace(/[^\p{L}\p{M}\p{N}_-]+/gu, &#39;-&#39;)
