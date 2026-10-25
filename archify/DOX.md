@@ -26,7 +26,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Repository evidence preserves the exact Git top-level filesystem spelling; normalize remote origins separately before identity comparison and credential redaction.
 - Keep fonts embedded and preserve THIRD_PARTY_NOTICES.md and asset licenses. No new runtime dependencies or automatic installation/update side effects.
 
-- Timeline dates retain years across year boundaries; subsecond omitted intervals state milliseconds. Waterfall timing agreement accounts for binary64 magnitude, and the incomplete legend describes only open bars. Neutral relationship text uses readable theme-specific ink without recoloring connectors or semantic variants. Exports use the authored heading and NFC Unicode letters/numbers with attached marks to retain localized titles; detached marks are removed and names without a letter or number use the existing fallback.
+- Timeline dates retain years across year boundaries; subsecond omitted intervals state milliseconds. Waterfall timing agreement accounts for binary64 magnitude, and the incomplete legend describes only open bars. Neutral relationship text uses readable theme-specific ink without recoloring connectors or semantic variants. Exports use the authored heading and NFC Unicode letters/numbers with attached marks to retain localized titles; detached marks are removed and names without a letter or number use the existing fallback. Older/custom pages without a heading retain their complete document title instead of guessing at suffix words.
 
 - Print CSS clears hidden navigation clearance independently of JavaScript; screen/mobile dock behavior stays measured.
 

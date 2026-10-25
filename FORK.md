@@ -223,3 +223,7 @@ Adapt Momoyeyu's [PR #1086](https://github.com/tt-a1i/archify/pull/1086), head `
 ### Crossing-budget pure-Q follow-up
 
 Adapt the empty-projection correction from outlier27-cell's PR #876 (`5ba198fd`): select crossing pairs after visible-route projection. A readable-v2 pure quadratic path has no straight segment pairs to inspect and must not consume the relationship-pair budget. Preserve both limits, complete-inspection refusals and existing supported geometry.
+
+### Authored and fallback export titles (#1024)
+
+Use the authored heading consistently across localized templates. Older/custom pages without that heading retain their complete document title: a suffix-like word cannot be identified safely as generated metadata. Keep NFC/Unicode sanitization, format and semantic-card suffixes, and the empty-name fallback. Real Chrome downloads cover English, Spanish, Korean, Arabic and Chinese plus SVG/PNG/route-card names.

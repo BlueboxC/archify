@@ -17,7 +17,7 @@ Viewer modules own UI state, navigation, keyboard behavior, themes and export. T
 - Compacted ordinary page flow pins the SVG top and restores the original inline height/alignment, including priorities, on reset or mode changes. Passport, Finder and Figure index small-text ink remains readable across supported themes/presets, including selected rows, without changing semantic border/stroke colors.
 - Preserve offline fonts, authored identity/geometry, accessibility and last-verified Preview recovery.
 
-- Mobile dock clearance follows its measured wrapped height; all actions and route overlays remain reachable. A capped semantic Lens shrinks its scrollable kinds list so Clear/Copy remain reachable at large root fonts. Presentation overflow keeps its leading edge scrollable. Default-label ink has its own token in light/print presets, while dark and semantic colors retain their contracts. Export filenames prefer the authored heading over translated page suffixes and preserve normalized Unicode.
+- Mobile dock clearance follows its measured wrapped height; all actions and route overlays remain reachable. A capped semantic Lens shrinks its scrollable kinds list so Clear/Copy remain reachable at large root fonts. Presentation overflow keeps its leading edge scrollable. Default-label ink has its own token in light/print presets, while dark and semantic colors retain their contracts. Export filenames prefer the authored heading over translated page suffixes and preserve normalized Unicode. Without an authored heading, retain the complete document title; never guess which suffix words are generated.
 
 - Print clears dock height in CSS even when page scripts are disabled; returning to screen media retains measured mobile clearance.
 
