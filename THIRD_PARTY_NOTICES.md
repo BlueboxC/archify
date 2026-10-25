@@ -72,6 +72,25 @@ distributed under the MIT License. The subset and its license text are in
 `explainer/vendor/pele/` in the packaged Skill. Charts are rendered to static
 SVG when a page is built; delivered pages contain no Pele code.
 
+
+## Adapted compiler optimizations
+
+The retained Archify 3.2.0 base keeps its original MIT grant. The lane/step
+indexing changes adapted from cookingwithvlad-del’s
+[PR #1106](https://github.com/tt-a1i/archify/pull/1106)
+(head 3233ebcd7100bec64fb6450ed6345c78ee80153a), and the flow-validation iteration
+and regression adapted from [PR #1109](https://github.com/tt-a1i/archify/pull/1109)
+(head 34a4d345e159f311e272af12387cad2fe0a4d416), are Apache-2.0 portions.
+Their original license and upstream attribution notice are included in
+`assets/Archify-Apache-2.0.txt` and `assets/Archify-Upstream-NOTICE.txt` in the
+Skill (`archify/assets/` in the repository). Those terms apply to these adapted
+portions; the retained MIT grants are not replaced.
+
+BlueboxC integrated those changes with the customized compiler and added
+main-path/off-path animation and repeated-object diagnostic checks. See FORK.md
+in the repository for the adaptation scope. No upstream trademark or endorsement
+is granted.
+
 ## No additional rights granted
 
 Brand names, logos, and trademarks remain the property of their respective

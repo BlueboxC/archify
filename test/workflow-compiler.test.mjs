@@ -1531,3 +1531,25 @@ test('a dense automatic first draft routes between columns without crossings', (
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
+
+test('indexed workflow geometry retains main-path and off-path animation order', () => {
+  const workflow = {
+    schema_version: 1, diagram_type: 'workflow',
+    meta: { title: 'Indexed animation', output: 'diagram.html', animation: 'trace' },
+    lanes: [{ id: 'main', label: 'Main' }, { id: 'side', label: 'Side' }],
+    nodes: [
+      { id: 'start', lane: 'main', col: 0, type: 'frontend', label: 'Start' },
+      { id: 'finish', lane: 'main', col: 1, type: 'backend', label: 'Finish' },
+      { id: 'side', lane: 'side', col: 0, type: 'backend', label: 'Side' },
+    ],
+    edges: [{ from: 'start', to: 'finish' }], mainPath: ['start', 'finish'],
+  };
+  const result = compileWorkflow({ workflow, qualityProfile: 'standard' });
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  for (const [id, step] of [['start', 0], ['finish', 1], ['side', 4]]) {
+    const group = result.svg.split(`data-node-id="${id}"`)[1]?.split('</g>')[0];
+    assert.ok(group, `rendered node ${id}`);
+    assert.match(group, new RegExp(`data-animate="node" style="--step:${step}"`));
+  }
+  assert.match(result.svg, /<path\b[^>]*data-edge-key="0"[^>]*data-animate="edge" style="--step:0"/);
+});

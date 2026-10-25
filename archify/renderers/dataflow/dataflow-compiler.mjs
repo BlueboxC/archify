@@ -1,3 +1,5 @@
+// Includes adapted flow validation iteration from PR #1109 (cookingwithvlad-del, Apache-2.0).
+// Modified for the BlueboxC 3.2.0 fork; see archify/THIRD_PARTY_NOTICES.md.
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { throwDiagnosticProblems, withIsolatedDiagnosticRecording, rendererFailure } from '../shared/diagnostics.mjs';
@@ -403,8 +405,7 @@ export function compileDataflow({ dataflow, sourceEvidence, qualityProfile: requ
 
       const flowList = asArray(dataflow.flows);
       const stageById = new Map(asArray(dataflow.nodes).map((node) => [node.id, node.stage]));
-      for (const flow of flowList) {
-        const flowIndex = flowList.indexOf(flow);
+      for (const [flowIndex, flow] of flowList.entries()) {
         for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
           if (nodes.has(flow[field])) continue;
           const problem = `Flow "${flow.label || flow[field]}" references unknown ${endpoint} "${flow[field]}".`;

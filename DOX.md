@@ -11,7 +11,7 @@ Root owns distribution builders, workflows, community intake, agent integration 
 ## Local Contracts
 
 - Keep fast-uri >=3.1.8 in both root and Skill development dependency graphs.
-- Preserve MIT attribution, pinned Actions, restricted workflow permissions and the embedded licensed font. Never restore network-loaded fonts.
+- Preserve MIT attribution for the retained base. Later Apache-2.0 compiler adaptations retain their scoped notices and complete license/attribution texts in the package. Keep pinned Actions, restricted workflow permissions and the embedded licensed font. Never restore network-loaded fonts.
 - Adapt reviewed corrections independently of upstream integration. Preserve schema-v1 inputs, explicit geometry, existing receipt failures and standard-quality compatibility.
 - Automatic GitHub Pages publishing is limited to the original repository; the fork still builds and verifies the website without provisioning hosting.
 - Keep private project data, installed backups, machine paths and local test receipts out of Git. Keep installation rollback outside the public package.

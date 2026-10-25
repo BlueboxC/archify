@@ -1,4 +1,7 @@
+// Includes adapted collection-index regression from PR #1109 (cookingwithvlad-del, Apache-2.0).
+// Modified for the BlueboxC 3.2.0 fork; see archify/THIRD_PARTY_NOTICES.md.
 import assert from 'node:assert/strict';
+import { compileDataflow } from '../archify/renderers/dataflow/dataflow-compiler.mjs';
 import crypto from 'node:crypto';
 import { labelPoint, segmentRectClearanceWithin } from '../archify/renderers/shared/geometry.mjs';
 import { spawnSync } from 'node:child_process';
@@ -49,6 +52,18 @@ function pipeline() {
     ].map(([from, to, label], index) => ({ id: `f${index}`, from, to, label })),
   };
 }
+
+test('unknown-flow diagnostics retain their collection index', t => {
+  const diagram = pipeline();
+  diagram.flows[2].to = 'ghost';
+  const { result, receipt } = inspect(t, diagram);
+  assert.notEqual(result.status, 0);
+  const diagnostic = receipt.diagnostics.find(({ code }) => code === 'dataflow/unknown-endpoint');
+  assert.ok(diagnostic);
+  assert.equal(diagnostic.subject.path, '/flows/2/to');
+  assert.ok(diagnostic.supportedFixes.length > 0);
+  assert.ok(diagnostic.supportedFixes.every(fix => fix.startsWith('set /flows/2/to to ')));
+});
 
 test('automatic dataflow width contains a nearby authored label without moving its pin', t => {
   const diagram = {
@@ -827,4 +842,16 @@ test('an invalid authored label preserves its diagnosis and the existing artifac
   const rendered = spawnSync(process.execPath, [cli, 'render', 'dataflow', input, output], { encoding: 'utf8', env });
   assert.equal(rendered.status, 1);
   assert.equal(fs.readFileSync(output, 'utf8'), 'previous complete diagram');
+});
+
+
+test('repeated flow object references retain each collection index in diagnostics', () => {
+ const diagram=pipeline();
+ const bad={from:'ghost',to:'prepare',label:'invalid'};
+ diagram.flows=[bad,diagram.flows[1],bad];
+ assert.throws(()=>compileDataflow({dataflow:diagram,qualityProfile:'standard'}), error=>{
+  const paths=error.archifyDiagnostics.filter(d=>d.code==='dataflow/unknown-endpoint').map(d=>d.subject.path);
+  assert.deepEqual(paths,['/flows/0/from','/flows/2/from']);
+  return true;
+ });
 });

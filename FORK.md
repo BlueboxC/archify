@@ -233,3 +233,13 @@ Use the authored heading consistently across localized templates. Older/custom p
 Carry Momoyeyu's `a7be6dc1` refinement: speculative reversed-port candidates suppress optional repair-hint discovery, while complete compile validation and acceptance remain unchanged. The per-invocation retry limit is distinct from total outer feedback work. Fixed-input comparisons include maintained fixtures and the contributor's exact public task4 input; supplied artifacts retain their original revision labels.
 
 The supplied task4 artifact (`83a109027936927cc65d212280ee1b6d28cabb38`, HTML SHA-256 `30aea889225e0c79c50fe762f466e410639ed43b21f3987538dd6caf9992f3d2`) was captured and inspected in [light](docs/assets/pr1086-task4-light.png) and [dark](docs/assets/pr1086-task4-dark.png). The dashed `ineligible` branch takes a longer outside-left corridor and reaches Reject without crossing the refund path; its label and arrowhead remain visible. This assisted visual inspection is not a contributor's personal human approval or a shortest-route guarantee.
+
+## Workflow compiler indexes
+
+Adapted cookingwithvlad-del’s PR [#1106](https://github.com/tt-a1i/archify/pull/1106), retaining first-occurrence node lookup and lane-prefix arithmetic. Added a public emitted-SVG regression for main-path/off-path node and edge animation order; schema, layout defaults, authored geometry and fork routing remain unchanged.
+
+## Dataflow validation indexes
+
+Adapted cookingwithvlad-del’s PR [#1109](https://github.com/tt-a1i/archify/pull/1109), including its public CLI diagnostic/fix-path regression. Direct indexed iteration removes repeated flow scans and correctly identifies each occurrence when JavaScript callers reuse one flow object. No runtime speedup is claimed without a dedicated measurement.
+
+The retained base remains MIT. These post-transition PR1106/1109 portions retain Apache-2.0 terms, contributor attribution and their complete upstream license/NOTICE in the Skill assets, with the scope recorded in THIRD_PARTY_NOTICES.md.

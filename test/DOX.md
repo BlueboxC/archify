@@ -41,6 +41,10 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 
 - Patch regressions compare repeated public-command HTML bytes and private/public bundle identities, including missing origins and simulated Windows paths. Routing regressions preserve source constraints and stable fork selection beyond the retry limit; compare complete maintained receipts on the same inputs.
 
+- Workflow indexing retains valid main-path/off-path animation metadata; full before/after comparisons include successful scenes and refusal diagnostics. Stress timings are synthetic measurements, separate from typical workloads.
+
+- Dataflow endpoint regressions cover a later JSON flow and repeated in-memory flow objects, asserting the exact source paths and offered fix targets.
+
 ## Work Guidance
 
 Use existing runners; add tests only for meaningful uncovered outcomes.
