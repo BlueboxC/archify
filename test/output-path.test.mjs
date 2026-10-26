@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { startPreview } from '../archify/bin/preview.mjs';
 import { loadDiagram, writeDiagram } from '../archify/renderers/shared/cli.mjs';
 import { pathsAlias } from '../archify/renderers/shared/output-path.mjs';
+import { stageCleanSkill } from '../scripts/stage-clean-skill.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..', 'archify');
@@ -24,16 +25,7 @@ function run(args, cwd) {
 }
 
 function copyInstalledSkill(target) {
-  fs.cpSync(skillRoot, target, {
-    recursive: true,
-    filter(source) {
-      const relative = path.relative(skillRoot, source);
-      return relative !== 'node_modules'
-        && !relative.startsWith(`node_modules${path.sep}`)
-        && relative !== 'test'
-        && !relative.startsWith(`test${path.sep}`);
-    },
-  });
+  stageCleanSkill({ repoRoot: path.resolve(skillRoot, '..'), destination: target });
 }
 
 function directoryAliasesNames(directory, authoredName, lookupName) {

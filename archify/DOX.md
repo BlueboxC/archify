@@ -24,7 +24,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Note-overlap repairs describe one jointly verified translation of the affected message suffix; reject plans that create canvas, note, segment, or legend failures. Preserve authored messages and ordering.
 - Authoring and delivery references use short topic indexes; keep legacy heading links reachable and current exit-code semantics documented.
 - Repository evidence preserves the exact Git top-level filesystem spelling; normalize remote origins separately before identity comparison and credential redaction.
-- Keep fonts embedded and preserve THIRD_PARTY_NOTICES.md and asset licenses, including the Apache-2.0 license/notice for adapted PR1106/1109 portions beside the retained MIT base. No new runtime dependencies or automatic installation/update side effects.
+- Keep fonts embedded and preserve THIRD_PARTY_NOTICES.md and asset licenses, including the Apache-2.0 license/notice for adapted PR1106/1109/1117 portions beside the retained MIT base. No new runtime dependencies or automatic installation/update side effects.
 
 - Timeline dates retain years across year boundaries; subsecond omitted intervals state milliseconds. Waterfall timing agreement accounts for binary64 magnitude, and the incomplete legend describes only open bars. Neutral relationship text uses readable theme-specific ink without recoloring connectors or semantic variants. Exports use the authored heading and NFC Unicode letters/numbers with attached marks to retain localized titles; detached marks are removed and names without a letter or number use the existing fallback. Older/custom pages without a heading retain their complete document title instead of guessing at suffix words.
 

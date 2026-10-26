@@ -91,6 +91,16 @@ main-path/off-path animation and repeated-object diagnostic checks. See FORK.md
 in the repository for the adaptation scope. No upstream trademark or endorsement
 is granted.
 
+## Adapted classic SVG grid correction
+
+The CSS selector and browser regression adapted from vedantb7's
+[PR #1117](https://github.com/tt-a1i/archify/pull/1117)
+(head 04f5725555194b47668510a97fc251d4c0098818) are Apache-2.0 portions.
+BlueboxC extended the browser controls to auto/light/dark variants, decoded
+PNGs and the editorial preset. The retained base remains MIT; the complete
+upstream license and notice remain in `assets/Archify-Apache-2.0.txt` and
+`assets/Archify-Upstream-NOTICE.txt`.
+
 ## No additional rights granted
 
 Brand names, logos, and trademarks remain the property of their respective

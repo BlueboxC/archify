@@ -243,3 +243,7 @@ Adapted cookingwithvlad-del’s PR [#1106](https://github.com/tt-a1i/archify/pul
 Adapted cookingwithvlad-del’s PR [#1109](https://github.com/tt-a1i/archify/pull/1109), including its public CLI diagnostic/fix-path regression. Direct indexed iteration removes repeated flow scans and correctly identifies each occurrence when JavaScript callers reuse one flow object. No runtime speedup is claimed without a dedicated measurement.
 
 The retained base remains MIT. These post-transition PR1106/1109 portions retain Apache-2.0 terms, contributor attribution and their complete upstream license/NOTICE in the Skill assets, with the scope recorded in THIRD_PARTY_NOTICES.md.
+
+### Classic SVG grid (#1111 / PR #1117)
+
+Adapted from vedantb7 under Apache-2.0; scoped attribution and complete upstream license/NOTICE remain in the Skill: scope classic grid suppression to the SVG preset so standalone SVG exports match the Viewer. Chrome checks cover auto/light/dark exports, decoded PNGs and visible blueprint/editorial grids. Existing generated user HTML requires regeneration.

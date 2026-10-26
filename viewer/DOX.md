@@ -20,6 +20,7 @@ Viewer modules own UI state, navigation, keyboard behavior, themes and export. T
 - Mobile dock clearance follows its measured wrapped height; all actions and route overlays remain reachable. A capped semantic Lens shrinks its scrollable kinds list so Clear/Copy remain reachable at large root fonts. Presentation overflow keeps its leading edge scrollable. Default-label ink has its own token in light/print presets, while dark and semantic colors retain their contracts. Export filenames prefer the authored heading over translated page suffixes and preserve normalized Unicode. Without an authored heading, retain the complete document title; never guess which suffix words are generated.
 
 - Print clears dock height in CSS even when page scripts are disabled; returning to screen media retains measured mobile clearance.
+- Classic grid suppression is scoped to the SVG preset so standalone auto/light/dark exports retain the Viewer rule. Other presets keep their grid styles.
 
 ## Work Guidance
 
