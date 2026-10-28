@@ -18,6 +18,7 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 - Bridge-versus-bridge collision regressions exercise the actual post-routing assembler with controlled fragments, both processing orders and same/mixed styles; clear-bus controls remain connected. Public CLI controls use valid separated families. Keep synthetic assembler evidence distinct from complete-diagram reproduction.
 - Repository evidence covers POSIX trailing-whitespace roots and whitespace-prefixed HTTP(S) origin failures while retaining identity, revision, source-range and credential-redaction checks.
 - Large layout reports must survive redirected and stalled-pipe output in every affected renderer without writing HTML. Static SVG checks retain post-nesting geometry and distinguish root elements from comments, attributes and script/style text.
+- Explainer subprocess regressions parse success/failure receipts larger than 64 KiB. Report regressions preserve literal parameter delimiters and complete Timeline graphemes, reject tag object identities and check Markdown source-link controls.
 - Assert user outcomes; adapt obsolete automatic-layout expectations when a better valid result replaces an old limitation.
 - Skips and platform simulations are not runtime passes. Keep real browser and package evidence distinct.
 - Real Chrome export checks keep the classic grid transparent in the Viewer and standalone SVG variants, with visible blueprint/editorial controls and successful PNG decoding.

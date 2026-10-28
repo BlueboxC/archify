@@ -14,6 +14,9 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Boundary membership is authored data. Older HTML without membership metadata remains readable and explicitly unjudged by that rule; never infer membership from labels.
 - Layout JSON mode drains stdout without creating or replacing HTML. SVG root discovery and geometry readers share a single-pass tokenizer with attribute-aware tag endings and self-closing flags. Preserve comment/CDATA context, script/style text exclusion, ASCII tag delimiters and the full root after nested SVG elements; this is a scoped artifact scanner rather than a general HTML validator.
 - Checker transport failure is not an artifact verdict. Preserve previous delivered output when verification cannot complete.
+- Explainer checker receipts fully drain piped stdout before exit, preserving a single JSON receipt and verdict exit code.
+- Class method styling preserves authored parameter delimiters. Timeline title wrapping keeps complete grapheme clusters and existing CJK punctuation grouping.
+- Repository evidence accepts only the supplied commit object identity; refuse tag/tree/blob IDs without silently peeling them. GitHub/GitLab Markdown line citations use plain source; path-only citations remain unchanged.
 - Preview retains the last verified artifact independently of checking/failure status; same-revision state updates preserve the loaded document.
 - Migration validates complete source/final semantic contracts; group repair spans preserve exact membership and each node's effective group identity under canonical ordering, including overlapping groups with equal labels. Self-calls retain ownership, notes and identity. Raster pins undergo container checks even with matching digests.
 - ERD renderer-added trunk bridges avoid unrelated routes and prior bridges using rendered stroke widths; preserve authored routes, ports and cardinality.

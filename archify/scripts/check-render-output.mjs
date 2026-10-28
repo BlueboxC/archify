@@ -53,8 +53,11 @@ try {
 
 if (isExplainerHtml(html)) {
   const result = checkExplainerHtml(html, { file: htmlPath });
-  console.log(JSON.stringify(result, null, 2));
-  process.exit(result.ok ? 0 : 1);
+  // Drain piped stdout before exiting; do not fall through to diagram checking.
+  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`, () => {
+    process.exit(result.ok ? 0 : 1);
+  });
+  await new Promise(() => {});
 }
 
 const checks = [];

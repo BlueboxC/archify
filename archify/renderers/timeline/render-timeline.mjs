@@ -314,6 +314,7 @@ const tickSeconds = ticks.some((tick) => tick.interval < MINUTE);
 // ---- Lanes and event cards ------------------------------------------------------
 const lanes = asArray(tl.lanes).length ? tl.lanes : [{ id: '__all', label: '' }];
 const laneOf = (event) => (asArray(tl.lanes).length ? event.lane : '__all');
+const GRAPHEME = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
 function wrapTitle(text, maxWidth) {
   const limit = Math.max(6, Math.floor(maxWidth / (layout.titleFont * ADVANCE * 1.05)));
@@ -325,7 +326,7 @@ function wrapTitle(text, maxWidth) {
     if (current.trim()) lines.push(current.trim());
     current = word.trimStart();
     while (textUnits(current) > limit) {
-      const chars = cjkWrapPieces(Array.from(current));
+      const chars = cjkWrapPieces([...GRAPHEME.segment(current)].map(({ segment }) => segment));
       let cut = 0;
       for (let units = 0; cut < chars.length && units + textUnits(chars[cut]) <= limit; cut += 1) units += textUnits(chars[cut]);
       lines.push(chars.slice(0, Math.max(1, cut)).join(''));
@@ -455,7 +456,6 @@ const legendMinWidth = legendEntries.length
 const width = Math.ceil(Math.max(legendMinWidth, Math.min(desiredWidth, Math.max(canvasWidth, DECLARED_WIDE_READER_MAX_WIDTH))));
 // Grapheme clusters keep a truncated family/flag sequence from ending in a
 // dangling joiner before the ellipsis.
-const GRAPHEME = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 function ellipsize(text, maxUnits) {
   if (textUnits(text) <= maxUnits) return text;
   let out = '';

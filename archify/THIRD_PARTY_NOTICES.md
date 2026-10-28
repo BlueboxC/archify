@@ -1,5 +1,14 @@
 # Third-party notices
 
+## Explainer receipt flushing
+
+The Explainer stdout-draining correction and large success/failure subprocess
+regressions are adapted from Moonhyeseong's [PR #1131](https://github.com/tt-a1i/archify/pull/1131),
+integrated upstream at `26513e7b01c7e91bd5f335c8b48cdd8bcfbcd234` under
+Apache-2.0. The complete license is retained in `assets/Archify-Apache-2.0.txt`.
+BlueboxC integrated this scoped correction into the retained MIT base; existing
+attribution and grants remain intact.
+
 Archify includes optional vector data for third-party brand marks. These marks
 are provided only to identify technologies and services in user-authored
 diagrams. Their inclusion does not imply sponsorship, endorsement, partnership,

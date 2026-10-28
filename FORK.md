@@ -1,5 +1,9 @@
 # Archify — BlueboxC fork
 
+## Report corrections (October 27–28)
+
+Adapt Moonhyeseong's #1131 stdout-draining correction and the maintained success/failure subprocess regressions (>64 KiB). Preserve one JSON receipt and its exit code. Reports by pqminh27 (#1127, #1128, #1129 and #1067 follow-up) also receive scoped corrections: retain Class parameter delimiters, use plain Markdown line links, reject non-commit object identities, and wrap Timeline titles on grapheme boundaries. Existing CJK punctuation rules, width measurement and offline/customized runtime remain supported. These are local compatibility corrections, independent of upstream acceptance.
+
 For [#1068](https://github.com/tt-a1i/archify/issues/1068), the current customized 3.2.0 Explainer also overflows in English without the unmerged Version control: its toolbar extends to 401 px at a 390 px viewport. The existing toolbar now wraps within the page column at narrow widths, and its menus anchor below the complete toolbar rather than an individual wrapped button. Desktop layout, keyboard handling, print exclusion, fonts and offline behavior stay unchanged. No update-awareness or feedback feature from #1066 is imported. Real Chrome regression coverage includes English/Chinese, 320/390/1440 px, four styles and both keyboard-opened menus.
 
 This fork integrates official Archify 3.2.0 (`v3.2.0`, commit
