@@ -882,7 +882,7 @@ function memberColumns(member, kind) {
   if (kind === 'attributes') return { left: punctuated(member.name), right: member.type };
   const parameters = member.parameters
     ? String(member.parameters).split(/(,\s*)/).map((part) => {
-      if (/^,\s*$/.test(part)) return `<tspan class="t-muted cl-punct">,</tspan> `;
+      if (/^,\s*$/.test(part)) return `<tspan class="t-muted cl-punct">,</tspan>${esc(part.slice(1))}`;
       const [name, ...annotation] = part.split(':');
       return annotation.length
         ? `<tspan class="cl-param">${esc(name)}</tspan><tspan class="t-muted cl-punct">:</tspan><tspan class="t-muted cl-type-ref">${esc(annotation.join(':'))}</tspan>`
