@@ -181,3 +181,49 @@ test('class: mixed hierarchy fallback keeps dependency notation in focus and SVG
     }
   }
 });
+
+test('class: method parameter delimiters retain visible spaces and tabs', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run class parameter browser checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-class-parameters-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const parameters = ['value: Literal["a,b"]', 'value: Literal["a, b"]',
+    'value: Literal["a,  b"]', 'value: Literal["a,\tb"]', 'value: Literal["a,\t\tb"]', 'a: X,  b: Y'];
+  const expected = parameters.map((value, index) => `parse${index}(${value})`);
+  const input = path.join(scratch, 'parameters.class.json');
+  const output = path.join(scratch, 'parameters.html');
+  fs.writeFileSync(input, JSON.stringify({
+    schema_version: 1, diagram_type: 'class', meta: { title: 'Literal fidelity' },
+    types: [{ id: 'parser', label: 'Parser', kind: 'class', width: 600, row: 0, col: 0,
+      methods: parameters.map((value, index) => ({ name: `parse${index}`, parameters: value, returns: 'Result' })) }],
+  }));
+  execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'class', input, output]);
+  const browser = desktopBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  for (const theme of ['light', 'dark']) {
+    const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+    await send('Page.navigate', { url: pathToFileURL(output).href + '?theme=' + theme });
+    await loaded;
+    const result = await send('Runtime.evaluate', {
+      expression: `(async () => {
+        await document.fonts.ready;
+        await Archify.viewerChromeLayout.whenStable();
+        return [...document.querySelectorAll('text[data-class-member="methods"]')].map(el => ({
+          text: el.textContent, characters: el.getNumberOfChars(),
+          whitespace: [...el.textContent].flatMap((char, index) => /[ \\t]/.test(char)
+            ? [el.getSubStringLength(index, 1)] : []),
+        }));
+      })()`, awaitPromise: true, returnByValue: true,
+    });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    const rows = result.result.value;
+    assert.deepEqual(rows.map(row => row.text), expected);
+    for (const row of rows) {
+      assert.equal(row.characters, row.text.length, `${theme}: ${JSON.stringify(row)}`);
+      assert.ok(row.whitespace.every(advance => advance > 0), `${theme}: ${JSON.stringify(row)}`);
+    }
+  }
+});

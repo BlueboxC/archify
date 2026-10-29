@@ -905,6 +905,7 @@ function renderMembers(type) {
       const style = [
         member.static ? 'text-decoration: underline' : '',
         member.abstract ? 'font-style: italic' : '',
+        compartment.kind === 'methods' ? 'white-space: pre' : '',
       ].filter(Boolean).join('; ');
       const styleAttr = style ? ` style="${style}"` : '';
       const rowTop = top + layout.compartmentPad + line * layout.rowH;
