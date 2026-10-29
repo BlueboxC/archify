@@ -146,7 +146,7 @@ function memberRows(type) {
 // longer than a whole line is split by character, never dropped.
 const PARAMETER_INDENT = 4;
 
-function fillLines(pieces, limit, firstIndent, indent) {
+function fillLines(pieces, limit, firstIndent, indent, preserveWhitespace = false) {
   const lines = [];
   let current = '';
   const room = () => limit - (lines.length ? indent : firstIndent);
@@ -156,8 +156,8 @@ function fillLines(pieces, limit, firstIndent, indent) {
       current += piece;
       continue;
     }
-    if (current) push(current.trimEnd());
-    current = piece.trimStart();
+    if (current) push(preserveWhitespace ? current : current.trimEnd());
+    current = preserveWhitespace ? piece : piece.trimStart();
     while (textUnits(current) > room()) {
       const chars = Array.from(current);
       let cut = 0;
@@ -166,7 +166,7 @@ function fillLines(pieces, limit, firstIndent, indent) {
       current = chars.slice(Math.max(1, cut)).join('');
     }
   }
-  if (current) push(current.trimEnd());
+  if (current) push(preserveWhitespace ? current : current.trimEnd());
   return lines;
 }
 
@@ -182,7 +182,7 @@ function wrapMember(text, availablePx) {
   const tail = text.slice(close);
   return [
     ...fillLines([head], limit, 0, CONTINUATION_INDENT),
-    ...fillLines(parameters, limit, PARAMETER_INDENT, PARAMETER_INDENT),
+    ...fillLines(parameters, limit, PARAMETER_INDENT, PARAMETER_INDENT, true),
     ...fillLines([tail], limit, CONTINUATION_INDENT, CONTINUATION_INDENT),
   ];
 }

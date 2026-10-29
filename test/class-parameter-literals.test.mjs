@@ -20,3 +20,11 @@ test('Class preserves comma and whitespace inside quoted method parameters',t=>{
     assert.ok(text.includes(`parse(${parameters})`),parameters);
   }
 });
+test('Class retains parameter whitespace across authored-width wrap boundaries',t=>{
+  for(const width of [180,196,220]) for(const parameters of ['value: Literal["a,  b"]','a: X,  b: Y','value: Literal["a,\t\tb"]']) {
+    const svg=render(t,{schema_version:1,diagram_type:'class',meta:{title:'Wrapped literals'},types:[{id:'parser',label:'Parser',kind:'class',width,row:0,col:0,methods:[{name:'parse',parameters,returns:'Result'}]}]});
+    const text=[...svg.matchAll(/<text\b[^>]*data-class-member="methods"[^>]*>([\s\S]*?)<\/text>/g)]
+      .map(([,line])=>line.replace(/<[^>]+>/g,'').replaceAll('&quot;','"')).join('');
+    assert.ok(text.includes(`parse(${parameters})`),`${width}: ${JSON.stringify(text)}`);
+  }
+});
