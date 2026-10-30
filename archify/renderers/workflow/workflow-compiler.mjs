@@ -4530,16 +4530,25 @@ function automaticPortCandidates(edge, node, side, preferred, counterpart) {
   const candidates = [];
   const extent = verticalSide ? node.height : node.width;
   const direction = (verticalSide ? counterpart.cy : counterpart.cx) >= center[axis] ? 1 : -1;
-  for (let offset = 0; offset <= extent / 2 - 16; offset += 12) {
-    // Stop when this spacing cannot produce a distinct floating-point coordinate.
-    if (offset > 0 && center[axis] + offset === center[axis] && center[axis] - offset === center[axis]) break;
-    if (offset + 12 === offset) break;
+  const limit = extent / 2 - 16;
+  const lastOffset = Math.floor(limit / 12) * 12;
+  for (let offset = 0; offset <= limit;) {
     for (const sign of [direction, -direction]) {
       const point = [...center];
       point[axis] += sign * offset;
       if (clear(point) && !candidates.some((candidate) => candidate[axis] === point[axis])) candidates.push(point);
     }
     if (candidates.length >= 2) return candidates.slice(0, 2);
+    let nextOffset = offset + Math.max(12, offset * Number.EPSILON);
+    const positive = center[axis] + offset, negative = center[axis] - offset;
+    if (center[axis] + nextOffset === positive && center[axis] - nextOffset === negative) {
+      // Skip repeated coordinates, not later usable ports. Keep the 12px grid.
+      const minimumStep = Math.min(Math.abs(positive), Math.abs(negative)) * Number.EPSILON / 2;
+      nextOffset = Math.max(nextOffset, Math.ceil((offset + minimumStep) / 12) * 12);
+    }
+    nextOffset = Math.min(nextOffset, lastOffset);
+    if (!Number.isFinite(nextOffset) || nextOffset <= offset) break;
+    offset = nextOffset;
   }
   return candidates.length ? candidates : [preferred];
 }

@@ -5,8 +5,40 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+test('occupied wide-node centers retain distinct clear automatic ports', () => {
+  // Exercise the actual nested selector with controlled existing routes; the public
+  // CLI case below separately protects its integration and bounded termination.
+  const source = fs.readFileSync(path.join(root, 'archify/renderers/workflow/workflow-compiler.mjs'), 'utf8');
+  const start = source.indexOf('function automaticPortCandidates(');
+  const end = source.indexOf('\nfunction automaticEndpointRepairs(', start);
+  assert.ok(start >= 0 && end > start);
+  const selector = source.slice(start, end);
+  for (const [coordinate, width, neighbours = []] of [[0, 128], [1.5e17, 128], [-1.5e17, 128],
+    [5e17, 104], [-5e17, 104], [2 ** 1000, 2 ** 951],
+    [1e30, 1e16, [1e30 - 2 ** 47, 1e30 + 2 ** 47]]]) {
+    const center = [coordinate, 0];
+    const node = { id: 'wide', width, height: 80 };
+    const edge = { from: 'wide', to: 'target' };
+    const occupied = [coordinate, ...neighbours];
+    const context = {
+      independentAutomaticRoute: () => true, isReadableAutomaticRoute: () => true,
+      layoutFeedback: {}, anchor: () => [...center],
+      nodeRoutes: new Map([['wide', new Map(occupied.map((position, index) => [
+        { from: 'wide', to: 'previous-' + index }, { points: [[position, 0], [position, 100]] },
+      ]))]]),
+      edge, node, center, counterpart: { cx: coordinate, cy: 100 },
+    };
+    const ports = vm.runInNewContext(`${selector}\nautomaticPortCandidates(edge, node, 'bottom', center, counterpart)`, context, { timeout: 1000 });
+    assert.equal(ports.length, 2, `center ${coordinate} lost available ports`);
+    assert.ok(ports.every(point => occupied.every(position => Math.abs(point[0] - position) >= 16)),
+      `center ${coordinate} reused the occupied center: ${JSON.stringify(ports)}`);
+    assert.notEqual(ports[0][0], ports[1][0]);
+  }
+});
 
 test('public Workflow validation terminates when port spacing cannot change finite coordinates', async t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-port-progress-'));
