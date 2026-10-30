@@ -17,26 +17,30 @@ test('occupied wide-node centers retain distinct clear automatic ports', () => {
   const end = source.indexOf('\nfunction automaticEndpointRepairs(', start);
   assert.ok(start >= 0 && end > start);
   const selector = source.slice(start, end);
-  for (const [coordinate, width, neighbours = []] of [[0, 128], [1.5e17, 128], [-1.5e17, 128],
+  for (const [coordinate, width, neighbours = [], edgeWidth = 1.4, side = 'bottom'] of [[0, 128], [1.5e17, 128], [-1.5e17, 128],
     [5e17, 104], [-5e17, 104], [2 ** 1000, 2 ** 951],
-    [1e30, 1e16, [1e30 - 2 ** 47, 1e30 + 2 ** 47]]]) {
-    const center = [coordinate, 0];
-    const node = { id: 'wide', width, height: 80 };
-    const edge = { from: 'wide', to: 'target' };
+    [1e30, 1e16, [1e30 - 2 ** 47, 1e30 + 2 ** 47]],
+    [5e29, 1e30, [], 1e25], [-5e29, 1e30, [], 1e25],
+    [5e29, 1e30, [], 1e25, 'right'],
+    [-72057594037927940, 80, [-72057594037927920]]]) {
+    const axis = side === 'right' ? 1 : 0;
+    const center = axis ? [0, coordinate] : [coordinate, 0];
+    const node = { id: 'wide', width: axis ? 80 : width, height: axis ? width : 80 };
+    const edge = { from: 'wide', to: 'target', ...(edgeWidth === 1.4 ? {} : { width: edgeWidth }) };
     const occupied = [coordinate, ...neighbours];
     const context = {
       independentAutomaticRoute: () => true, isReadableAutomaticRoute: () => true,
       layoutFeedback: {}, anchor: () => [...center],
       nodeRoutes: new Map([['wide', new Map(occupied.map((position, index) => [
-        { from: 'wide', to: 'previous-' + index }, { points: [[position, 0], [position, 100]] },
+        { from: 'wide', to: 'previous-' + index }, { points: axis ? [[0, position], [100, position]] : [[position, 0], [position, 100]] },
       ]))]]),
-      edge, node, center, counterpart: { cx: coordinate, cy: 100 },
+      edge, node, center, side, counterpart: axis ? { cx: 100, cy: coordinate } : { cx: coordinate, cy: 100 },
     };
-    const ports = vm.runInNewContext(`${selector}\nautomaticPortCandidates(edge, node, 'bottom', center, counterpart)`, context, { timeout: 1000 });
+    const ports = vm.runInNewContext(`${selector}\nautomaticPortCandidates(edge, node, side, center, counterpart)`, context, { timeout: 1000 });
     assert.equal(ports.length, 2, `center ${coordinate} lost available ports`);
-    assert.ok(ports.every(point => occupied.every(position => Math.abs(point[0] - position) >= 16)),
+    assert.ok(ports.every(point => occupied.every(position => Math.abs(point[axis] - position) >= Math.max(16, 3.5 * (edgeWidth + 1.4)) - 0.0001)),
       `center ${coordinate} reused the occupied center: ${JSON.stringify(ports)}`);
-    assert.notEqual(ports[0][0], ports[1][0]);
+    assert.notEqual(ports[0][axis], ports[1][axis]);
   }
 });
 
@@ -54,8 +58,13 @@ test('public Workflow validation terminates when port spacing cannot change fini
     ],
     edges: [{ id: 'one', from: 'source', to: 'target' }, { id: 'two', from: 'source', to: 'target' }],
   };
-  for (const width of [1e30, 1e26, 1e25, 1e18, 320]) {
+  for (const [width, edgeWidth] of [[1e30], [1e26], [1e25], [1e18], [320],
+    [1e30, 1e25], [320, 1e25], [1e30, 1e308]]) {
     workflow.nodes[1].width = width;
+    for (const edge of workflow.edges) {
+      if (edgeWidth === undefined) delete edge.width;
+      else edge.width = edgeWidth;
+    }
     const authored = JSON.stringify(workflow);
     fs.writeFileSync(input, authored);
     const child = spawn(process.execPath, [path.join(root, 'archify/bin/archify.mjs'), 'validate', 'workflow', input, '--json'], {
@@ -81,11 +90,11 @@ test('public Workflow validation terminates when port spacing cannot change fini
     const timer = setTimeout(() => { timedOut = true; terminate(); }, process.platform === 'win32' ? 10000 : 5000);
     let result;
     try { result = await closed; } finally { clearTimeout(timer); terminate(); }
-    assert.equal(timedOut, false, `width ${width} exceeded the bounded public CLI deadline`);
+    assert.equal(timedOut, false, `node width ${width}, edge width ${edgeWidth ?? 'default'} exceeded the bounded public CLI deadline`);
     assert.ok([0, 1].includes(result.code), stderr);
     const receipt = JSON.parse(stdout);
     assert.equal(typeof receipt.ok, 'boolean');
-    if (width === 320) assert.equal(result.code, 0, stdout);
+    if (width === 320 && edgeWidth === undefined) assert.equal(result.code, 0, stdout);
     else if (!receipt.ok) assert.ok(Array.isArray(receipt.diagnostics) && receipt.diagnostics.length);
     assert.equal(fs.readFileSync(input, 'utf8'), authored);
     assert.equal(fs.existsSync(path.join(directory, 'finite-width.html')), false);
