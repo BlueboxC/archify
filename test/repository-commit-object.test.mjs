@@ -8,5 +8,9 @@ test('repository evidence rejects annotated tag objects without changing commit 
   assert.equal(verifyRepositoryEvidence('architecture',data.diagram,data.root).verified,true);
   git(data.root,'-c','tag.gpgSign=false','tag','-a','v1','-m','fixture');
   data.diagram.meta.repository.revision=git(data.root,'rev-parse','refs/tags/v1');
-  assert.throws(()=>verifyRepositoryEvidence('architecture',data.diagram,data.root),/commit/i);
+  assert.throws(()=>verifyRepositoryEvidence('architecture',data.diagram,data.root),(error)=>{
+    assert.match(error.message,/commit/i);
+    assert.equal(error.archifyDiagnostics?.[0]?.code,'repository-evidence/revision-not-commit');
+    return true;
+  });
 });
