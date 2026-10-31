@@ -12,7 +12,7 @@ const testDir=path.dirname(fileURLToPath(import.meta.url));
 
 // Public synthetic labels deliberately exercise a maximum-width participant.
 // This fixture carries no application-specific source or private repository.
-test('sequence headers reserve an icon/brand rail without shrinking or changing literal labels', async t=>{
+test('sequence headers center text without overlapping corner marks or changing literal labels', async t=>{
   if(!Object.hasOwn(process.env,'ARCHIFY_CHROME')){t.skip('Set ARCHIFY_CHROME to run the real browser regression.');return;}
   const chrome=findChrome();
   assert.ok(chrome,'The configured browser regression requires Chrome.');
@@ -21,6 +21,8 @@ test('sequence headers reserve an icon/brand rail without shrinking or changing 
     {id:'transfer',type:'backend',label:'Cloud File Transfer (CFTS)',sublabel:'Transfer participant'},
     {id:'without-context',type:'external',label:'Cloud File Transfer (CFTS)'},
     {id:'branded',type:'database',label:'Redis',sublabel:'Cache participant',brand:'redis'},
+    {id:'chinese',type:'database',label:'本地数据库',sublabel:'day_tasks 表'},
+    {id:'single-chinese',type:'external',label:'用户'},
   ],messages:[{id:'request',from:'transfer',to:'without-context',y:200,label:'Exact request'},{id:'reply',from:'without-context',to:'transfer',y:250,label:'Exact reply',variant:'return'}]};
   const input=path.join(dir,'input.json'),output=path.join(dir,'output.html');
   fs.writeFileSync(input,JSON.stringify(spec));
@@ -46,6 +48,10 @@ test('sequence headers reserve an icon/brand rail without shrinking or changing 
           assert(row.text.x>=row.box.x-.1&&row.text.right<=row.box.right+.1&&row.text.y>=row.box.y-.1&&row.text.bottom<=row.box.bottom+.1,where+': label escapes header');
           assert.equal(row.font,fittedNodeFontSize(row.label,row.brand?142:190,11,8),where+': original fitted label font must be unchanged');
           for(const context of row.context)assert(context.bottom<=row.box.bottom+.1,where+': context escapes header');
+          const top=Math.min(row.text.y,...row.context.map(r=>r.y));
+          const bottom=Math.max(row.text.bottom,...row.context.map(r=>r.bottom));
+          const offset=Math.abs((top+bottom)/2-(row.box.y+row.box.height/2));
+          assert(offset<=row.box.height/60*2.5,where+': title/context block is not vertically centered');
         }
       }
     }
