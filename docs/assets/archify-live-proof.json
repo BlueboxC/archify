@@ -7,8 +7,8 @@
   "fps": 10,
   "frameCount": 54,
   "durationSeconds": 5.4,
-  "bytes": 835951,
-  "sha256": "5d355c20e13d58280e41701ba4d339f358933cac8613c3b8fc31febef83b50d2",
+  "bytes": 836142,
+  "sha256": "e7993f158961fd1308890fd0d75ebe410f9a947cd28956390de0361f4fc811af",
   "scenes": [
     {
       "id": "signal-flow",
@@ -31,7 +31,7 @@
     {
       "id": "classic",
       "artifact": "docs/gallery/artifacts/cache-miss.sequence.html",
-      "artifactSha256": "f19e74aa1de3a328d4d28913258ceb944e57c99244d2d337139076041ca9f7a3",
+      "artifactSha256": "28151cee3e8417795ec99f1f784226c6152731c55f521d5d9823c1b12ad71d1e",
       "hash": "#route=web~db",
       "eyebrow": "SEQUENCE · CLASSIC",
       "title": "Cache Miss Request",
