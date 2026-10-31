@@ -25,8 +25,11 @@ test('discovery archive preserves every canonical package file without its wrapp
     assert.equal(entry.digest, `sha256:${createHash('sha256').update(fs.readFileSync(archive)).digest('hex')}`);
     const original = path.join(scratch, 'canonical');
     const downloaded = path.join(scratch, 'downloaded');
-    execFileSync('unzip', ['-q', path.join(repo, 'archify.zip'), '-d', original]);
-    execFileSync('unzip', ['-q', archive, '-d', downloaded]);
+    for (const [zip, destination] of [[path.join(repo, 'archify.zip'), original], [archive, downloaded]]) {
+      fs.mkdirSync(destination, { recursive: true });
+      if (process.platform === 'win32') execFileSync('tar', ['-xf', zip, '-C', destination]);
+      else execFileSync('unzip', ['-q', zip, '-d', destination]);
+    }
     const inventory = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry =>
       entry.isDirectory() ? inventory(path.join(dir, entry.name)).map(name => `${entry.name}/${name}`) : [entry.name]).sort();
     const expected = path.join(original, 'archify');
