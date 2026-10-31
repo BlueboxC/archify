@@ -21,6 +21,7 @@ test('Timeline title wraps preserve complete emoji grapheme clusters',t=>{
     const label=[...svg.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/gu)].find(([,a])=>a.includes('data-node-label='));
     assert.ok(label);
     const lines=[...label[2].matchAll(/<tspan\b[^>]*>([^<]*)<\/tspan>/gu)].map(([,s])=>s);
+    assert.ok(lines.length>1,'fixture must exercise wrapping: '+JSON.stringify({cluster,lines}));
     assert.equal(lines.join(''),title);
     for(const line of lines) assert.ok([...segmenter.segment(line)].every(({segment})=>segment===cluster),JSON.stringify(line));
   }
