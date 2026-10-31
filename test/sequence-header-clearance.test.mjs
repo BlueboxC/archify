@@ -23,6 +23,8 @@ test('sequence headers center text without overlapping corner marks or changing 
     {id:'branded',type:'database',label:'Redis',sublabel:'Cache participant',brand:'redis'},
     {id:'chinese',type:'database',label:'本地数据库',sublabel:'day_tasks 表'},
     {id:'single-chinese',type:'external',label:'用户'},
+    {id:'minimum-fit',type:'database',label:'W'.repeat(28),sublabel:'x'.repeat(50),brand:'redis'},
+    {id:'minimum-single',type:'database',label:'W'.repeat(28),brand:'redis'},
   ],messages:[{id:'request',from:'transfer',to:'without-context',y:200,label:'Exact request'},{id:'reply',from:'without-context',to:'transfer',y:250,label:'Exact reply',variant:'return'}]};
   const input=path.join(dir,'input.json'),output=path.join(dir,'output.html');
   fs.writeFileSync(input,JSON.stringify(spec));
@@ -38,9 +40,13 @@ test('sequence headers center text without overlapping corner marks or changing 
       let ready=false;for(let i=0;i<300;i++){if(await evaluate('!!window.Archify?.view')){ready=true;break;}await new Promise(r=>setTimeout(r,25));}assert(ready,'Viewer did not initialize');
       for(const theme of ['light','dark'])for(const scale of [.75,1,3]){
         await evaluate(`(async()=>{await document.fonts.ready;if(document.documentElement.dataset.theme!==${JSON.stringify(theme)})document.getElementById('btn-theme').click();if(Archify.motionGovernor.mode()!=='still')document.getElementById('btn-motion').click();Archify.view.centerAt(850,110,{scale:${scale},instant:true});await Archify.readerLayout.whenStable();await Archify.viewerChromeLayout.whenStable();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));})()`);
-        const rows=await evaluate(`(()=>{const box=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};return [...document.querySelectorAll('g[data-node-id]')].map(n=>({id:n.dataset.nodeId,label:n.dataset.nodeLabel,box:box(n.querySelector('rect')),text:box(n.querySelector('text[data-node-label]')),sigil:box(n.querySelector('[data-semantic-sigil]')),brand:n.querySelector('.brand-mark')?box(n.querySelector('.brand-mark')):null,context:[...n.querySelectorAll('text')].filter(e=>!e.hasAttribute('data-node-label')).map(box),font:Number(n.querySelector('text[data-node-label]').getAttribute('font-size'))}));})()`);
+        const rows=await evaluate(`(()=>{const box=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};return [...document.querySelectorAll('g[data-node-id]')].map(n=>({id:n.dataset.nodeId,label:n.dataset.nodeLabel,box:box(n.querySelector('rect')),text:box(n.querySelector('text[data-node-label]')),sigil:box(n.querySelector('[data-semantic-sigil]')),brand:n.querySelector('.brand-mark')?box(n.querySelector('.brand-mark')):null,context:[...n.querySelectorAll('text')].filter(e=>!e.hasAttribute('data-node-label')).map(box),subFont:Number(n.querySelector('text[data-detail=\"context\"]')?.getAttribute('font-size')),font:Number(n.querySelector('text[data-node-label]').getAttribute('font-size'))}));})()`);
         assert.deepEqual(rows.map(r=>r.label),spec.participants.map(p=>p.label));
         assert(rows.find(r=>r.id==='branded').brand,'Brand fixture must actually render its mark');
+        const minimum=rows.find(r=>r.id==='minimum-fit');
+        assert.equal(minimum.font,8,'Minimum-fit title must exercise 8px');
+        assert.equal(minimum.subFont,6,'Minimum-fit context must exercise 6px');
+        assert.equal(rows.find(r=>r.id==='minimum-single').font,8,'Title-only minimum must exercise 8px');
         for(const row of rows){
           const where=`${width}x${height}/${theme}/${scale}/${row.id}`,overlap=(a,b)=>Math.min(a.right,b.right)>Math.max(a.x,b.x)+.01&&Math.min(a.bottom,b.bottom)>Math.max(a.y,b.y)+.01;
           assert(!overlap(row.text,row.sigil),where+': semantic sigil overlaps label');
