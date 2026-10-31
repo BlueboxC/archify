@@ -469,7 +469,7 @@
   const agentTabs = [...document.querySelectorAll('.agent-tabs button')];
   function selectAgent(tab, focus) {
     agentTabs.forEach(t => { const on = t === tab; t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1; });
-    agentCommand.textContent = `npx -y skills add tt-a1i/archify --skill archify --agent ${tab.dataset.agent} --global --copy --yes`;
+    agentCommand.textContent = `npx -y skills@latest add https://archify.si --skill archify --agent ${tab.dataset.agent} --global --copy --yes`;
     if (focus) tab.focus();
   }
   agentTabs.forEach((tab, i) => {
