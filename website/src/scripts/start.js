@@ -220,7 +220,11 @@
 
       document.querySelectorAll('[data-copy-source]').forEach(function (button) {
         button.addEventListener('click', function () {
-          var step = button.dataset.copySource === 'install-command' ? 'global_install_copy' : 'project_install_copy';
+          var step = {
+            'install-command': 'global_install_copy',
+            'project-command': 'project_install_copy',
+            'agent-install-prompt': 'agent_install_prompt_copy'
+          }[button.dataset.copySource];
           copyText(document.getElementById(button.dataset.copySource).textContent.trim(), step);
         });
       });
