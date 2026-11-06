@@ -168,6 +168,8 @@ Adapt CodeRabbit's inline observation on PR #1027 at `4342092890`: clear `--arch
 
 Independently address b84330808’s synthetic CLI report [#1067](https://github.com/tt-a1i/archify/issues/1067) with one shared wrap-piece grouping rule. Tree labels/sublabels, Timeline titles and Sequence notes keep closing punctuation, iteration marks and ellipses with their preceding text, and opening brackets with the next piece. Fold the previous Sequence-only closing-punctuation case into the helper. Width estimation, fonts, schemas and English/Korean wrapping remain unchanged; this is not a complete UAX #14/JIS implementation.
 
+The quote-space follow-up adapts tt-a1i’s [PR #1248](https://github.com/tt-a1i/archify/pull/1248), qualified source `bdff019b639b2f905f58abc990b9ba2ce59cff3e`: keep whitespace after an opening CJK bracket attached to its following text before Timeline word wrapping. Retain this fork’s `Intl.Segmenter` grapheme splitting and previous punctuation controls. CLI regressions preserve single/repeated/ideographic spaces and complete combining, flag and ZWJ clusters; this does not import or duplicate the upstream PR.
+
 ### Finite workflow port probing (#1072)
 
 Automatic port probing stops when the spacing no longer changes the floating-point coordinate. Preserve authored finite dimensions, topology and normal-size routing; do not introduce an arbitrary schema maximum. The public CLI regression covers the reported enormous widths and an ordinary-width control with a bounded child timeout. Based on MBrekhof's report in [#1072](https://github.com/tt-a1i/archify/issues/1072).

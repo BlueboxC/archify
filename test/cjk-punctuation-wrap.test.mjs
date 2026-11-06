@@ -13,7 +13,7 @@ const titles = [
   '決済エラー率が上昇し、オンコール担当者へ通知。',
 ];
 const startsWithClosing = /^[、。，．：；！？）〕］｝〉》」』】々〻ゝゞヽヾー…‥]/u;
-const endsWithOpening = /[（〔［｛〈《「『【]$/u;
+const endsWithOpening = /[（〔［｛〈《「『【]\s*$/u;
 
 function render(t, diagram) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-cjk-wrap-'));
@@ -50,6 +50,23 @@ function check(groups, originals) {
 test('CJK timeline titles keep punctuation with its text', (t) => {
   const svg = render(t, { schema_version: 1, diagram_type: 'timeline', meta: { title: '付款事件', locale: 'zh-TW', timezone: 'Asia/Taipei', evidence: 'illustrative' }, events: titles.map((title, i) => ({ id: `e${i}`, at: `2026-10-01T${10+i}:00:00+08:00`, title })) });
   check(textLines(svg, /data-node-label=/u), titles);
+});
+
+// Quote-space case from tt-a1i/archify#1248; keep the fork's grapheme controls.
+test('CJK timeline opening quotes retain authored whitespace and complete graphemes', (t) => {
+  const cases = [
+    '先確認訂單狀態再執行「 退款」，再通知客戶。',
+    '先確認訂單狀態再執行「  👩‍💻e\u0301🇯🇵退款」，再通知客戶。',
+    '先確認訂單狀態再執行「\u3000👨‍👩‍👧‍👦退款」，再通知客戶。',
+  ];
+  for (const title of cases) {
+    const svg = render(t, { schema_version: 1, diagram_type: 'timeline', meta: { title: '付款事件', locale: 'zh-TW', evidence: 'illustrative' }, events: [{ id: 'a', at: '2026-10-01T10:00:00Z', title }] });
+    const groups = textLines(svg, /data-node-label=/u);
+    check(groups, [title]);
+    for (const cluster of ['👩‍💻', 'e\u0301', '🇯🇵', '👨‍👩‍👧‍👦']) {
+      if (title.includes(cluster)) assert.ok(groups[0].some(line => line.includes(cluster)), `${cluster} stays within one line`);
+    }
+  }
 });
 
 test('CJK tree labels and sublabels keep punctuation with its text', (t) => {

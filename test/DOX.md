@@ -29,7 +29,7 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 
 - Real Chrome print-media checks cover narrow/wide output with scripts enabled/disabled and return-to-screen clearance. Explainer toolbar regressions cover English/Chinese at 320, 390 and 1440 px across every style, including actual style selection and selected-label widths, keyboard-opened menus, Escape closing from the focused panel with focus returned to the toggle, and print-hidden controls.
 
-- CJK punctuation regressions exercise emitted SVG text through the CLI in Tree, Timeline and Sequence; preserve all characters and reject prohibited punctuation boundaries without freezing a particular valid wrap.
+- CJK punctuation regressions exercise emitted SVG text through the CLI in Tree, Timeline and Sequence; preserve all characters and reject prohibited punctuation boundaries without freezing a particular valid wrap. Timeline covers single, repeated and ideographic spaces after opening quotes while retaining combining, flag and ZWJ grapheme clusters.
 
 - Cover finite extreme workflow dimensions with bounded public CLI timeouts and ordinary-size controls.
 - Denied namespace probes and non-directory evidence targets must return structured failures while preserving artifacts and inputs.

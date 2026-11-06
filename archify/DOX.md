@@ -33,7 +33,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 
 - Print CSS clears hidden navigation clearance independently of JavaScript; screen/mobile dock behavior stays measured.
 
-- Tree label/sublabel, Timeline title and Sequence note wrapping keep closing CJK punctuation, iteration marks and ellipses with the preceding piece, and opening brackets with the following piece. Keep width measurement, fonts and non-CJK wrapping; this is a scoped punctuation rule, not complete Unicode line breaking.
+- Tree label/sublabel, Timeline title and Sequence note wrapping keep closing CJK punctuation, iteration marks and ellipses with the preceding piece, and opening brackets with the following piece, including authored whitespace after the bracket. Timeline retains complete grapheme clusters. Keep width measurement, fonts and non-CJK wrapping; this is a scoped punctuation rule, not complete Unicode line breaking.
 
 - Automatic workflow port probing stops when the configured spacing cannot produce a distinct floating-point coordinate; preserve finite authored dimensions and ordinary routing.
 - Failed schema-v2 relative drop forks may retry opposite source-port order at up to four stably selected forks per compile invocation. Speculative candidates disable repair-hint discovery while retaining full validation. Accept only a fully validated compile; keep successful scenes, authored topology/sides and absolute geometry. Outer layout feedback retains its independent bounds.

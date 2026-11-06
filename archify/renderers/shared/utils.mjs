@@ -261,7 +261,7 @@ export function textUnits(text) {
 
 const CJK_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
 const CJK_NO_LINE_START = /^[、。，．：；！？）〕］｝〉》」』】〗〙〛々〻ゝゞヽヾー…‥]/u;
-const CJK_NO_LINE_END = /[（〔［｛〈《「『【〖〘〚]$/u;
+const CJK_NO_LINE_END = /[（〔［｛〈《「『【〖〘〚]\s*$/u;
 
 // Keep prohibited CJK boundaries inside one wrap piece. Measurement is unchanged.
 export function cjkWrapPieces(pieces) {
