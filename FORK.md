@@ -253,3 +253,7 @@ The retained base remains MIT. These post-transition PR1106/1109 portions retain
 ### Classic SVG grid (#1111 / PR #1117)
 
 Adapted from vedantb7 under Apache-2.0; scoped attribution and complete upstream license/NOTICE remain in the Skill: scope classic grid suppression to the SVG preset so standalone SVG exports match the Viewer. Chrome checks cover auto/light/dark exports, decoded PNGs and visible blueprint/editorial grids. Existing generated user HTML requires regeneration.
+
+## Notifier claim test timing
+
+The stale-claim interleaving regression controls its network timer instead of charging filesystem scheduling to a real 50 ms response wait. Preserve all ownership and single-request assertions, verify success before expiry and timer cleanup afterward, and explicitly check abortion at the unchanged deadline. The real bounded-timeout regression remains in place. The notifier runtime and packaged Skill are unchanged.

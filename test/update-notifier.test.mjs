@@ -1788,7 +1788,10 @@ test('an empty precheck snapshot cannot start a second concurrent network reques
   assert.equal(requests, 1);
 });
 
-test('two promoters cannot replace and then steal a stale empty active claim', async (t) => {
+test('two promoters cannot replace and then steal a stale empty active claim', { timeout: 2_000 }, async (t) => {
+  // Disk interleaving must not spend the independent network timeout budget.
+  // Advance that clock explicitly; keep the configured 50ms deadline unchanged.
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   const testFixture = fixture();
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
   const activeClaim = path.join(stateDirectory(testFixture), 'active-claim');
@@ -1801,7 +1804,9 @@ test('two promoters cannot replace and then steal a stale empty active claim', a
   let markFetchStarted;
   let requests = 0;
   const fetchStarted = new Promise((resolve) => { markFetchStarted = resolve; });
-  const fetchImpl = async () => {
+  let fetchSignal;
+  const fetchImpl = async (_url, { signal }) => {
+    fetchSignal = signal;
     requests += 1;
     markFetchStarted();
     return new Promise((resolve) => { releaseFetch = resolve; });
@@ -1816,12 +1821,20 @@ test('two promoters cannot replace and then steal a stale empty active claim', a
   );
   const claimedCheck = checkForUpdate(options(testFixture, fetchImpl));
   await fetchStarted;
+  const ownerPath = path.join(stateDirectory(testFixture), 'active-claim', 'owner.json');
+  const liveOwner = JSON.parse(fs.readFileSync(ownerPath, 'utf8'));
   pause.release();
   assert.deepEqual(await delayedRetirement, { status: 'silent', reason: 'check-in-progress' });
   assert.equal(requests, 1);
+  assert.deepEqual(JSON.parse(fs.readFileSync(ownerPath, 'utf8')), liveOwner,
+    'the delayed retirement preserves the live owner identity');
 
+  t.mock.timers.tick(49);
+  assert.equal(fetchSignal.aborted, false, 'the live owner retains its network budget');
   releaseFetch(response(remoteRelease()));
   assert.equal((await claimedCheck).status, 'update_available');
+  t.mock.timers.tick(1);
+  assert.equal(fetchSignal.aborted, false, 'a completed request clears its timeout');
   pause.restore();
   assert.equal(requests, 1);
 });
@@ -2802,6 +2815,30 @@ test('a bounded timeout fails silently without retrying', async (t) => {
 
   const result = await checkForUpdate(options(testFixture, fetchImpl, { timeoutMs: 10 }));
   assert.deepEqual(result, { status: 'silent', reason: 'check-failed' });
+  assert.equal(requests, 1);
+});
+
+test('an update fetch aborts exactly at its configured deadline without retrying', { timeout: 2_000 }, async (t) => {
+  const testFixture = fixture();
+  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let signal;
+  let requests = 0;
+  let markFetchStarted;
+  const fetchStarted = new Promise((resolve) => { markFetchStarted = resolve; });
+  const checking = checkForUpdate(options(testFixture, (_url, init) => {
+    signal = init.signal;
+    requests += 1;
+    markFetchStarted();
+    return new Promise(() => {});
+  }));
+  await fetchStarted;
+
+  t.mock.timers.tick(49);
+  assert.equal(signal.aborted, false, 'the request remains live before its deadline');
+  t.mock.timers.tick(1);
+  assert.equal(signal.aborted, true, 'the configured deadline still aborts the request');
+  assert.deepEqual(await checking, { status: 'silent', reason: 'check-failed' });
   assert.equal(requests, 1);
 });
 
