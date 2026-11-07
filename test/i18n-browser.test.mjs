@@ -176,6 +176,7 @@ const BROWSER_LOCALES = {
 };
 
 async function assertLocalizedViewer(browser, locale, expected) {
+  const artifacts = [];
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     document.meta.locale = locale;
@@ -264,12 +265,18 @@ async function assertLocalizedViewer(browser, locale, expected) {
       rejected: true,
       message: expected.shareCardFailure,
     }, `${locale}/${type}`);
+    artifacts.push({ type, artifactPath: result.output });
+  }
+  return artifacts;
+}
 
+async function assertLocalizedArtifacts(artifacts, locale) {
+  for (const { type, artifactPath } of artifacts) {
     // Keep every locale/type's real viewport, theme, font and capture checks.
     // The delivered fixtures above retain the public visual-check CLI receipt
     // contract; this matrix calls the same checker without another CLI process.
     // Its default factory still creates a fresh Chrome profile for each artifact.
-    const visual = await runVisualCheck({ artifactPath: result.output, chromePath });
+    const visual = await runVisualCheck({ artifactPath, chromePath });
     assert.ok([0, 1].includes(visual.exitCode), `${locale}/${type}: ${JSON.stringify(visual.receipt)}`);
     const receipt = visual.receipt;
     assert.equal(receipt.visualReview, 'pending', `${locale}/${type}`);
@@ -285,46 +292,39 @@ async function assertLocalizedViewer(browser, locale, expected) {
   }
 }
 
-test('real Chrome keeps zh-CN Finder, Route, Export, and accessibility UI localized in all five modes', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
-}, async () => {
+async function assertLocalizedLocale(locale, expected) {
   const browser = new ChromeVisualBrowser(chromePath);
+  let artifacts;
   try {
-    await assertLocalizedViewer(browser, 'zh-CN', BROWSER_LOCALES['zh-CN']);
+    artifacts = await assertLocalizedViewer(browser, locale, expected);
   } finally {
     await browser.close();
   }
+  // Keep the same UI session across all modes, then release it before the
+  // independent visual checker opens its fresh per-artifact Chrome profiles.
+  await assertLocalizedArtifacts(artifacts, locale);
+}
+
+test('real Chrome keeps zh-CN Finder, Route, Export, and accessibility UI localized in all five modes', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
+}, async () => {
+  await assertLocalizedLocale('zh-CN', BROWSER_LOCALES['zh-CN']);
 });
 
 test('real Chrome keeps es Finder, Route, Export, and accessibility UI localized in all five modes', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
 }, async () => {
-  const browser = new ChromeVisualBrowser(chromePath);
-  try {
-    await assertLocalizedViewer(browser, 'es', BROWSER_LOCALES.es);
-  } finally {
-    await browser.close();
-  }
+  await assertLocalizedLocale('es', BROWSER_LOCALES.es);
 });
 
 test('real Chrome keeps ko Finder, Route, Export, and accessibility UI localized in all five modes', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
 }, async () => {
-  const browser = new ChromeVisualBrowser(chromePath);
-  try {
-    await assertLocalizedViewer(browser, 'ko', BROWSER_LOCALES.ko);
-  } finally {
-    await browser.close();
-  }
+  await assertLocalizedLocale('ko', BROWSER_LOCALES.ko);
 });
 
 test('real Chrome keeps Arabic UI localized with mixed-script authored titles in all five modes', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
 }, async () => {
-  const browser = new ChromeVisualBrowser(chromePath);
-  try {
-    await assertLocalizedViewer(browser, 'ar', BROWSER_LOCALES.ar);
-  } finally {
-    await browser.close();
-  }
+  await assertLocalizedLocale('ar', BROWSER_LOCALES.ar);
 });
