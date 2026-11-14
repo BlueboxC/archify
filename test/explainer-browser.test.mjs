@@ -254,7 +254,10 @@ test('wide frozen native previews keep every node visible at 1280 and reclaim th
  try {
   for(const theme of ['light','dark']) {
    for(const width of [1280,1440]) {
-    await browser.resetPage();const common=await inspectPublicHtml(browser,{artifactPath:file,width,theme,keyboard:false});assert.equal(common.scrollWidth,width);assert.deepEqual(common.overflowElements,[]);assert.deepEqual(common.consoleErrors,[]);assertFit(await inspectNativePreviewLayout(browser),width);
+    await browser.resetPage();const common=await inspectPublicHtml(browser,{artifactPath:file,width,theme,keyboard:false});assert.equal(common.scrollWidth,width);assert.deepEqual(common.overflowElements,[]);assert.deepEqual(common.consoleErrors,[]);
+    // The Reader fits after fonts are ready and two animation frames; loaded fonts alone do not finish it.
+    await pageValue(browser,'document.fonts.ready.then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))');
+    assertFit(await inspectNativePreviewLayout(browser),width);
    }
    const wide=await inspectNativePreviewLayout(browser);assert.ok(wide.every(e=>parseFloat(e.minWidth)===0&&e.scrollWidth<=e.clientWidth+1),'Complete desktop previews must fit without local horizontal scrolling');
    await browser.cdp.send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false},await browser.sessionPromise);
