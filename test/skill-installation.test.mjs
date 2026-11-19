@@ -8,6 +8,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { stageCleanSkill } from '../scripts/stage-clean-skill.mjs';
+import { extractSkillArchive } from './helpers/extract-skill-archive.mjs';
 
 const require = createRequire(import.meta.url);
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -31,16 +32,7 @@ function metadata(content) {
 }
 
 function extractArchive(destination) {
-  fs.mkdirSync(destination, { recursive: true });
-  const archive = path.join(repoRoot, 'archify.zip');
-  const result = process.platform === 'win32'
-    ? spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-      'Expand-Archive -LiteralPath $env:ARCHIFY_TEST_ARCHIVE -DestinationPath $env:ARCHIFY_TEST_EXTRACT'], {
-      encoding: 'utf8',
-      env: { ...process.env, ARCHIFY_TEST_ARCHIVE: archive, ARCHIFY_TEST_EXTRACT: destination },
-    })
-    : spawnSync('unzip', ['-q', archive, '-d', destination], { encoding: 'utf8' });
-  assert.equal(result.status, 0, result.error?.message || result.stderr);
+  extractSkillArchive(path.join(repoRoot, 'archify.zip'), destination);
 }
 
 test('distributed ZIP carries the same valid Skill frontmatter as source', (t) => {

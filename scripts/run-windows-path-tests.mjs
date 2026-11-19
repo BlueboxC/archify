@@ -10,6 +10,7 @@ import {
   sameLocation,
   sidecarNamespaceComponentKey,
 } from '../archify/renderers/shared/path-semantics.mjs';
+import { parseRepositoryRemote } from '../archify/renderers/shared/repository-location.mjs';
 import { checkForUpdate } from '../archify/scripts/check-update.mjs';
 import { stageCleanSkill } from './stage-clean-skill.mjs';
 
@@ -254,9 +255,13 @@ async function runControlledWindowsPathE2E() {
       encoding: 'utf8',
     });
     requireSuccess('repository revision discovery', revision);
+    const origin = spawnSync('git', ['-C', repoRoot, 'remote', 'get-url', 'origin'], { encoding: 'utf8' });
+    requireSuccess('repository origin discovery', origin);
+    const repositoryUrl = origin.stdout.trim();
+    assert.ok(parseRepositoryRemote(repositoryUrl, { authored: true }), 'the fixture requires a credential-free repository origin');
     const evidenceDiagram = JSON.parse(fs.readFileSync(architectureInput, 'utf8'));
     evidenceDiagram.meta.repository = {
-      url: 'https://github.com/tt-a1i/archify',
+      url: repositoryUrl,
       revision: revision.stdout.trim(),
     };
     evidenceDiagram.components[0].sources = [{
