@@ -5,9 +5,11 @@ import path from 'node:path';
 
 export function extractSkillArchive(archive, destination, { platform = process.platform, run = spawnSync } = {}) {
   fs.mkdirSync(destination, { recursive: true });
+  // Avoid loading the PowerShell 7 Archive module in Windows PowerShell 5.1
+  // when the test process inherits PSModulePath from a pwsh parent.
   const result = platform === 'win32'
     ? run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-      "$ErrorActionPreference = 'Stop'; Expand-Archive -LiteralPath $env:ARCHIFY_TEST_ARCHIVE -DestinationPath $env:ARCHIFY_TEST_EXTRACT -ErrorAction Stop"], {
+      "$ErrorActionPreference = 'Stop'; Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory($env:ARCHIFY_TEST_ARCHIVE, $env:ARCHIFY_TEST_EXTRACT)"], {
       encoding: 'utf8',
       env: { ...process.env, ARCHIFY_TEST_ARCHIVE: archive, ARCHIFY_TEST_EXTRACT: destination },
     })
