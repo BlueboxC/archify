@@ -31,9 +31,9 @@
 <p align="center">
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="#インストール方法"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
-  <a href="CHANGELOG.md#320--2026-10-18"><img src="https://img.shields.io/badge/version-3.2.0-0891b2?style=flat-square" alt="Stable version 3.2.0" /></a>
+  <a href="CHANGELOG.md#330--2026-11-23"><img src="https://img.shields.io/badge/version-3.3.0-0891b2?style=flat-square" alt="Stable version 3.3.0" /></a>
 </p>
 
 <p align="center">
@@ -42,6 +42,7 @@
   <a href="#コミュニティ"><img src="https://img.shields.io/badge/WeChat-07C160?style=for-the-badge&amp;logo=wechat&amp;logoColor=white" alt="Archify WeChat group" /></a>
   <a href="#コミュニティ"><img src="https://img.shields.io/badge/QQ-1688D8?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="Archify QQ group" /></a>
   <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
+  <a href="#archify-を支援する"><img src="https://img.shields.io/badge/Support-E2500E?style=for-the-badge" alt="Support Archify" /></a>
 </p>
 
 ## 実際の Archify
@@ -58,8 +59,10 @@ https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
 
 Cursor、Claude Code、Codex CLI、OpenCode で利用できます。その他の連携については下記のインストール方法を参照してください。
 
-```bash
-npx skills add tt-a1i/archify -g
+**AI エージェントに任せる。** 次の文をそのまま貼り付けてください:
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
 ```
 
 エージェントにこう送ってください:
@@ -91,6 +94,8 @@ Archify で 1 ページにまとめて答えて：API の P99 が 80 ms から 6
 平均はほとんど変わらない。考えられる原因と調べ方は？
 ```
 
+既定では、複雑な流れ、トラブルシューティングの結果、選択肢の比較、テストレポートのような回答では、頼まなくてもエージェントがページを作ります。返信にはチャットでそのまま読める短い結論が残り、最後の行が「テストレポートを開く」のようなページへのリンクになります。短い答え、テキストだけの依頼、生成に失敗したページでは、ページもリンクも出しません。頼んだときだけページを作らせたい場合は、エージェントにそう伝えるか、グローバルルールファイル（`~/.codex/AGENTS.md` や `~/.claude/CLAUDE.md` など）に `[archify explainer: on-demand]` を追加します。`[archify explainer: always-on]` は結論のあるすべての回答にコンパクトなページを付けます。この行を消すと既定に戻ります。
+
 ライブ例：[初めての HTTPS 接続（英語）](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 レイテンシ（中国語）](https://archify.si/cases/explainer/p99-tail-latency.html) · [Archify の finalize をリポジトリから読む（中国語）](https://archify.si/cases/explainer/finalize-delivery.html) · [初めての賃貸チェックリスト（中国語）](https://archify.si/cases/explainer/first-rental.html)
 
 ## ❤️ スポンサー
@@ -104,7 +109,6 @@ Archify で 1 ページにまとめて答えて：API の P99 が 80 ms から 6
 <td align="center" width="240"><a href="https://www.openlux.ai/register?channel=c_qdvanbpc"><img src="docs/assets/sponsors/openlux-logo.png" alt="OpenLux" width="200" /></a><br/><strong><a href="https://www.openlux.ai/register?channel=c_qdvanbpc">OpenLux</a></strong></td>
 <td>OpenLux による本プロジェクトへのスポンサー支援に感謝します！OpenLux は、世界の主要プロバイダーの AI モデルを集約した企業向けのオールインワン AI プラットフォームです。高速で安定したサービスと迅速な技術サポートを提供し、Claude、OpenAI、Gemini シリーズの基本料金は、それぞれ公式料金の 8.82%、4%、8% から利用できます。<br/><br/>Archify ユーザー限定特典：専用リンクから登録すると、クレジットのチャージが最大 7.5% 割引になります！<br/><br/><a href="https://www.openlux.ai/register?channel=c_qdvanbpc">OpenLux を試す →</a></td>
 </tr>
-<tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>EverMind は Archify をスポンサーし、エージェント向けのメモリ基盤を開発しています。同社の <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> ハーネスは、検証済みでインタラクティブなシステムマップのために Archify を Skill としてサポートしています。</td></tr>
 </table>
 
 > Archify のスポンサーをご検討ですか？ [メールでお問い合わせください。](mailto:2801884530@qq.com)
@@ -125,6 +129,33 @@ Archify で 1 ページにまとめて答えて：API の P99 が 80 ms から 6
 [![公開リポジトリ mco-org/mco から生成した MCO ランタイムアーキテクチャ](docs/assets/mco-runtime-share-card.png)](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)
 
 Archify は [`mco-org/mco`](https://github.com/mco-org/mco) の `9f1a1cf` を解析し、この検証済みマップを生成しました。**[開く ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [到達範囲をトレース ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [型付きソース](docs/cases/mco-runtime.architecture.json)
+
+### リポジトリを診断する
+
+<sub>CODE ANALYSIS · Skill に組み込み済み、追加インストール不要</sub>
+
+| 依存関係の星図 | 同じ解析の 3D モデル |
+|---|---|
+| [![Atlas 星図：モジュールを円周に並べ、ファイル間の依存を内側に描き、サイドパネルに検出結果と結合度を表示](docs/assets/code-analysis-views/atlas.png)](archify/modules/code-analysis/docs/USAGE.md) | [![Atlas 3D：最も依存されるモジュールを幹に、他のモジュールが依存の層の高さで枝分かれする](docs/assets/code-analysis-views/atlas-3d.png)](archify/modules/code-analysis/docs/USAGE.md) |
+
+**アーキテクチャ診断**はリポジトリを読み、コードが実際にどうつながっているかを示します。循環依存、結合の強すぎるモジュール、複雑度のホットスポット、レイヤールール違反を、それぞれ根拠のソースへのリンクと、Agent にそのまま渡せる修正タスク付きで一覧にします。アーキテクチャ図と組み合わせると、各コンポーネントに問題の件数が表示されます。JS/TS、Python、Java、Go、Rust、C、C++ に対応し、結果はオフラインで開ける 1 つの HTML ファイルです。
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
+```
+
+[Code Analysis ガイド](archify/modules/code-analysis/docs/USAGE.md)
+
+### ストーリーや PR として見せる
+
+<sub>STORY · PR ウォークスルー</sub>
+
+- **Story 動画。** Agent に頼むと、どの図にもガイド付きのストーリーを追加できます。ページにはタイムラインと字幕付きの Story モードが加わり、**Export → Story video** で 1080p・60 fps の動画（WebM または MP4）に書き出せます。複数の図を 1 つのステージページや動画にまとめることもできます。[Story の書き方](archify/references/story-authoring.md)
+- **PR ウォークスルー。** Agent に PR やブランチの説明を頼むと、Archify が変更点を図の上に直接マークし、ライト／ダークの図を GitHub PR や GitLab MR に添付できます。任意の `archify-pr` Skill は、PR の準備中に実質的な変更があるときだけ提案します。[PR レビュー](archify/references/pr-review.md)
+
+```text
+Use archify to add a guided story to this diagram and export it as a video.
+```
 
 ### 拡張しやすい。自分のものにする方法はいくつもある。
 
@@ -189,22 +220,36 @@ Export メニューから PNG をクリップボードにコピーしたり、�
 
 ## クイックスタート
 
-**現在の安定版:** `v3.2.0`。[変更履歴](CHANGELOG.md#320--2026-10-18)を参照してください。
+**現在の安定版:** `v3.3.0`。[変更履歴](CHANGELOG.md#330--2026-11-23)を参照してください。
 
 ### 1. インストール
 
-```bash
-npx skills add tt-a1i/archify -g
+**AI エージェントに任せる**
+
+次の文をそのまま貼り付けてください:
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
 ```
+
+確認なしでインストールすることもできます。`--agent` は 1 つ、または切り替え対象ごとに繰り返します（`cursor`、`codex`、`claude-code`、`opencode`、`github-copilot`）。`--copy` はシンボリックリンクではなくファイルをコピーします:
+
+Cursor のみにインストールする場合:
+
+```bash
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+```
+
+または、5 つすべてのエージェントが必要な場合のみ:
+
+```bash
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+```
+
+任意の PR コンパニオン Skill（リポジトリソースからのインストールのみ。既定のインストールは引き続き `archify` のみ）: `archify` をインストールした後、`npx -y skills@latest add tt-a1i/archify --skill archify-pr --agent cursor --global --copy --yes` で PR 変更ウォークスルーを追加できます。ドキュメント、ロックファイル、整形などの小さな変更では静かに待機し、実質的な diff のときだけ図を提案します。エージェントのグローバルルールファイルに `[archify pr: on-demand]` を書くと提案を完全に止められます。
 
 <details>
 <summary>その他のインストール方法と更新チェックの詳細</summary>
-
-Cursor に明示的・非対話的にインストールする場合:
-
-```bash
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
-```
 
 インストールせずに試す場合:
 
@@ -212,9 +257,9 @@ npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy 
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-[DSH コミュニティ版（任意）](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`
+[DSH コミュニティ版（任意）](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`
 
-[エージェント切り替え](https://archify.si/start.html?agent=cursor&type=architecture)は `cursor`、`codex`、`claude-code`、`opencode` に対応しています。
+[エージェント切り替え](https://archify.si/start.html?agent=cursor&type=architecture)は `cursor`、`codex`、`claude-code`、`opencode`、`github-copilot` に対応しています。
 
 Archify は固定の安定版マニフェストを GET して任意の更新リマインダーを表示することがありますが、更新をダウンロードしたりインストールしたりすることはありません。チェックに成功すると次回まで約 24 時間（±20%）待機し、失敗した場合はアクティブに使用していれば 6 時間後、その後は 24 時間後に再試行します。サーバーが受け取るのは通常の HTTP メタデータ（IP と時刻）だけで、バージョン、Agent、プロジェクトデータ、プロンプト、アカウント／デバイス ID、ETag は送信されません。更新するかどうか、いつ更新するかは常にあなたが決めます。`ARCHIFY_UPDATE_CHECK_DISABLED=1` を設定すると、ネットワーク通信とリマインダー状態の書き込みを無効化できます。
 
@@ -232,6 +277,12 @@ Use Archify to draw: Browser -> API -> Redis cache -> PostgreSQL fallback.
 Analyze this repository, then use archify to create a high-level runtime architecture diagram.
 Show 8–12 core components, one primary path, external dependencies, and trust boundaries.
 Put supporting detail in cards instead of adding more edges.
+```
+
+Archify の組み込み機能 **アーキテクチャ診断**では、リポジトリ内の依存関係を放射状の星図と回転できる 3D モデルで確認できます。アーキテクチャ図の各コンポーネントに指摘件数を表示し、循環依存や図にない依存関係の根拠となるソースコードを開けます。リポジトリに基づくアーキテクチャ図を作成すると、Archify は要約の最後に診断でできることを示し、図の右上にも説明を開くボタンが表示されます。診断は同意を得てから起動します。追加のインストールは不要です。[Code Analysis の使い方](archify/modules/code-analysis/docs/USAGE.md)を参照してください。
+
+```text
+Use archify Code Analysis on this repository: show module coupling, dependency cycles and hotspots.
 ```
 
 ### 3. チャットで調整する
@@ -447,6 +498,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 1〜2 個のセマンティックロールを比較 | <kbd>L</kbd> または `LENS` |
 | ライブの全体レーダーを開く | <kbd>M</kbd> または `MAP` |
 | プレゼンテーションステージに入る | <kbd>F</kbd> |
+| ガイド付きストーリーを再生、または動画に書き出す（ストーリー付きの図） | モーション操作 → `Story` · Export → `Story video` |
 | ビジュアルスタイルを選択（`S` で循環）/ テーマ切り替え / Export を開く | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | ズーム / リセット | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
@@ -464,7 +516,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | **Claude.ai** | Settings → Capabilities → Skills から `archify.zip` をアップロード | サンドボックスでの Node.js 利用可否に依存 |
 | **Project Knowledge** | プロジェクトに `archify.zip` をアップロード | プロンプト駆動のアーキテクチャフォールバック |
 | **Hermes Agent** | 明示的に有効化: `hermes skills install skills-sh/tt-a1i/archify/archify -y` | コミュニティ版の Skill のみの統合。Node `>=18`。Nous 公式製品ではありません。テレメトリはありません。切り替え対象には含まれません。[詳細](integrations/hermes-agent/README.md)。 |
-| **DeepSeek Harness** | 明示的に有効化: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`。呼び出し: `Use the archify skill to map this repository's runtime architecture.` 削除: `dsh plugin --profile web remove @tt-a1i/archify-dsh` | 開発者プレビュー版 `@deepseek-ai/dsh@0.1.2-rc.1` 向けのコミュニティ統合。Node `^22.19.0 \|\| >=24.0.0`。DeepSeek 公式製品ではなく、テレメトリもありません。シェルファイルには Web Produced Files ではなく、正確なワークスペースパスが必要です。[詳細](integrations/deepseek-harness/README.md)。 |
+| **DeepSeek Harness** | 明示的に有効化: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.1.0`。呼び出し: `Use the archify skill to map this repository's runtime architecture.` 削除: `dsh plugin --profile web remove @tt-a1i/archify-dsh` | 開発者プレビュー版 `@deepseek-ai/dsh@0.2.1-rc.2` 向けのコミュニティ統合。Node `^22.19.0 \|\| >=24.0.0`。DeepSeek 公式製品ではなく、テレメトリもありません。シェルファイルには Web Produced Files ではなく、正確なワークスペースパスが必要です。[詳細](integrations/deepseek-harness/README.md)。 |
 
 ## リファレンスとスコープ
 
@@ -496,13 +548,15 @@ Mermaid の自動パース、汎用オートレイアウト、ホスティング
 
 ## 公式リンクと第三者サービス
 
-- **オープンソースプロジェクト：** ソースコードとインストールパッケージは [MIT ライセンス](LICENSE)に従って無料で利用できます。
+- **オープンソースプロジェクト：** 現在のソースコードとそれから構築したパッケージには [Apache-2.0 ライセンス](LICENSE)が適用され、過去のリリースは元の許諾を維持します。
 - **公式サイト：** [archify.si](https://archify.si) は現在、プロジェクトの紹介、サンプル、インストール手順を提供しています。
 - **第三者サービス：** 料金、データの取り扱い、サポートは各運営者が決定します。名称やドメインが似ていても、公式の提携を意味するものではありません。
 
 ## ライセンス
 
-[MIT](LICENSE) — 自由に利用・改変・配布できます。
+[Apache-2.0](LICENSE) — 自由に利用・改変・配布できます。
+
+過去の MIT 許諾は引き続き有効です。[NOTICE](NOTICE) と [LICENSE-MIT](LICENSE-MIT) を参照してください。第三者コンポーネントには各自のライセンスが適用されます。ソフトウェアの許諾はユーザー作成コンテンツの権利を変更せず、Archify の商標を一般的に使用する権利も付与しません。
 
 ## コントリビュート
 
@@ -531,6 +585,12 @@ Alipay で下の QR コードをスキャンするか、画像を保存して Al
 </details>
 
 利用、共有、不具合の報告、改善への貢献も、プロジェクトの支えになります。
+
+## コントリビューター
+
+Archify の開発を支えてくれたすべての人に感謝します。[フォローしてみてください。](https://github.com/tt-a1i/archify/graphs/contributors) ❤️
+
+<p align="center"><a href="https://github.com/tt-a1i/archify/graphs/contributors"><img alt="Archify のコントリビューター" src="https://raw.githubusercontent.com/tt-a1i/archify/contributors/contributors.svg" width="1000" /></a></p>
 
 ## Star History
 

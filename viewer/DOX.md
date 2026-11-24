@@ -12,6 +12,7 @@ Viewer modules own UI state, navigation, keyboard behavior, themes and export. T
 
 - Follow README.md module interfaces and export cleanup contracts.
 - Edit authored modules, then regenerate the template; do not patch generated template scripts directly.
+- Finder modified Enter retains selection;only modified navigation is left native. Keep the composition and WebKit229 guards before selection.
 - Composition and IME commit events remain native. Modified navigation leaves roving focus unchanged; preserve ordinary and printable Shift shortcuts. Refresh owned public Viewer copies without altering authored diagram geometry.
 - Camera clipping and panning use the container content box, excluding reserved Dock padding, without shrinking the SVG viewport. Preserve overview, reset and authored geometry.
 - Compacted ordinary page flow pins the SVG top and restores the original inline height/alignment, including priorities, on reset or mode changes. Passport, Finder and Figure index small-text ink remains readable across supported themes/presets, including selected rows, without changing semantic border/stroke colors.

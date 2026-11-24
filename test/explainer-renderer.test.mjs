@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { Script } from 'node:vm';
 import { parse } from 'parse5';
 import { renderExplainer } from '../archify/explainer/render.mjs';
 import { computeExplainerRevision } from '../archify/explainer/revision.mjs';
 import { unpackPageBundle } from '../archify/explainer/page-bundle.mjs';
+import { scanHtml } from '../archify/explainer/check.mjs';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
 const all = (node, test) => [ ...(test(node) ? [node] : []), ...(node.childNodes || []).flatMap(child=>all(child,test)) ];
@@ -16,7 +18,7 @@ const source = {id:'code-source',title:'Real excerpt',path:'src/example.mjs',lin
 const nativeHtml = '<!doctype html><html><body><svg id="diagram-svg"></svg><script>const sample = "native";</script></body></html>';
 const diagram = {diagramType:'architecture',spec:{meta:{title:'Actual relationships'}},html:nativeHtml,svg:'<svg id="diagram-svg" viewBox="0 0 200 80"><defs><marker id="arrow"></marker></defs><g data-node-id="api"><text x="10" y="30">API</text></g><path data-edge-id="write" data-edge-from="api" data-edge-to="redis" marker-end="url(#arrow)"/><g data-node-id="redis"><text x="90" y="30">Redis</text></g></svg>',styles:'<style>:root,[data-theme="dark"]{--native-ink:#eee}[data-theme="light"]{--native-ink:#123}body{height:100vh}text{fill:var(--native-ink)}</style>',sha256:sha(nativeHtml),bytes:Buffer.byteLength(nativeHtml),semantic:{nodes:[{id:'api',label:'API'},{id:'redis',label:'Redis'}],edges:[{id:'write',from:'api',to:'redis',label:'writes'}]}};
 function fixture() {
-  return {schema_version:1,diagram_type:'explainer',meta:{id:'test-explainer',title:'How <script> works?',locale:'en'},answer:{summary:'Keep **the evidence** visible.'},panels:[{id:'panel-main',title:'What do we know?',blocks:[
+  return {schema_version:1,diagram_type:'explainer',meta:{id:'test-explainer',title:'How `<script>` works?',locale:'en'},answer:{summary:'Keep **the evidence** visible.'},panels:[{id:'panel-main',title:'What do we know?',blocks:[
     {id:'prose',type:'prose',text:'Untrusted `<img src=x onerror=alert(1)>` and [typical](typical:not measured here).'},
     {id:'list',type:'list',ordered:true,items:['First','Second']},
     {id:'callout',type:'callout',level:'warning',title:'Bounded warning',text:'Read the actual source.'},
@@ -34,6 +36,9 @@ const resources = () => ({preparedSources:{sources:{'code-source':{...source,rev
 
 test('renderer: every shape remains statically readable and authored text cannot become markup',()=>{
   const html = renderExplainer(fixture(),resources()); const tree = parse(html);
+  assert.ok(Buffer.byteLength(html.slice(0, html.indexOf('<meta charset='))) < 1024, 'charset must precede the software notices');
+  const softwareNotice = all(tree,node=>attr(node,'id') === 'archify-software-notices')[0];
+  assert.match(JSON.parse(text(softwareNotice)), /Apache License/);
   assert.equal(all(tree,node=>node.tagName === 'img').length,1);
   assert.equal(all(tree,node=>attr(node,'onerror')).length,0);
   assert.match(text(find(tree,'prose')),/Untrusted <img src=x onerror=alert\(1\)>/);
@@ -51,7 +56,7 @@ test('renderer: every shape remains statically readable and authored text cannot
 });
 
 test('renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents',()=>{
-  const input = fixture(); input.meta.title = '</script><script>injected</script>';
+  const input = fixture(); input.meta.title = '`</script><script>injected</script>`';
   const draft = '# draft\n</script>\n& literal text';
   const bundle = {sourceText:draft,document:input,...resources(),dependencies:[],digest:'prepared-digest'};
   const tree = parse(renderExplainer(input,{...resources(),sourceText:draft,preparedBundle:bundle}));
@@ -98,7 +103,7 @@ test('renderer: no-script content includes scope, system theme and inert operati
   const previewStyles = text(all(tree,node=>node.tagName === 'style' && node.parentNode?.attrs?.some(attribute=>attribute.value.includes('diagram-preview')))[0]);
   assert.match(previewStyles,/@media\(prefers-color-scheme:dark\)/);
   assert.match(previewStyles,/@media print/);
-  assert.equal(all(tree,node=>node.tagName === 'script' && attr(node,'type') === 'application/json').length,3,'one prepared bundle plus compact reader metadata');
+  assert.equal(all(tree,node=>node.tagName === 'script' && attr(node,'type') === 'application/json').length,4,'prepared bundle, reader metadata and software notices');
 });
 
 test('renderer: multiple native diagrams retain independent preview IDs and original payload hashes',()=>{
@@ -228,4 +233,44 @@ test('renderer: Windows cross-volume source locations are omitted instead of exp
   const tree=parse(renderExplainer(document,{...prepared,sourceText,preparedBundle,diagnostics,pageDirectory:'C:\\published'}));
   const frozen=payload(tree,'archify-explainer-prepared'),manifest=JSON.parse(text(find(tree,'explainer-manifest')));
   assert.equal(frozen.sourcePath,null);assert.equal(frozen.baseDir,null);assert.equal(frozen.dependencies[0].path,null);assert.equal(manifest.diagnostics[0].subject.input,null);
+});
+
+
+test('renderer: page titles render validated inline content in reading order with plain browser text',()=>{
+  const input=fixture();
+  input.meta.title='Why `GET <key>` **now**? [Guide](source:external) [1 ms](typical:Illustrative only) [Details](block:panel-main) [API](node:native-diagram.api)';
+  input.answer.summary='The [excerpt](source:code-source) follows the title.';
+  input.panels[0].title='How does `cache.get()` **work**?[](source:external) [2 ms](typical:Estimated)';
+  const tree=parse(renderExplainer(input,resources())),heading=all(tree,node=>node.tagName==='h1')[0];
+  const masthead=all(tree,node=>node.tagName==='header'&&attr(node,'class')==='masthead')[0];
+  const panel=find(tree,'panel-main'),panelIdLink=all(panel,node=>attr(node,'class')==='panel-id')[0];
+  const code=all(heading,node=>node.tagName==='code')[0];
+  assert.ok(code,'the page heading must render its validated inline code');
+  assert.equal(text(code),'GET <key>');
+  assert.equal(text(all(heading,node=>node.tagName==='strong')[0]),'now');
+  assert.equal(text(all(tree,node=>node.tagName==='title')[0]),'Why GET <key> now? Guide 1 ms Details API · Archify');
+  assert.equal(attr(masthead,'data-title'),'Why GET <key> now? Guide 1 ms Details API');
+  assert.equal(attr(panel,'data-title'),'How does cache.get() work? 2 ms');
+  assert.equal(attr(panelIdLink,'aria-label'),'How does cache.get() work? 2 ms');
+  assert.equal(text(all(panel,node=>node.tagName==='h2').flatMap(h=>all(h,n=>n.tagName==='code'))[0]),'cache.get()');
+  assert.ok(all(heading,node=>attr(node,'href')==='#panel-main').length);
+  assert.equal(attr(all(heading,node=>attr(node,'data-diagram-link')==='native-diagram')[0],'data-diagram-hash'),'focus=api');
+  assert.equal(text(all(heading,node=>attr(node,'href')==='#source-external')[0]),'1');
+  assert.equal(attr(find(tree,'source-external'),'value'),'1');
+  assert.equal(attr(find(tree,'source-code-source'),'value'),'2');
+  assert.ok(all(heading,node=>attr(node,'href')==='#explainer-typical-1').length);
+  assert.match(text(find(tree,'explainer-typical-1')),/Illustrative only/);
+  assert.match(text(find(tree,'explainer-typical-3')),/not measured here/);
+  assert.deepEqual(payload(tree,'archify-explainer-prepared').document,input,'rendering must not rewrite the canonical title');
+});
+
+test('renderer: inline reader keeps parsing after a Live Server style injection before the first closing body tag',()=>{
+  const html=renderExplainer(fixture(),resources());
+  const reader=scanHtml(html).scripts.find(script=>!script.attrs.type);
+  assert.ok(reader,'the rendered page carries one executable reader script');
+  assert.equal(/<\/body>/i.test(reader.text),false,'the serialized reader must not contain a literal closing body tag');
+  const injected=html.replace(/<\/body>/i,'<script src="/livereload.js"></script></body>');
+  const injectedReader=scanHtml(injected).scripts.find(script=>!script.attrs.type);
+  assert.ok(injectedReader,'the reader script survives the injection');
+  assert.doesNotThrow(()=>new Script(injectedReader.text),'a reload script injected before the first closing body tag must not cut the reader script short');
 });

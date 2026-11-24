@@ -1006,7 +1006,11 @@ test('packaged skill keeps first-draft rules inline and repair contracts behind 
   const authoring = readReferenceContract(skillRoot, 'authoring');
   const delivery = readReferenceContract(skillRoot, 'delivery');
   const repository = read('references/repository-authoring.md');
-  const fastPath = skill.slice(skill.indexOf('## Native diagram authoring'), skill.indexOf('## Update awareness'));
+  const authoringStart = skill.indexOf('## Native diagram authoring');
+  const authoringEnd = skill.indexOf('## Update awareness', authoringStart);
+  assert.ok(authoringStart >= 0, 'native diagram authoring section exists');
+  assert.ok(authoringEnd > authoringStart, 'authoring section ends at update awareness');
+  const fastPath = skill.slice(authoringStart, authoringEnd);
   assert.match(skill, /## Existing candidate handoff[\s\S]*run `finalize` first as one CLI invocation/);
   assert.match(fastPath, /exact schema and example paths in the Type router without listing their directories/);
   assert.match(fastPath, /references\/authoring-defaults\.md/);

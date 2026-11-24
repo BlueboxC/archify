@@ -32,11 +32,13 @@ export function parseValidatedExplainer(sourceText, options = {}) {
 export function declaredExplainerInputPaths(sourceText, inputPath) {
   if (Buffer.byteLength(sourceText) > MAX_SOURCE_BYTES) fail('source-limit', 'Explainer draft exceeds the 16 MiB source budget.', inputPath, 'source-byte-limit');
   const parsed = parseExplainer(sourceText, { inputPath });
-  if (!parsed.document) throwDiagnosticError('Explainer inputs could not be inspected.', parsed.diagnostics);
+  if (!parsed.document || parsed.diagnostics.some(entry => entry.severity !== 'warning')) throwDiagnosticError('Explainer inputs could not be inspected.', parsed.diagnostics);
   const inputs = [path.resolve(inputPath)];
-  for (const panel of parsed.document.panels || []) for (const block of panel.blocks || []) {
-    const reference = block.type === 'chart' ? block.data?.path : block.type === 'diagram' ? block.source : undefined;
-    if (typeof reference === 'string') inputs.push(path.resolve(path.dirname(inputPath), reference));
+  for (const panel of Array.isArray(parsed.document.panels) ? parsed.document.panels : []) {
+    for (const block of Array.isArray(panel?.blocks) ? panel.blocks : []) {
+      const reference = block?.type === 'chart' ? block.data?.path : block?.type === 'diagram' ? block.source : undefined;
+      if (typeof reference === 'string') inputs.push(path.resolve(path.dirname(inputPath), reference));
+    }
   }
   return [...new Set(inputs)];
 }
@@ -132,12 +134,14 @@ export function validatePreparedTargets(document, diagrams, options = {}) {
       visit(entry,`${pointer}/${key}`,panelId,component);
     }
   };
+  visit(document.meta?.title,'/meta/title',undefined,'title');
   visit(document.answer,'/answer',undefined,'answer');
   document.panels.forEach((panel,index)=>{
     visit(panel.title,`/panels/${index}/title`,panel.id,'panel');
     panel.blocks.forEach((block,blockIndex)=>{
       const pointer=`/panels/${index}/blocks/${blockIndex}`;
       visit(block,pointer,panel.id,block.type);
+      if(block.type==='diagram')for(const key of ['nodeSources','nodeBlocks'])for(const node of Object.keys(block[key]||{}))validateExplainerDiagramTarget(diagrams,{diagram:block.id,node},{...options,pointer:`${pointer}/${key}/${node}`,line:options.sourceMap?.[`${pointer}/${key}/${node}`]?.line || options.sourceMap?.[pointer]?.line || 1});
       if(block.type==='steps') block.items.forEach((item,itemIndex)=>{
         if(item.target)validateExplainerDiagramTarget(diagrams,item.target,{...options,pointer:`${pointer}/items/${itemIndex}/target`,line:options.sourceMap?.[`${pointer}/items/${itemIndex}`]?.line || options.sourceMap?.[pointer]?.line || 1});
       });

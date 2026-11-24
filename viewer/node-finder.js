@@ -113,10 +113,13 @@
       function select(id) {
         var item = items.find(function (candidate) { return candidate.id === id; });
         if (!item) return false;
-        var routeSelection = context.kind === 'route-source' || context.kind === 'route-target';
-        if (routeSelection) {
-          if (!Archify.routeProbe || typeof Archify.routeProbe.choose !== 'function' || !Archify.routeProbe.choose(id)) return false;
-          if (Archify.routeProbe.active() === 'target' && Archify.view && typeof Archify.view.reveal === 'function') {
+        // The Node Index also calls select() while the Finder is closed.
+        // Only the live Route phase determines whether this picks an endpoint.
+        var routeProbe = Archify.routeProbe;
+        var routeMode = routeProbe && routeProbe.active();
+        if (routeMode === 'source' || routeMode === 'target') {
+          if (!routeProbe.choose(id)) return false;
+          if (routeProbe.active() === 'target' && Archify.view && typeof Archify.view.reveal === 'function') {
             Archify.view.reveal([id], { includeNeighbors: true, reason: 'route-pick' });
           }
           close({ restoreFocus: false });
@@ -230,7 +233,7 @@
       });
       results.addEventListener('keydown', function (event) {
         if (event.isComposing || event.keyCode === 229) return;
-        if ((event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) && /^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(event.key)) return;
+        if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
         var buttons = resultButtons();
         var index = buttons.indexOf(document.activeElement);
         if (index < 0 || !buttons.length) return;

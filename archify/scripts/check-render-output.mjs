@@ -3,6 +3,8 @@
 import fs from 'node:fs';
 import { isExplainerHtml, checkExplainerHtml } from '../explainer/check.mjs';
 import { analyzeSvgPath } from '../renderers/shared/svg-path-analysis.mjs';
+import { drawnPathRectClearance, prepareCrossingPath, visibleCrossings } from '../renderers/shared/route-crossings.mjs';
+import { arrowheadTriangle, maskCoversArrowhead } from '../renderers/shared/arrowhead.mjs';
 import { textUnits } from '../renderers/shared/utils.mjs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -53,7 +55,8 @@ try {
 
 if (isExplainerHtml(html)) {
   const result = checkExplainerHtml(html, { file: htmlPath });
-  // Drain piped stdout before exiting; do not fall through to diagram checking.
+  // Piped stdout is asynchronous on macOS. Exit only after the full receipt
+  // has flushed, and keep the diagram path below from emitting a second one.
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`, () => {
     process.exit(result.ok ? 0 : 1);
   });
@@ -97,6 +100,12 @@ let composition = {
 };
 
 const NON_FINITE_TOKEN = /\b(?:NaN|undefined|Infinity)\b/;
+// Consume comments/CDATA as whole tokens, including any tag-like prose.
+// A quote opens a quoted attribute value only right after '='; anywhere
+// else (for example the apostrophe in data-note=it's) it is literal text,
+// so the tag pattern anchors quoted spans to '=' and lets a lone quote
+// through as an ordinary character.
+const SVG_TAG_TOKEN = /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<(\/?)([A-Za-z][\w:-]*)(?=[\s/>])(?:=\s*"[^"]*"|=\s*'[^']*'|[^>"']|["'])*>/g;
 const AUTOMATIC_CROSSOVER_UNDERLAY_TAG = /<path\b[^>]*\bdata-graph-role="automatic-crossover-underlay"[^>]*\/>/i;
 const HTML_VOID_ELEMENTS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
 const SVG_HTML_INTEGRATION_POINTS = new Set(['foreignobject', 'desc', 'title']);
@@ -126,44 +135,155 @@ function addCheck(name, ok, details = []) {
   checks.push({ name, ok, details });
 }
 
-// Attribute names and unquoted values may contain literal quotes. Keep one
-// state machine for tag boundaries and the SVG self-closing flag.
-function scanTagEnd(source, from) {
+// A '/' that ends an unquoted attribute value (for example data-note=value/>)
+// is value text per HTML, not the self-closing flag: parse5 keeps it, and the
+// finite_svg tests document x1="NaN/" for <line x1=NaN/>. A quote inside an
+// unquoted value is literal text too (data-note=it's/>), so a strip-the-quoted-
+// spans shortcut misreads that '/' as the flag. Walk the token with the same
+// value tracking as extractSvgBlocks: the flag is only a '/' that sits outside
+// every attribute value, immediately before the '>'.
+function isSelfClosingTag(token) {
   let quote = null;
-  let state = 'none';
-  let slash = false;
-  for (let i = from; i < source.length; i += 1) {
-    const ch = source[i];
+  let value = 'none'; // 'none' | 'aname' (in attribute name) | 'afterName' (whitespace after a name) | 'pending' (just after '=') | 'unquoted'
+  let slash = false; // the previous char was a '/' outside any attribute value
+  for (let k = 1; k < token.length; k += 1) {
+    const ch = token[k];
     if (quote !== null) {
-      if (ch === quote) { quote = null; state = 'none'; }
+      if (ch === quote) { quote = null; value = 'none'; }
       slash = false;
     } else if (ch === '>') {
-      return { end: i, selfClosing: slash };
-    } else if (state === 'name') {
-      if (ch === '=') state = 'pending';
-      else if (/[ \t\n\f\r/]/.test(ch)) state = 'none';
+      return slash;
+    } else if (value === 'aname') {
+      if (ch === '=') value = 'pending';
+      // Whitespace after a name does not end the attribute: a following '='
+      // still belongs to it (data-note = "a/>b"). Resetting to 'none' here
+      // made '=' start a new attribute, so the quoted '/>' that followed
+      // was read as the self-closing flag and the rest of the root was cut
+      // off. A '/' here can be the self-closing flag when it terminates
+      // the tag name (<svg/>): only a '/' immediately before '>' sets the
+      // flag, so remember it instead of clearing it. A '/' inside an
+      // unquoted value never reaches this branch (it stays 'unquoted'),
+      // and '<svg / >' clears the flag on the space that follows.
+      else if (/[ \t\n\f\r]/.test(ch)) value = 'afterName';
+      else if (ch === '/') value = 'none';
       slash = ch === '/';
-    } else if (state === 'pending') {
+    } else if (value === 'afterName') {
+      if (ch === '=') value = 'pending';
+      else if (ch === '/') value = 'none';
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'aname';
+      slash = ch === '/';
+    } else if (value === 'pending') {
       if (ch === '"' || ch === "'") quote = ch;
-      else if (!/[ \t\n\f\r]/.test(ch)) state = 'unquoted';
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'unquoted';
       slash = false;
-    } else if (state === 'unquoted') {
-      if (/[ \t\n\f\r]/.test(ch)) state = 'none';
+    } else if (value === 'unquoted') {
+      if (/[ \t\n\f\r]/.test(ch)) value = 'none';
       slash = false;
     } else {
-      if (!/[ \t\n\f\r/]/.test(ch)) state = 'name';
+      if (ch === '=') value = 'aname';
+      else if (!/[ \t\n\f\r/]/.test(ch)) value = 'aname';
       slash = ch === '/';
     }
   }
-  return null;
+  return false;
 }
 
-// Shared by root discovery and geometry consumers; consume each position once.
-// Match fields retain the previous tag-consumer interface: text, slash, name.
+// The root opener of a block: everything through the first '>' that sits
+// outside a quoted attribute value, walked with the same value tracking as
+// extractSvgBlocks. A quoted-spans pattern cannot express that rule: a lone
+// quote inside an unquoted value (data-note=x") opens a span there that
+// swallows the rest of the tag, the match fails, and every root attribute
+// (data-quality-profile included) is lost.
+function svgRootTag(block) {
+  let quote = null;
+  let value = 'none'; // 'none' | 'aname' (in attribute name) | 'afterName' (whitespace after a name) | 'pending' (just after '=') | 'unquoted'
+  for (let k = 0; k < block.length; k += 1) {
+    const ch = block[k];
+    if (quote !== null) {
+      if (ch === quote) { quote = null; value = 'none'; }
+    } else if (ch === '>') {
+      return block.slice(0, k + 1);
+    } else if (value === 'aname') {
+      if (ch === '=') value = 'pending';
+      else if (/[ \t\n\f\r]/.test(ch)) value = 'afterName';
+      else if (ch === '/') value = 'none';
+    } else if (value === 'afterName') {
+      // Whitespace after a name does not end the attribute: a following
+      // '=' still belongs to it (data-note = "a/>b").
+      if (ch === '=') value = 'pending';
+      else if (ch === '/') value = 'none';
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'aname';
+    } else if (value === 'pending') {
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'unquoted';
+    } else if (value === 'unquoted') {
+      if (/[ \t\n\f\r]/.test(ch)) value = 'none';
+    } else if (ch === '=') {
+      value = 'aname';
+    } else if (!/[ \t\n\f\r/]/.test(ch)) {
+      value = 'aname';
+    }
+  }
+  return '';
+}
+
+// Consume a tag from `from` (just past its name scan) through its '>',
+// honoring quoted attribute values with the same value tracking the block
+// scan uses: a quote opens a quoted value only right after '=', inside a
+// name or an unquoted value it is literal text. Returns the index of the
+// '>', or -1 when the tag never terminates.
+function endOfTag(source, from) {
+  let quote = null;
+  let value = 'none'; // 'none' | 'aname' (in attribute name) | 'afterName' (whitespace after a name) | 'pending' (just after '=') | 'unquoted'
+  let k = from;
+  while (k < source.length) {
+    const ch = source[k];
+    if (quote !== null) {
+      if (ch === quote) { quote = null; value = 'none'; }
+    } else if (ch === '>') {
+      return k;
+    } else if (value === 'aname') {
+      if (ch === '=') value = 'pending';
+      else if (/[ \t\n\f\r]/.test(ch)) value = 'afterName';
+      else if (ch === '/') value = 'none';
+    } else if (value === 'afterName') {
+      // Whitespace after a name does not end the attribute: a following
+      // '=' still belongs to it (data-note = "a/>b").
+      if (ch === '=') value = 'pending';
+      else if (ch === '/') value = 'none';
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'aname';
+    } else if (value === 'pending') {
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'unquoted';
+    } else if (value === 'unquoted') {
+      if (/[ \t\n\f\r]/.test(ch)) value = 'none';
+    } else if (ch === '=') {
+      value = 'aname';
+    } else if (!/[ \t\n\f\r/]/.test(ch)) {
+      value = 'aname';
+    }
+    k += 1;
+  }
+  return -1;
+}
+
+// Collect each top-level <svg> block. Matching lazily to the first </svg>
+// would cut a root short at a nested <svg> (for example inside foreignObject)
+// and drop the rest of the root from every check below; markup inside HTML
+// comments is not an element and must not count as a block either.
+//
+// The scan walks the source once, left to right, with the same quote- and
+// CDATA-aware token rules the other static checks use, so `<svg>` text inside
+// comments, CDATA sections, or quoted attribute values never moves the depth
+// counter. Case-insensitive like the HTML parser: <SVG> is the same element
+// as <svg>. A regex tokenizer is not used here: it retries its tag pattern
+// at every '<', so on a truncated candidate ending in unterminated quoted
+// tags each retry rescans the remaining suffix (quadratic overall), while
+// this scan consumes every position once.
 function* svgTagTokens(source) {
-  let i = 0;
   let depth = 0;
   let rawText = null;
+  let i = 0;
   while (i < source.length) {
     let lt;
     if (rawText) {
@@ -176,12 +296,16 @@ function* svgTagTokens(source) {
     } else {
       lt = source.indexOf('<', i);
     }
-    if (lt < 0) return;
+    if (lt === -1) break;
     if (source.startsWith('<!--', lt)) {
+      // HTML also ends a comment on --!> and closes <!--> / <!---> outright.
       let end = -1;
       if (source[lt + 4] === '>') end = lt + 5;
       else if (source.startsWith('->', lt + 4)) end = lt + 6;
       else {
+        // Walk each '--' once instead of probing for --!> with a fresh
+        // suffix search per comment: with no --!> anywhere, that probe
+        // rescans the remaining suffix from every comment (quadratic).
         let p = lt + 4;
         while ((p = source.indexOf('--', p)) !== -1) {
           if (source[p + 2] === '>') { end = p + 3; break; }
@@ -189,17 +313,35 @@ function* svgTagTokens(source) {
           p += 1;
         }
       }
-      i = end < 0 ? source.length : end;
+      i = end === -1 ? source.length : end;
       continue;
     }
-    if (source.startsWith('<![CDATA[', lt) && depth > 0) {
-      const end = source.indexOf(']]>', lt + 9);
-      i = end < 0 ? source.length : end + 3;
+    if (source.startsWith('<![CDATA[', lt)) {
+      if (depth > 0) {
+        const end = source.indexOf(']]>', lt + 9);
+        i = end === -1 ? source.length : end + 3;
+      } else {
+        // Outside foreign content, <![CDATA[ is a bogus comment in HTML: it
+        // ends at the first '>' and the markup after it is real.
+        const end = source.indexOf('>', lt + 9);
+        i = end === -1 ? source.length : end + 1;
+      }
       continue;
     }
-    if (source.startsWith('<!', lt) || source.startsWith('<?', lt) || source.startsWith('</!', lt)) {
+    if (source.startsWith('<?', lt)) {
+      // A processing instruction is a bogus comment in HTML too: it ends
+      // at the first '>', so an <svg> inside it opens no element and the
+      // markup after that '>' stays real.
       const end = source.indexOf('>', lt + 2);
-      i = end < 0 ? source.length : end + 1;
+      i = end === -1 ? source.length : end + 1;
+      continue;
+    }
+    if (source.startsWith('<!', lt)) {
+      // Any other <!...> (a doctype, or a declaration like <!x) is a bogus
+      // comment in HTML: it ends at the first '>', so a <!-- inside it
+      // opens no comment and the markup after that '>' stays real.
+      const end = source.indexOf('>', lt + 2);
+      i = end === -1 ? source.length : end + 1;
       continue;
     }
     let j = lt + 1;
@@ -209,23 +351,43 @@ function* svgTagTokens(source) {
     while (j < source.length && /[\w:-]/.test(source[j])) j += 1;
     const name = source.slice(nameStart, j);
     const after = source[j];
+    // Tag names end only at ASCII whitespace, '/' or '>' — JavaScript \s
+    // would also accept U+00A0 and friends, which HTML joins into the name.
     if (!/^[A-Za-z]/.test(name) || (after !== undefined && !/[ \t\n\f\r/>]/.test(after))) {
-      if (/[A-Za-z]/.test(source[lt + 1] || '')) {
-        const tag = scanTagEnd(source, lt + 1);
-        i = tag ? tag.end + 1 : source.length;
-      } else i = lt + 1;
+      // A rejected '<' is not always plain text. '</!' is a bogus comment in
+      // HTML that runs to its first '>', and a letter after '<' means the
+      // tag-name state swallowed the rest (e.g. <x"<svg>> is one malformed
+      // tag), so resuming at lt + 1 would expose an inner <svg> that HTML
+      // never tokenizes as an element. Anything else ('<3', '<<') is text,
+      // so resuming one byte later stays correct there.
+      if (source.startsWith('</!', lt)) {
+        const end = source.indexOf('>', lt + 3);
+        i = end === -1 ? source.length : end + 1;
+      } else if (/[A-Za-z]/.test(source[lt + 1] || '')) {
+        const gt = endOfTag(source, j);
+        i = gt === -1 ? source.length : gt + 1;
+      } else {
+        i = lt + 1;
+      }
       continue;
     }
-    const tag = scanTagEnd(source, lt + 1);
-    if (!tag) return;
-    i = tag.end + 1;
-    const match = [source.slice(lt, i), closing ? '/' : '', name];
+    // Consume the tag through its '>', honoring quoted attribute values.
+    // Per HTML, a quote opens a quoted value only right after '='; inside a
+    // name or an unquoted value it is literal text and the tag still ends
+    // at its '>'. An '=' in before-attribute-name position starts an
+    // attribute whose name is '=' (it does not open a value), so '=' moves
+    // to the attribute-name state instead of value-pending.
+    const gt = endOfTag(source, j);
+    if (gt === -1) break; // unterminated tag: the rest is its text
+    const token = source.slice(lt, gt + 1);
+    i = gt + 1;
+    const match = [token, closing ? '/' : '', name];
     match.index = lt;
-    match.selfClosing = tag.selfClosing;
+    match.selfClosing = isSelfClosingTag(token);
     yield match;
     const element = name.toLowerCase();
-    if (element === 'svg') depth = Math.max(0, depth + (closing ? -1 : tag.selfClosing ? 0 : 1));
-    if (!closing && !tag.selfClosing && (element === 'script' || element === 'style')) rawText = element;
+    if (element === 'svg') depth = Math.max(0, depth + (closing ? -1 : match.selfClosing ? 0 : 1));
+    if (!closing && !match.selfClosing && (element === 'script' || element === 'style')) rawText = element;
   }
 }
 
@@ -271,7 +433,8 @@ if (svgBlocks.length === 1) {
     readerFit: svgAttrs['data-reader-fit'] || null,
     diagramType: svgAttrs['data-diagram-type'] || null,
   });
-  const arrows = collectArrows(beforeLegend, workflowV2);
+  const architecture = svgAttrs['data-diagram-type'] === 'architecture' || svgAttrs['data-reader-primary-text'] === '14';
+  const arrows = collectArrows(beforeLegend, workflowV2, architecture);
   const diagonal = arrows.flatMap((arrow) => diagonalStraightSegments(arrow).map((segment) => ({ arrow, ...segment })));
   addCheck(
     'orthogonal_arrows',
@@ -283,6 +446,7 @@ if (svgBlocks.length === 1) {
     workflowV2,
     maxCrossingPairChecks,
     maxCrossingSegmentPairChecks,
+    architecture,
   );
   const measuredRelationshipCrossings = crossingAnalysis.crossings;
   const resolvedCrossovers = measuredRelationshipCrossings.filter((hit) => (
@@ -337,8 +501,7 @@ if (svgBlocks.length === 1) {
   const nodeRects = svgAttrs.transform ? [] : collectUntransformedNodeRects(beforeLegend);
   const routeMetrics = subpathBudgetMetrics(routedRelationships);
   // Architecture marks only one of its two Reader fits with its type.
-  const crowdedSides = svgAttrs['data-diagram-type'] === 'architecture' || svgAttrs['data-reader-primary-text'] === '14'
-    ? crowdedNodeSides(arrows, nodeRects) : [];
+  const crowdedSides = architecture ? crowdedNodeSides(arrows, nodeRects) : [];
   const routeRhythmIssues = subpathRhythmIssues(routedRelationships);
   const ambiguousCorridors = subpathCorridors({
     routedRelations: routedRelationships,
@@ -351,7 +514,10 @@ if (svgBlocks.length === 1) {
       .flatMap(entry => routeParts(entry).filter(part => part.targetEndpoint)),
     allowShortWorkflowTrunks: workflowV2,
   });
+  const cardinalityPorts = svgAttrs['data-erd-ui'] ? coincidentCardinalityPorts(arrows) : [];
   const relationshipLabels = collectRelationshipLabelMasks(beforeLegend, arrows);
+  const labelArrowheadMasks = architecture ? collectLabelArrowheadMasks(relationshipLabels, arrows) : [];
+  const labelOwnership = architecture ? collectLabelOwnership(relationshipLabels, arrows) : [];
   const leadingSpace = collectArchitectureLeadingSpace({
     svgAttrs, fragment: beforeLegend, nodeRects, frames: compositionFrames,
     arrows, labels: relationshipLabels,
@@ -419,6 +585,7 @@ if (svgBlocks.length === 1) {
       resolvedCrossovers: resolvedCrossovers.length,
       ambiguousCorridors: ambiguousCorridors.length,
       arrowheadCollisions: arrowheadCollisions.length,
+      ...(cardinalityPorts.length ? { coincidentCardinalityPorts: cardinalityPorts.length } : {}),
       containerBorderRuns: containerBorderRuns.length,
       boundaryMembershipIssues: boundaryMembership.hits.length,
       boundaryMembershipFramesChecked: boundaryMembership.framesChecked,
@@ -446,6 +613,7 @@ if (svgBlocks.length === 1) {
         };
       }),
       ...(crowdedSides.length ? { crowdedSides } : {}),
+      ...(cardinalityPorts.length ? { coincidentCardinalityPorts: cardinalityPorts } : {}),
       detours: routedRelationships.flatMap((entry) => {
         const metrics = subpathBudgetMetrics([entry]);
         const blockers = directCorridorBlockers(entry.relation, nodeRects);
@@ -474,6 +642,8 @@ if (svgBlocks.length === 1) {
         nodeRect: roundedRect({ x: hit.node.x, y: hit.node.y, width: hit.node.width, height: hit.node.height }),
         frameRect: roundedRect({ x: hit.frame.x, y: hit.frame.y, width: hit.frame.width, height: hit.frame.height }),
       })),
+      ...labelArrowheadMasks,
+      ...labelOwnership,
       ...containerBorderRuns.map((hit) => ({
         severity: qualityGatesEnforced ? 'error' : 'warning',
         code: 'composition/container-border-run',
@@ -654,7 +824,7 @@ console.log(JSON.stringify({ ok, file: htmlPath, artifact, checks, composition,
 // Let pending stdout writes drain: large receipts are asynchronous when piped.
 process.exitCode = ok ? 0 : 1;
 
-function collectArrows(fragment, useActualPoints = false) {
+function collectArrows(fragment, useActualPoints = false, architecture = false) {
   const arrows = [];
   let index = 0;
   let pathIndex = 0;
@@ -699,10 +869,9 @@ function collectArrows(fragment, useActualPoints = false) {
     let routeSubpaths = line ? continuousRoutePoints(segments)
       : parsed.subpaths.flatMap(part => continuousRoutePoints(part.straightSegments));
     // Legacy single-path metadata remains supported. It cannot bridge actual moveto boundaries.
-    if (!useActualPoints && (line || parsed.subpaths.length === 1)) {
-      const authoredPoints = parseRoutePoints(attrs['data-composition-points']);
-      if (authoredPoints) routeSubpaths = [authoredPoints];
-    }
+    const authoredPoints = !useActualPoints && (line || parsed.subpaths.length === 1)
+      ? parseRoutePoints(attrs['data-composition-points']) : null;
+    if (authoredPoints) routeSubpaths = [authoredPoints];
     arrows.push({
       kind: name,
       index: index += 1,
@@ -721,9 +890,13 @@ function collectArrows(fragment, useActualPoints = false) {
       automaticWorkflowRoute: attrs['data-composition-routing'] === 'workflow-v2-auto',
       junction: attrs['data-composition-junction'] || null,
       width: routeStrokeWidth,
+      markerEnd: attrs['marker-end'],
+      ...(attrs['data-er-ends'] ? { erMarkers: [attrs['marker-start'], attrs['marker-end']] } : {}),
       variant: raw.match(/\ba-(default|emphasis|security|dashed)\b/)?.[1] || 'default',
       role: attrs['data-edge-role'],
       segments,
+      ...(architecture ? { visiblePaths: line ? [prepareCrossingPath(segments)]
+        : parsed.subpaths.map(part => prepareCrossingPath(part.commands)) } : {}),
       borderSegments,
       routePoints: routeSubpaths.length === 1 ? routeSubpaths[0] : [],
       routeSubpaths,
@@ -737,6 +910,58 @@ function collectArrows(fragment, useActualPoints = false) {
   }
 
   return arrows;
+}
+
+function collectLabelOwnership(labels, arrows) {
+  const gap = (rect, route, limit) => route.visiblePaths.reduce((nearest, path) =>
+    Math.min(nearest, drawnPathRectClearance(path, rect, nearest)), limit);
+  return labels.flatMap(({ rect, label, relation }) => {
+    const own = gap(rect, relation, Infinity);
+    if (!Number.isFinite(own)) return [];
+    let nearest = own;
+    let competing = null;
+    for (const other of arrows) {
+      if (other === relation || (other.key !== undefined && other.key === relation.key)) continue;
+      const distance = gap(rect, other, nearest);
+      if (distance + 0.0001 < nearest) {
+        nearest = distance;
+        competing = other;
+      }
+    }
+    return competing ? [{
+      severity: 'info',
+      code: 'composition/label-route-ownership',
+      label,
+      labelRelationship: relationshipRecord(relation),
+      otherRelationship: relationshipRecord(competing),
+      ownClearance: Math.round(own * 10) / 10,
+      otherClearance: Math.round(nearest * 10) / 10,
+      labelRect: roundedRect(rect),
+      detail: `Label "${label}" is closer to ${relationshipName(competing)} than to its own route.`,
+    }] : [];
+  });
+}
+
+function collectLabelArrowheadMasks(labels, arrows) {
+  const markers = arrows.flatMap(arrow => {
+    if (!/^url\(#arrowhead(?:-[\w-]+)?\)$/.test(arrow.markerEnd)) return [];
+    const end = arrow.visiblePaths.at(-1)?.segments.at(-1);
+    if (!end) return [];
+    const marker = arrowheadTriangle(end.end, end.control || end.start,
+      arrow.width || (arrow.variant === 'emphasis' ? 1.8 : 1.5));
+    return [{ arrow, marker }];
+  });
+  return labels.flatMap(({ rect, label, relation }) => markers.flatMap(({ arrow, marker }) => (
+    maskCoversArrowhead(rect, marker) ? [{
+      severity: 'info',
+      code: 'composition/label-arrowhead-mask',
+      label,
+      labelRelationship: relationshipRecord(relation),
+      otherRelationship: relationshipRecord(arrow),
+      labelRect: roundedRect(rect),
+      detail: `Label "${label}" covers an arrowhead of ${relationshipName(arrow)}.`,
+    }] : []
+  )));
 }
 
 function continuousRoutePoints(segments) {
@@ -942,6 +1167,7 @@ function collectRelationshipCrossings(
   includeSharedEndpoints = false,
   pairLimit = DEFAULT_MAX_CROSSING_PAIR_CHECKS,
   segmentPairLimit = DEFAULT_MAX_CROSSING_SEGMENT_PAIR_CHECKS,
+  architecture = false,
 ) {
   const relationships = arrows.filter((arrow) => arrow.from && arrow.to).map(arrow => ({
     ...arrow,
@@ -956,10 +1182,11 @@ function collectRelationshipCrossings(
     const left = relationships[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < relationships.length; rightIndex += 1) {
       const right = relationships[rightIndex];
-      // A shared semantic endpoint does not make an interior X a junction
-      // when both paths opt into automatic workflow or independent-port checks.
+      // Architecture counts interior crossings even when arrows share a
+      // card. Other legacy layouts can opt in through their own contracts.
       if ([left.from, left.to].some((id) => id === right.from || id === right.to)
           && !includeSharedEndpoints
+          && !architecture
           && !(left.independentPorts && right.independentPorts)
           && !(left.automaticWorkflowRoute && right.automaticWorkflowRoute)) continue;
       if (attemptedPairs >= pairLimit) {
@@ -967,6 +1194,27 @@ function collectRelationshipCrossings(
       }
       attemptedPairs += 1;
       let point = null;
+      if (architecture) {
+        let exhausted = false;
+        const consume = () => {
+          if (attemptedSegmentPairs >= segmentPairLimit) {
+            exhausted = true;
+            return false;
+          }
+          attemptedSegmentPairs += 1;
+          return true;
+        };
+        for (const a of left.visiblePaths) {
+          for (const b of right.visiblePaths) {
+            point = visibleCrossings(a, b, 1, consume)[0]?.point;
+            if (point || exhausted) break;
+          }
+          if (point || exhausted) break;
+        }
+        if (exhausted) return { crossings, attemptedPairs, attemptedSegmentPairs, exhausted: true, exhaustedBudget: 'segment-pairs' };
+        if (point) crossings.push({ left, right, point });
+        continue;
+      }
       for (const leftSegment of left.segments) {
         for (const rightSegment of right.segments) {
           if (attemptedSegmentPairs >= segmentPairLimit) {
@@ -1082,6 +1330,35 @@ function crowdedNodeSides(arrows, nodes) {
     return relationships > 1 && sidePx < neededPx
       ? [{ node: node.id, label: node.label, side, relationships, sidePx, neededPx }] : [];
   });
+}
+
+// A shared ERD trunk has no marker of its own. Its relationship paths still
+// terminate at separate table ports. Measure the drawn ends, including split
+// paths, instead of inferring ports from the placement or logical route points.
+function coincidentCardinalityPorts(arrows) {
+  const ports = new Map();
+  for (const arrow of arrows) {
+    if (!arrow.erMarkers || !arrow.from || !arrow.to || !arrow.segments.length) continue;
+    const first = arrow.segments[0];
+    const last = arrow.segments.at(-1);
+    const ends = [
+      [arrow.from, 'fromSide', first.start, first.end, arrow.erMarkers[0], 'start'],
+      [arrow.to, 'toSide', last.end, last.start, arrow.erMarkers[1], 'end'],
+    ];
+    for (const [entityId, field, point, neighbor, marker, end] of ends) {
+      const glyph = marker?.match(/^url\(#er-((?:one|many)(?:-optional)?)-(start|end)\)$/);
+      if (!glyph || glyph[2] !== end) continue;
+      const dx = neighbor[0] - point[0];
+      const dy = neighbor[1] - point[1];
+      if ((!dx && !dy) || (dx && dy)) continue;
+      const side = dx ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'top' : 'bottom');
+      const key = JSON.stringify([entityId, side, point]);
+      const port = ports.get(key) || { entityId, side, point, ends: [] };
+      port.ends.push({ relationship: relationshipRecord(arrow), sideField: field, glyph: glyph[1] });
+      ports.set(key, port);
+    }
+  }
+  return [...ports.values()].filter((port) => port.ends.length > 1);
 }
 
 function relationshipRecord(arrow) {

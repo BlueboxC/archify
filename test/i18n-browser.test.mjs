@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome, runVisualCheck } from '../archify/bin/visual-check.mjs';
+import { isolatedVisualBrowser } from './helpers/isolated-visual-browser.mjs';
 import {
   skillRoot, cli, EXAMPLES, example, localeDocument, FR_PARTIAL_TRANSLATIONS, createLocaleFixture,
 } from './helpers/i18n-fixture.mjs';
@@ -172,7 +173,21 @@ const BROWSER_LOCALES = {
     },
     shareCardFailure: 'سياقُ لوحة الرسم ثنائيِّ الأبعاد غير متاح لـبطاقة مشاركة',
   },
-
+  ru: {
+    title: (type) => `Локализация в браузере-${type}`,
+    toolbarLabel: 'Управление видом диаграммы',
+    finder: { hidden: false, title: 'Найти узел', searchLabel: 'Поиск узлов диаграммы' },
+    route: { hidden: false, title: 'Выберите начало пути', label: 'Очистить маршрут' },
+    exportLabel: 'Экспортировать диаграмму',
+    exportMenuLabel: 'Экспорт',
+    exportMenuText: /Копировать диаграмму/,
+    presetBadges: {
+      'signal-flow': { header: 'ПОТОК СИГНАЛОВ', plate: 'none' },
+      blueprint: { header: 'ЧЕРТЁЖ / РЕД. 01', plate: '' },
+      editorial: { header: 'РЕДАКЦИЯ / ЗАМЕТКА', plate: 'ARCHIFY / ЛИСТ 04' },
+    },
+    shareCardFailure: '2D-контекст Canvas недоступен для карточки для публикации',
+  },
 };
 
 async function assertLocalizedViewer(browser, locale, expected) {
@@ -327,4 +342,15 @@ test('real Chrome keeps Arabic UI localized with mixed-script authored titles in
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
 }, async () => {
   await assertLocalizedLocale('ar', BROWSER_LOCALES.ar);
+});
+
+test('real Chrome keeps Russian Viewer controls, exports, and accessibility labels localized', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    await assertLocalizedViewer(browser, 'ru', BROWSER_LOCALES.ru);
+  } finally {
+    await browser.close();
+  }
 });

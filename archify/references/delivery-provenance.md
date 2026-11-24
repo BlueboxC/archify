@@ -1,7 +1,6 @@
 # Delivery provenance and recovery
 
 ## Validate and deliver
-
 `render` and direct renderer entry points print classified authoring failures
 to stderr as readable diagnostics and exit 1. Input read/JSON parse failures
 use `input/read` or `input/json-parse`; output filesystem failures use
@@ -10,6 +9,8 @@ their existing rule codes. Use the advertised `validate --json` or
 `deliver --json` interface for a machine receipt; `render` has no `--json` flag.
 Unexpected implementation failures retain debugging information in human
 mode and remain `internal/unclassified` in machine receipts.
+
+Declared local Explainer chart data and native-diagram specification files are protected inputs, including physical aliases. Delivery and finalize refuse sidecars that would overwrite those inputs, including when resource preparation fails; an uninspectable draft cannot publish failure evidence.
 
 Each delivered output has two artifact-specific metadata paths. When an output
 stem is too long for those derived filenames, Archify shortens it and appends a

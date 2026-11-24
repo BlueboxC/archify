@@ -19,6 +19,44 @@ function temp(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-explain
 function fixture(){return {schema_version:1,diagram_type:'explainer',meta:{id:'patch-document',title:'What can change?',locale:'en'},answer:{summary:'One stable panel can be replaced.'},panels:[{id:'first',title:'What changes?',blocks:[{id:'first-text',type:'prose',text:'This text may change.'}]},{id:'second',title:'What stays?',blocks:[{id:'second-text',type:'prose',text:'This text remains exactly the same.'}]}],sources:[]};}
 function deliver(dir,doc=fixture(),options=[]){const input=path.join(dir,'author.json'),artifact=path.join(dir,'original.html');fs.writeFileSync(input,JSON.stringify(doc,null,2)+'\n');const result=run(['deliver','explainer',input,artifact,...options,'--json']);assert.equal(result.status,0,result.stdout+result.stderr);return {input,artifact};}
 
+test('patch payload errors preserve their specific repair advice',async t=>{
+  const dir=temp(t),artifact=path.join(dir,'original.html'),replacement=path.join(dir,'replacement.md'),output=path.join(dir,'patched.html');
+  const replacementText='## Question {#question}\n\nReplacement.\n';
+  fs.writeFileSync(replacement,replacementText);
+  const script=text=>`<script type="application/json" id="archify-explainer-prepared">${text}</script>`;
+  const cases=[
+    [fs.readFileSync('examples/lifecycle-agent-run.html','utf8'),'The artifact must contain one original draft and prepared resource payload.','Use an artifact produced by the formal explainer CLI.'],
+    [script('{}')+script('{}'),'The artifact must contain one original draft and prepared resource payload.','Use an artifact produced by the formal explainer CLI.'],
+    [script('{invalid'),'Embedded draft payload is invalid.','Rebuild the artifact from its original draft.'],
+    [script(JSON.stringify({preparedDiagrams:{diagrams:{flow:{htmlGzip:'not-gzip'}}}})),'Embedded native diagram payload cannot be inflated.','Rebuild the original artifact before patching.'],
+  ];
+  for(const [html,message,fix] of cases) {
+    fs.writeFileSync(artifact,html);
+    await assert.rejects(preparePanelPatch({artifactPath:artifact,panelId:'question',replacementPath:replacement}),error=>{
+      const diagnostic=error.archifyDiagnostics[0];
+      assert.equal(error.message,message);
+      assert.equal(diagnostic.code,'explainer/patch-payload');
+      assert.equal(diagnostic.message,message);
+      assert.deepEqual(diagnostic.supportedFixes,[fix]);
+      return true;
+    });
+    assert.equal(fs.readFileSync(artifact,'utf8'),html);
+    assert.equal(fs.readFileSync(replacement,'utf8'),replacementText);
+  }
+  // A valid native page passes the CLI's artifact check, then needs the specific
+  // missing-Explainer-payload diagnostic. Malformed HTML is rejected earlier.
+  fs.writeFileSync(artifact,cases[0][0]);fs.writeFileSync(output,'previous verified artifact');
+  const result=run(['patch','explainer',artifact,'question',replacement,output,'--json']);
+  assert.equal(result.status,1,result.stdout+result.stderr);
+  const diagnostic=JSON.parse(result.stdout).diagnostics[0];
+  assert.equal(diagnostic.code,'explainer/patch-payload');
+  assert.equal(diagnostic.message,cases[0][1]);
+  assert.deepEqual(diagnostic.supportedFixes,[cases[0][2]]);
+  assert.equal(fs.readFileSync(artifact,'utf8'),cases[0][0]);
+  assert.equal(fs.readFileSync(replacement,'utf8'),replacementText);
+  assert.equal(fs.readFileSync(output,'utf8'),'previous verified artifact');
+});
+
 test('panel patch preserves original source outside target token range',t=>{
   const dir=temp(t),{artifact}=deliver(dir),previous=read(artifact),replacement=path.join(dir,'replacement.json'),output=path.join(dir,'patched.html');
   const next={...previous.document.panels[0],title:'What changed?',blocks:[{id:'first-text',type:'prose',text:'The selected panel has new content.'}]};
@@ -31,6 +69,21 @@ test('panel patch preserves original source outside target token range',t=>{
   assert.equal(receipt.original.sourceSha256,previous.source.sha256);assert.equal(receipt.sourceSha256,patched.source.sha256);
   assert.notEqual(receipt.revision,receipt.sourceSha256);
   const check=run(['check',output,'--json','--require-provenance']);assert.equal(check.status,0,check.stdout+check.stderr);
+});
+
+test('patching referenced prose keeps the diagram and its frozen native artifact unchanged',t=>{
+  const dir=temp(t),doc=fixture();
+  const spec=compileExplainerDiagram('sequence',['actor api | API','actor db | DB','api | db | Read'],{id:'request'});
+  doc.panels[1].blocks.push({id:'request',type:'diagram',diagramType:'sequence',spec,nodeBlocks:{api:'first-text'}});
+  const {input,artifact}=deliver(dir,doc),previous=read(artifact),inputBytes=fs.readFileSync(input);
+  const next=structuredClone(doc.panels[0]);next.blocks[0].text='The updated explanation is shared with the node.';
+  const replacement=path.join(dir,'replacement.json'),output=path.join(dir,'patched.html');fs.writeFileSync(replacement,JSON.stringify(next));
+  const result=run(['patch','explainer',artifact,'first',replacement,output,'--json']);assert.equal(result.status,0,result.stdout+result.stderr);
+  const patched=read(output);
+  assert.equal(patched.document.panels[0].blocks[0].text,next.blocks[0].text);
+  assert.deepEqual(patched.document.panels[1],previous.document.panels[1]);
+  assert.deepEqual(patched.preparedDiagrams,previous.preparedDiagrams);
+  assert.deepEqual(fs.readFileSync(input),inputBytes,'rendering and patching never rewrite the original draft');
 });
 
 test('panel patch rejects missing target and changed identity without overwriting existing output',t=>{
@@ -135,65 +188,43 @@ test('a page without its source directory can patch prose but cannot read unrela
   await assert.rejects(preparePanelPatch({artifactPath:artifact,panelId:'first',replacementPath}),{message:'Local images require an input directory.'});
 });
 
-test('payload failures retain their original diagnostic while genuine inflation failures stay distinct (#1084)',async t=>{
-  const dir=temp(t),artifact=path.join(dir,'original.html'),replacement=path.join(dir,'replacement.md');
-  fs.writeFileSync(replacement,'## Question {#question}\n\nReplacement.\n');
-  const script=text=>`<script type="application/json" id="archify-explainer-prepared">${text}</script>`;
-  const cases=[
-    ['', 'The artifact must contain one original draft and prepared resource payload.', 'Use an artifact produced by the formal explainer CLI.'],
-    [script('{}')+script('{}'),'The artifact must contain one original draft and prepared resource payload.','Use an artifact produced by the formal explainer CLI.'],
-    [script('{invalid'),'Embedded draft payload is invalid.','Rebuild the artifact from its original draft.'],
-    [script(JSON.stringify({preparedDiagrams:{diagrams:{flow:{htmlGzip:'not-gzip'}}}})),'Embedded native diagram payload cannot be inflated.','Rebuild the original artifact before patching.'],
-  ];
-  for(const [html,message,fix] of cases) {
-    fs.writeFileSync(artifact,html);
-    await assert.rejects(preparePanelPatch({artifactPath:artifact,panelId:'question',replacementPath:replacement}),error=>{
-      assert.equal(error.message,message);
-      assert.equal(error.archifyDiagnostics[0].code,'explainer/patch-payload');
-      assert.deepEqual(error.archifyDiagnostics[0].supportedFixes,[fix]);
-      return true;
-    });
-    assert.equal(fs.readFileSync(artifact,'utf8'),html);
-  }
-});
-
-test('patching a native page reports missing Explainer payload without replacing output (#1084)',t=>{
-  const dir=temp(t),artifact=path.join(dir,'native.html'),replacement=path.join(dir,'replacement.md'),output=path.join(dir,'patched.html');
-  const delivered=run(['deliver','lifecycle',path.resolve('archify/examples/agent-run.lifecycle.json'),artifact,'--json']);
-  assert.equal(delivered.status,0,delivered.stdout+delivered.stderr);
-  const previous=fs.readFileSync(artifact);
-  fs.writeFileSync(replacement,'## Question {#question}\n\nReplacement.\n');fs.writeFileSync(output,'previous verified artifact');
-  const result=run(['patch','explainer',artifact,'question',replacement,output,'--json']);
-  assert.equal(result.status,1,result.stdout+result.stderr);
-  const receipt=JSON.parse(result.stdout);
-  assert.equal(receipt.diagnostics[0].code,'explainer/patch-payload');
-  assert.equal(receipt.diagnostics[0].message,'The artifact must contain one original draft and prepared resource payload.');
-  assert.deepEqual(fs.readFileSync(artifact),previous);
-  assert.equal(fs.readFileSync(output,'utf8'),'previous verified artifact');
-});
-
 
 test('patch output excludes temporary execution paths and is reproducible (#1085)', t => {
   const dir = temp(t), {artifact, input} = deliver(dir);
-  const replacement = path.join(dir, 'replacement.json'), output = path.join(dir, 'patched.html');
+  const replacement = path.join(dir, 'replacement.json'), outputs = ['first', 'second'].map(name => path.join(dir, name, 'patched.html'));
+  for (const output of outputs) fs.mkdirSync(path.dirname(output));
   fs.writeFileSync(replacement, JSON.stringify({...fixture().panels[0], title:'A stable replacement'}));
   const original = fs.readFileSync(artifact), source = fs.readFileSync(input);
   let previous;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (const output of outputs) {
     const patched = run(['patch','explainer',artifact,'first',replacement,output,'--json']);
     assert.equal(patched.status, 0, patched.stdout + patched.stderr);
     const bundle = read(output), bytes = fs.readFileSync(output);
     assert.equal(Object.hasOwn(bundle, 'inputPath'), false);
-    assert.equal(path.resolve(dir, bundle.sourcePath), input);
+    assert.equal(path.resolve(path.dirname(output), bundle.sourcePath), input);
     assert.doesNotMatch(JSON.stringify(bundle), /archify-explainer-patch-[^/\\]*[/\\]patched-draft\.json/);
     assert.equal(bundle.digest, createHash('sha256').update(JSON.stringify({...bundle,digest:undefined})).digest('hex'));
-    if (previous) assert.deepEqual(bytes, previous, 'same original/replacement/output gives identical HTML');
+    if (previous) assert.deepEqual(bytes, previous, 'equivalent output directories give identical HTML despite separate patch temporaries');
     previous = bytes;
     const checked = run(['check',output,'--json','--require-provenance']);
     assert.equal(checked.status, 0, checked.stdout + checked.stderr);
   }
   assert.deepEqual(fs.readFileSync(artifact), original);
   assert.deepEqual(fs.readFileSync(input), source);
+  fs.unlinkSync(input);
+  // A later edit resolves a new relative resource from the original draft directory.
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a8XcAAAAASUVORK5CYII=','base64');
+  fs.writeFileSync(path.join(dir, 'later.png'), png);
+  fs.writeFileSync(replacement, JSON.stringify({...fixture().panels[0], blocks:[{id:'new-image',type:'image',path:'later.png',alt:'A later resource'}]}));
+  const output = path.join(dir, 'repatched.html');
+  const again = run(['patch','explainer',outputs[0],'first',replacement,output,'--json']);
+  assert.equal(again.status, 0, again.stdout + again.stderr);
+  const bundle = read(output);
+  assert.equal(Object.hasOwn(bundle, 'inputPath'), false);
+  assert.equal(path.resolve(dir, bundle.sourcePath), input);
+  assert.equal(bundle.preparedSources.assets['new-image'].sha256, createHash('sha256').update(png).digest('hex'));
+  const checked = run(['check',output,'--json','--require-provenance']);
+  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
 });
 
 test('reader serialization omits private bindings for Windows paths and missing origins (#1085)', async t => {

@@ -64,7 +64,7 @@ test('real Chrome: website copy controls report real outcomes and preserve selec
           document.querySelector('[data-type="workflow"]').click();
           document.querySelector('[data-input="repository"]').click();
         }
-        return page === 'index' ? ['[data-copy-text]', '[data-copy-from]'] : page === 'guide' ? ['#copy-prompt'] : ['[data-copy-source="install-command"]', '[data-copy-source="project-command"]', '#copy-prompt', '#copy-starter'];
+        return page === 'index' ? ['[data-copy-text]', '[data-copy-from]'] : page === 'guide' ? ['#copy-prompt'] : ['[data-copy-source="agent-install-prompt"]', '[data-copy-source="install-command"]', '[data-copy-source="project-command"]', '#copy-prompt', '#copy-starter'];
       })()`);
       for (const selector of controls) for (const [api, fallback] of [['success', 'throw'], ['missing', 'true'], ['missing', 'false'], ['missing', 'throw'], ['reject', 'true'], ['reject', 'false'], ['reject', 'throw']]) {
         const receipt = await evaluate(`(async () => {
@@ -78,7 +78,7 @@ test('real Chrome: website copy controls report real outcomes and preserve selec
           else if (button.dataset.copySource) expected = document.getElementById(button.dataset.copySource).textContent.trim();
           else if (selector === '#copy-prompt') expected = document.getElementById('recipe-prompt').textContent;
           else {
-            const command = document.getElementById('install-command').textContent.trim(), prompt = document.getElementById('recipe-prompt').textContent;
+            const command = document.getElementById('agent-install-prompt').textContent.trim(), prompt = document.getElementById('recipe-prompt').textContent;
             expected = ${JSON.stringify(lang)} === 'zh' ? '为 Cursor 安装 Archify：\\n' + command + '\\n\\n然后在目标仓库中让 Cursor：\\n' + prompt : 'Install Archify for Cursor:\\n' + command + '\\n\\nThen, in your target repository, ask Cursor:\\n' + prompt;
           }
           const writes = [], legacy = [];
@@ -87,6 +87,8 @@ test('real Chrome: website copy controls report real outcomes and preserve selec
           // Settle the previous receipt/recommendation layout before measuring
           // this attempt; clearing old feedback is not a clipboard scroll jump.
           status.textContent = '';
+          const heroFallback = document.getElementById('hero-copy-fallback');
+          if (heroFallback) heroFallback.hidden = true;
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           button.scrollIntoView({ block: 'center', behavior: 'instant' }); button.focus({ preventScroll: true });
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -97,12 +99,13 @@ test('real Chrome: website copy controls report real outcomes and preserve selec
           for (let i = 0; !status.textContent && i < 30; i++) await new Promise(resolve => setTimeout(resolve, 10));
           window.removeEventListener('archify:start-funnel', onCopy);
           const box = status.getBoundingClientRect();
-          return { expected, writes, legacy, visible: box.width > 0 && box.height > 0 && box.top >= 0 && box.bottom <= innerHeight && box.left >= 0 && box.right <= innerWidth, status: status.textContent, role: status.getAttribute('role'), live: status.getAttribute('aria-live'), focus: document.activeElement === button, areas: document.querySelectorAll('textarea').length - before.areas, scrollDelta: scrollY - before.scroll, events };
+          return { expected, writes, legacy, visible: box.width > 0 && box.height > 0 && box.top >= 0 && box.bottom <= innerHeight && box.left >= 0 && box.right <= innerWidth, fallbackVisible: heroFallback ? !heroFallback.hidden && heroFallback.textContent === expected : null, status: status.textContent, role: status.getAttribute('role'), live: status.getAttribute('aria-live'), focus: document.activeElement === button, areas: document.querySelectorAll('textarea').length - before.areas, scrollDelta: scrollY - before.scroll, events };
         })()`);
         manifest.receipts.push({ lang, page, selector, api, fallback, ...receipt });
         fs.writeFileSync(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
         const ok = api === 'success' || fallback === 'true';
         assert.equal(receipt.status, lang === 'zh' ? (ok ? '已复制到剪贴板。' : '复制失败，请手动选择文本。') : (ok ? 'Copied to clipboard.' : 'Copy failed. Select the text manually.'), `${page} ${selector} ${api}/${fallback}`);
+        if (selector === '[data-copy-text]') assert.equal(receipt.fallbackVisible, !ok, 'hero prompt fallback must become visible on copy failure');
         assert.deepEqual(receipt.writes, api === 'missing' ? [] : [receipt.expected]);
         assert.deepEqual(receipt.legacy, api === 'success' ? [] : [{ command: 'copy', text: receipt.expected }]);
         assert.equal(receipt.visible, true, 'feedback is visible near the clicked control at 320px');
@@ -185,16 +188,27 @@ test('real Chrome: website copy controls report real outcomes and preserve selec
       manifest.receipts.push({ lang, page, lateOutcome, stale });
       }
       for (const captureSelector of controls) for (const theme of ['light', 'dark']) {
-        await evaluate(`(async () => {
+        const captureStatus = await evaluate(`(async () => {
           document.documentElement.dataset.theme = ${JSON.stringify(theme)};
           Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
           document.execCommand = () => false;
-          const button = document.querySelector(${JSON.stringify(captureSelector)}); button.click();
-          await new Promise(resolve => setTimeout(resolve, 30));
+          const button = document.querySelector(${JSON.stringify(captureSelector)});
           const status = document.getElementById(button.getAttribute('aria-describedby'));
+          status.textContent = '';
+          button.click();
+          for (let i = 0; !status.textContent && i < 30; i++) await new Promise(resolve => setTimeout(resolve, 10));
           status.scrollIntoView({ block: 'center', behavior: 'instant' });
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Capture the settled theme, without waiting a fixed duration when no
+          // transition is running. The interaction assertions above still run
+          // against the page's normal animation behavior.
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          for (const animation of document.getAnimations()) {
+            if (animation instanceof CSSTransition && Number.isFinite(animation.effect.getComputedTiming().endTime)) animation.finish();
+          }
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          return status.textContent;
         })()`);
+        assert.equal(captureStatus, lang === 'zh' ? '复制失败，请手动选择文本。' : 'Copy failed. Select the text manually.');
         const file = `${lang}-${page}-${controls.indexOf(captureSelector)}-320-${theme}-failure.png`;
         const image = await browser.cdp.send('Page.captureScreenshot', { format: 'png' }, session);
         fs.writeFileSync(path.join(output, file), Buffer.from(image.data, 'base64'));

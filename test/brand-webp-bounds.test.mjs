@@ -8,7 +8,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../archify');
+const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
 const cli = path.join(skillRoot, 'bin/archify.mjs');
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 // Pillow-encoded 2x2 images, independently decoded (including both animation frames).

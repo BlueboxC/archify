@@ -11,7 +11,9 @@ const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 // A pipe holds 8 KiB on macOS and 64 KiB on Linux before it blocks, so every
 // fixture below produces a layout report well past both sizes.
 const PIPE_LIMIT = 64 * 1024;
-const shellQuote = value => `'${value.replaceAll("'", "'\\''")}'`;
+
+// A shell argument must preserve literal path characters such as $ and quotes.
+const shellQuote = (value) => "'" + String(value).replaceAll("'", "'\"'\"'") + "'";
 
 const wideTree = () => {
   const nodes = [{ id: 'root', label: 'root' }];

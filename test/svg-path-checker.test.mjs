@@ -143,6 +143,20 @@ test('正常二次曲线继续受检，不能为拒绝其他曲线而禁止已�
   assertPass(await check(t, arrow('m20 20l60 0q20 0 20 20v80')));
 });
 
+test('readable-v2 的纯 Q 路线不消耗交叉关系对预算', async t => {
+  const body = [
+    arrow('M20 20Q40 40 60 20', { id: 'one', from: 'a', to: 'b' }),
+    arrow('M20 60Q40 80 60 60', { id: 'two', from: 'c', to: 'd' }),
+    arrow('M20 100Q40 120 60 100', { id: 'three', from: 'e', to: 'f' }),
+  ].join('');
+  const result = await check(t, body, {
+    rootAttrs: 'data-layout-contract="readable-v2"',
+    env: { ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS: '1' },
+  });
+  assertPass(result);
+  assert.equal(result.receipt.composition.metrics.properCrossings, 0);
+});
+
 test('readable-v2 的圆角前后直线不生成虚假跨越，采样点不成为微线段', async t => {
   const rounded = arrow('M20 20L80 20Q100 20 100 40L100 120');
   const other = arrow('M50 70H96', { id: 'other', from: 'c', to: 'd', extra: 'data-edge-key="1"' });
@@ -167,6 +181,29 @@ test('readable-v2 仍检出圆角后可见直线上的真实交叉', async t => 
   assert.equal(result.code, 1);
   assert.equal(result.receipt.checks.find(item => item.name === 'relationship_crossings').ok, false);
   assert.deepEqual(result.receipt.composition.issues.find(item => item.code === 'composition/proper-crossing').point, [100, 70]);
+});
+
+test('architecture checking finds a crossing at an exact rounded-corner sample', async t => {
+  const result = await check(t, arrow('M20 20H92Q100 20 100 28V120')
+    + arrow('M98 5V160', { id: 'other', from: 'c', to: 'd' }), {
+    publicCli: true, rootAttrs: 'data-diagram-type="architecture"',
+  });
+  assert.equal(result.code, 1);
+  const crossing = result.receipt.composition.issues.find(item => item.code === 'composition/proper-crossing');
+  assert.deepEqual(crossing?.point, [98, 22]);
+});
+
+test('architecture checking flags a label over a neighboring arrowhead without requiring a shaft hit', async t => {
+  const another = arrow('M60 145H160', { id: 'other', from: 'c', to: 'd', extra: 'data-edge-key="1"' });
+  const label = '<g data-edge-key="1" data-edge-from="c" data-edge-to="d" data-edge-label="Return"><rect class="c-mask" x="86.7" y="104.2" width="4" height="4"/></g>';
+  const result = await check(t, arrow('M20 100H100') + another + label, {
+    rootAttrs: 'data-diagram-type="architecture"', profile: 'standard',
+  });
+  assertPass(result);
+  assert.equal(result.receipt.composition.metrics.labelRouteClearanceIssues, 0);
+  const issue = result.receipt.composition.issues.find(item => item.code === 'composition/label-arrowhead-mask');
+  assert.equal(issue?.labelRelationship.id, 'other');
+  assert.equal(issue?.otherRelationship.id, 'route');
 });
 
 const disconnected = 'M20 20L100 20M100 100L200 100';
@@ -223,11 +260,17 @@ test('交叉分析关系对预算只接受安全正整数环境变量', async t 
   // 318 relationships produce 50,403 eligible pairs, so invalid overrides
   // must fall back to the production 50,000-pair limit rather than merely
   // differing from an explicitly tiny valid override.
-  const body = Array.from({ length: 318 }, (_, index) => arrow('M20 20H80', {
-    id: `fallback-${index}`,
-    from: `source-${index}`,
-    to: `target-${index}`,
-  })).join('');
+  // Spread the routes across the canvas so the checker spends its budget
+  // on eligible pairs without reporting thousands of unrelated overlaps.
+  const body = Array.from({ length: 318 }, (_, index) => {
+    const x = 8 + (index % 18) * 22;
+    const y = 8 + Math.floor(index / 18) * 13;
+    return arrow(`M${x} ${y}H${x + 12}`, {
+      id: `fallback-${index}`,
+      from: `source-${index}`,
+      to: `target-${index}`,
+    });
+  }).join('');
   for (const [value, expectedLimit] of [
     ['', 50_000],
     ['not-a-number', 50_000],
@@ -242,6 +285,7 @@ test('交叉分析关系对预算只接受安全正整数环境变量', async t 
     assert.equal(result.code, 1);
     const issue = result.receipt.composition.issues.find(item => item.code === 'composition/crossing-analysis-budget');
     assert.equal(issue?.exhaustedBudget, 'relationship-pairs');
+    assert.equal(issue?.pairLimit, expectedLimit);
     assert.equal(issue?.attemptedPairs, expectedLimit);
     assert.match(issue?.detail || '', new RegExp(`relationship pairs \\(limit ${expectedLimit}\\)`));
   }

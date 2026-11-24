@@ -23,6 +23,9 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 - Notifier claim-interleaving tests control the network timer independently of real filesystem progress. Preserve single-request, stale-owner and timeout boundaries; keep the real timeout control and explicit before/at-deadline abort assertions. Do not widen deadlines to hide scheduling delays.
 - Skips and platform simulations are not runtime passes. Keep real browser and package evidence distinct.
 - Localization fixtures retain one UI session across all five modes, close it, then run the same independent visual checks with fresh per-artifact profiles. Preserve all locale, viewport, theme, font, capture and receipt assertions while keeping only one test Chrome instance live at a time.
+- Finder keyboard handler regressions execute the actual registered callbacks with minimal DOM dispatch:modified Enter selects,modified navigation and IME229/composition remain native,and ordinary/empty-result paths keep their behavior. Retain the real-browser boundary assertions.
+- SVG host and geometry readers close each independent browser before the next read, including read/setup failures. Keep idempotent after-hook cleanup and preserve primary plus cleanup errors together; retain every preset/theme/image/story/V2 assertion.
+- Story media tests retain the browser through the final toolbar UI assertions, await its idempotent close, then run independent CLI video exports. Keep the after-hook fallback, codec conditions, formats, fps, ranges and all rendering assertions.
 - Real Chrome export checks keep the classic grid transparent in the Viewer and standalone SVG variants, with visible blueprint/editorial controls and successful PNG decoding.
 - Browser regressions protect tall-diagram top visibility and restoration of inline alignment priorities. Passport/Finder/Figure-index contrast checks composite actual HTML background colors across themes/presets and selected rows; they do not certify every product surface. Mobile Lens tests assert that Clear/Copy are inside the capped panel and hit-testable with a 24px root font.
 - SVG scanner regressions retain the contributor's malformed/truncated markup cases, raw script/style controls and independent parse5 root-count comparisons. Keep boundary-membership and coincident-route checks intact.
@@ -48,6 +51,10 @@ Root tests own repository regression fixtures, helpers and browser checks. Insta
 - Workflow indexing retains valid main-path/off-path animation metadata; full before/after comparisons include successful scenes and refusal diagnostics. Stress timings are synthetic measurements, separate from typical workloads.
 
 - Dataflow endpoint regressions cover a later JSON flow and repeated in-memory flow objects, asserting the exact source paths and offered fix targets.
+
+- Changed Sequence labels reserve the stable change-prefix width alongside retained self-call layout. Fixed-canvas compatibility keeps its original drawing hash; any normalization of added non-drawing metadata requires immutable base/candidate byte comparison.
+
+- The unchanged fixed-canvas review9/fixed-096 fixture names its exact three authored-membership warnings, including subjects and rectangles. Keep the original SVG drawing hash and full warning comparison; all other clean fixtures still require no composition issues.
 
 ## Work Guidance
 

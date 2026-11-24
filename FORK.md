@@ -1,3 +1,7 @@
+# Current integration candidate
+
+Based on stable3.3.0 af3aaf3c36762f2afb62a4a09533f6c7273b07e5 with f04 correction contracts/current1110/1149 controls. Reuse upstream equivalents; earlier qualifications do not prove this combined source. Preserve existing userHTML. Current base is Apache-2.0; preserve LICENSE-MIT/NOTICE historical grants. Historical sections below identify adapted credits and their original evidence.
+
 # Archify — BlueboxC fork
 
 ## Report corrections (October 27–28)
@@ -6,7 +10,7 @@ Adapt Moonhyeseong's #1131 stdout-draining correction and the maintained success
 
 For [#1068](https://github.com/tt-a1i/archify/issues/1068), the current customized 3.2.0 Explainer also overflows in English without the unmerged Version control: its toolbar extends to 401 px at a 390 px viewport. The existing toolbar now wraps within the page column at narrow widths, and its menus anchor below the complete toolbar rather than an individual wrapped button. Desktop layout, keyboard handling, print exclusion, fonts and offline behavior stay unchanged. No update-awareness or feedback feature from #1066 is imported. Real Chrome regression coverage includes English/Chinese, 320/390/1440 px, four styles and both keyboard-opened menus.
 
-This fork integrates official Archify 3.2.0 (`v3.2.0`, commit
+This fork now integrates official Archify 3.3.0. Historical3.2 foundation (`v3.2.0`, commit
 `208acba8d412335185b2056fedf54b3405df43fb`) with our reviewed corrections.
 It supports ten diagram types, Explainer documents and the release's Viewer, workflow migration,
 Preview and verified `finalize` delivery. Existing generated user artifacts are

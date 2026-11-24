@@ -433,20 +433,6 @@ function iconCandidates(links, pageUrl) {
   return [...unique.values()].slice(0, 5).concat({ url: fallback, score: -1 });
 }
 
-function validIcoImageRanges(buffer) {
-  if (buffer.length < 6 || buffer.readUInt16LE(0) !== 0 || buffer.readUInt16LE(2) !== 1) return false;
-  const count = buffer.readUInt16LE(4);
-  const directoryEnd = 6 + count * 16;
-  if (count === 0 || directoryEnd > buffer.length) return false;
-  for (let index = 0; index < count; index += 1) {
-    const entry = 6 + index * 16;
-    const size = buffer.readUInt32LE(entry + 8);
-    const offset = buffer.readUInt32LE(entry + 12);
-    if (size === 0 || offset < directoryEnd || offset + size > buffer.length) return false;
-  }
-  return true;
-}
-
 // Necessary RIFF bounds, not a WebP bitstream decoder. Unknown chunks and
 // bytes after the declared RIFF end remain compatible with tolerant readers.
 // https://developers.google.com/speed/webp/docs/riff_container
@@ -488,7 +474,20 @@ function hasWebpImageData(buffer) {
     }
   }
   return imageFound;
+}
 
+function validIcoImageRanges(buffer) {
+  if (buffer.length < 6 || buffer.readUInt16LE(0) !== 0 || buffer.readUInt16LE(2) !== 1) return false;
+  const count = buffer.readUInt16LE(4);
+  const directoryEnd = 6 + count * 16;
+  if (count === 0 || directoryEnd > buffer.length) return false;
+  for (let index = 0; index < count; index += 1) {
+    const entry = 6 + index * 16;
+    const size = buffer.readUInt32LE(entry + 8);
+    const offset = buffer.readUInt32LE(entry + 12);
+    if (size === 0 || offset < directoryEnd || offset + size > buffer.length) return false;
+  }
+  return true;
 }
 
 async function imageData(response) {

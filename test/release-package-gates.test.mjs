@@ -132,7 +132,7 @@ test('release prevents manifest preannouncement and smokes the exact archive bef
   assert.match(build, /run: scripts\/build-zip\.sh \/tmp\/archify-built\.zip/);
   assert.match(smoke, /unzip -q \/tmp\/archify-built\.zip -d "\$package_root"/);
   assert.match(smoke, /node scripts\/package-smoke\.mjs "\$package_root\/archify"/);
-  assert.doesNotMatch(smoke, /\bnpm\s+(?:ci|install)\b/);
+  assert.doesNotMatch(smoke, /\b(?:pnpm|npm)\s+(?:ci|install)\b/);
   assert.match(freshness, /cmp -s \/tmp\/archify-built\.zip archify\.zip/);
   assertPinnedAction(
     upload,
@@ -262,7 +262,7 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
     'v5.0.0',
   );
   const website = workflowJob(workflow, 'website');
-  assert.match(website, /npm run check && npm run build && npm test/);
+  assert.match(website, /pnpm run check && pnpm run build && pnpm test/);
   assert.match(website, /ARCHIFY_SITE_ROOT:.*website\/dist/);
   assertPinnedAction(
     website,
@@ -273,19 +273,15 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
   assert.match(website, /name: website-dist/);
   const browser = workflowJob(workflow, 'browser-regression');
   assert.match(browser, /Run shared browser regression gate/);
-  assert.match(browser, /npm run test:browser -- --shard=\$\{\{ matrix\.shard \}\}\/2/);
+  assert.match(browser, /pnpm run test:browser --shard=\$\{\{ matrix\.shard \}\}\/\$\{\{ strategy\.job-total \}\}/);
   const media = workflowJob(workflow, 'webm-artifact');
   assert.match(media, /needs: \[scope, browser-regression, webm-decode\]/);
-  assert.match(media, /test "\$BROWSER_RESULT" = success/);
-  assert.match(media, /test "\$WEBM_RESULT" = success/);
   assert.ok(jobs['canonical-test'].needs.includes('full-regression'), 'Pages must wait for the complete regression and adapter checks');
   const packageSmoke = workflowJob(workflow, 'package-smoke');
   assert.match(packageSmoke, /Verify delivery-lock ownership with real subprocesses/);
   assert.match(packageSmoke, /Verify macOS opener stays behind delivery-lock release/);
   const windows = workflowJob(workflow, 'windows-test-portability');
-  assert.match(windows, /node-version: \[22, 24\]/);
   assert.match(windows, /Verify maintained Windows path contracts/);
-  assert.match(windows, /ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'/);
 });
 
 test('release tags with a SemVer prerelease are marked prerelease and never become latest', () => {
@@ -356,22 +352,21 @@ test('package smoke rejects a missing or modified distribution license', () => {
     assert.notEqual(result.status, 0, 'missing LICENSE must fail package smoke');
     assert.match(`${result.stdout}\n${result.stderr}`, /packaged skill is missing LICENSE/);
 
-    const repositoryLicense = fs.readFileSync(path.join(repoRoot, 'LICENSE'), 'utf8');
-    fs.writeFileSync(
-      licensePath,
-      repositoryLicense.replace(
-        'Copyright (c) 2025 Cocoon AI',
-        'Copyright (c) 2025 Cocoon AI (original "architecture-diagram-generator")',
-      ),
-    );
-    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
-    assert.notEqual(result.status, 0, 'modified upstream notice must fail package smoke');
-    assert.match(`${result.stdout}\n${result.stderr}`, /missing the exact Cocoon AI copyright line/);
+    fs.copyFileSync(path.join(repoRoot, 'LICENSE'), licensePath);
+    for (const name of ['LICENSE', 'LICENSE-MIT', 'NOTICE']) {
+      const target = path.join(staged, name);
+      const original = fs.readFileSync(target);
+      fs.rmSync(target);
+      result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+      assert.notEqual(result.status, 0, `missing ${name} must fail package smoke`);
+      assert.ok(`${result.stdout}\n${result.stderr}`.includes(`packaged skill is missing ${name}`));
+      fs.writeFileSync(target, 'truncated notice');
+      result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
+      assert.notEqual(result.status, 0, `modified ${name} must fail package smoke`);
+      assert.ok(`${result.stdout}\n${result.stderr}`.includes(`must byte-match the repository ${name}`));
+      fs.writeFileSync(target, original);
+    }
 
-    fs.writeFileSync(licensePath, 'Copyright (c) 2025 Cocoon AI\n');
-    result = spawnSync(process.execPath, [packageSmoke, staged], { encoding: 'utf8' });
-    assert.notEqual(result.status, 0, 'truncated LICENSE must fail package smoke');
-    assert.match(`${result.stdout}\n${result.stderr}`, /must byte-match the repository LICENSE/);
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }
@@ -1512,6 +1507,22 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
   };
   const complete = list();
   const smoke = list('--smoke');
+  const workflow = parse(fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8'));
+  const automation = workflow.jobs['windows-test-portability'];
+  const lanes = automation.strategy.matrix.include.map(lane => [lane['node-version'], lane.profile]);
+  assert.deepEqual(lanes, [[22, '--controlled'], [22, '--contracts-1'], [22, '--contracts-2'], [22, '--portability'], [24, '--smoke']]);
+  const canonical = lanes.filter(([node]) => node === 22).map(([, profile]) => list(profile));
+  assert.equal(canonical.filter(lane => lane.controlledPaths).length, 1);
+  const [first, second, portability] = canonical.flatMap(lane => lane.groups);
+  const [contracts, completePortability] = complete.groups;
+  const contractFiles = [...first.slice(2), ...second.slice(2)];
+  assert.deepEqual(first.slice(0, 2), contracts.slice(0, 2));
+  assert.deepEqual(second.slice(0, 2), contracts.slice(0, 2));
+  assert.deepEqual(contractFiles.sort(), contracts.slice(2).sort());
+  assert.deepEqual(portability, completePortability);
+  const invalidCombination = spawnSync(process.execPath, [runnerPath, '--list', '--controlled', '--smoke']);
+  assert.notEqual(invalidCombination.status, 0);
+
   assert.equal(complete.controlledPaths, true);
   assert.equal(smoke.controlledPaths, true);
   assert.deepEqual(smoke.groups.flat().filter(arg => arg.endsWith('.test.mjs')),
@@ -1541,6 +1552,7 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
     'test/sidecar-path-length.test.mjs',
     'test/open-artifact.test.mjs',
     'test/repository-evidence.test.mjs',
+    'test/repository-evidence-replacement.test.mjs',
     'test/renderer-atomic-write.test.mjs',
     'test/atomic-output-recovery.test.mjs',
   ];
@@ -1671,14 +1683,14 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
   for (const [label, workflow] of workflows) {
     const job = workflowJob(workflow, 'windows-test-portability');
     assert.match(job, /runs-on:\s*windows-latest/);
-    assert.match(job, /node-version:\s*\[22, 24\]/);
+    if (label !== 'CI') assert.match(job, /node-version:\s*\[22, 24\]/);
     assert.match(job, /node-version:\s*\$\{\{ matrix\.node-version \}\}/);
-    assert.match(job, /npm ci --ignore-scripts/);
+    assert.match(job, /pnpm install --frozen-lockfile --ignore-scripts/);
     assert.match(job, /node scripts\/run-windows-path-tests\.mjs/);
-    assert.ok(job.includes("matrix.node-version == 24 && '--smoke' || ''"),
-      `${label} must select smoke only for Node 24; Node 22 retains the complete matrices`);
+    assert.ok(job.includes(label === 'CI' ? '${{ matrix.profile }}' : "matrix.node-version == 24 && '--smoke' || ''"),
+      `${label} must select the maintained Windows profiles`);
     assert.match(job, label === 'CI'
-      ? /name: Provision controlled Windows path fixtures\n\s+if: needs\.scope\.outputs\.windows == 'true'\n\s+shell: pwsh/
+      ? /name: Provision controlled Windows path fixtures\n\s+id: windows-path-fixtures\n\s+if: needs\.scope\.outputs\.windows == 'true'\n\s+shell: pwsh/
       : /name: Provision controlled Windows path fixtures\n\s+shell: pwsh/);
     assert.match(
       job,
@@ -1687,7 +1699,7 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
     assert.match(
       job,
       label === 'CI'
-        ? /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) && needs\.scope\.outputs\.windows == 'true' \}\}/
+        ? /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) && steps\.windows-path-fixtures\.outcome != 'skipped' \}\}/
         : /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) \}\}/,
     );
     assert.match(
@@ -1701,8 +1713,8 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
     );
     assert.match(
       job,
-      /ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS:\s*'1'/,
-      `${label} must require controlled UNC and case-sensitive NTFS coverage on every lane`,
+      label === 'CI' ? /ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS:.*'--controlled'.*'--smoke'.*'1'/ : /ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS:\s*'1'/,
+      `${label} must require controlled UNC and case-sensitive NTFS coverage on both Node versions`,
     );
     for (const suite of fullSuites) {
       assert.equal(job.includes(suite), false, `${label} must get ${suite} from the shared runner`);

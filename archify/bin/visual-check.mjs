@@ -1,3 +1,4 @@
+import { softwareNoticesHtml } from '../renderers/shared/software-notices.mjs';
 import { spawn } from 'node:child_process';
 import { isExplainerHtml } from '../explainer/check.mjs';
 import { EXPLAINER_VIEWPORTS, inspectExplainerBrowser, explainerObservation, explainerObservationDiagnostics } from '../explainer/browser-check.mjs';
@@ -1609,6 +1610,10 @@ export class ChromeVisualBrowser {
     const targets = await this.cdp.send(
       'Target.getTargets', {}, undefined, this.startupTimeoutMs,
     );
+    // Deny downloads across this browser, including pages created by resetPage.
+    // If the browser rejects the policy, stop before loading an artifact whose
+    // exports could leave partial files in the user's Downloads folder (#1371).
+    await this.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
     let target = targets.targetInfos?.find((item) => item.type === 'page');
     if (!target) {
       const created = await this.cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -1824,8 +1829,9 @@ export class ChromeVisualBrowser {
         scrollWidth: Math.ceil(document.documentElement.scrollWidth),
         // Bottom notes and index are reading material below the fold; the
         // Reader excludes them from the one-screen fit, and so does this check.
+        // The feedback footer always sits last, below the fold, for the same reason.
         scrollHeight: Math.max(window.innerHeight, Math.ceil(document.documentElement.scrollHeight - (
-          notesBelowFold ? outerHeight(reader.querySelector('.reader-rail')) : 0))),
+          notesBelowFold ? outerHeight(reader.querySelector('.reader-rail')) : 0) - outerHeight(document.querySelector('.page-feedback')))),
         resolvedTheme: document.documentElement.getAttribute('data-theme') || '',
         readerLayout: document.documentElement.getAttribute('data-reader-layout') || null,
         readerOverflow: document.documentElement.getAttribute('data-reader-overflow') || null,
@@ -2022,7 +2028,7 @@ function contactSheetHtml({ artifactPath, receipt, screenshots }) {
   return `<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8">${softwareNoticesHtml}
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Archify automated browser evidence · ${htmlEscape(path.basename(artifactPath))}</title>
 <style>

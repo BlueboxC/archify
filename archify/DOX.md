@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Own the zero-dependency installed CLI, renderers, checker, Viewer, authoring contracts and regression tests.
+Own the zero-dependency installed CLI, renderers, checker, Viewer and authoring contracts, with bundled Story and Code Analysis boundaries.
 
 ## Ownership
 
-This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schemas/`, `references/`, bundled examples. `explainer/` owns structured explanatory documents and chart compilation. Root `test/` owns tests and root `viewer/` owns Viewer sources.
+This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schemas/`, `references/`, bundled examples. `story/` owns native walkthrough attachment, choreography and presentation exports. `modules/code-analysis/` owns its separate package, static-analysis pipeline and local workbench. `explainer/` owns structured explanatory documents and chart compilation. Root `test/` owns tests and root `viewer/` owns Viewer sources.
 
 ## Local Contracts
 
@@ -15,7 +15,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 - Layout JSON mode drains stdout without creating or replacing HTML. SVG root discovery and geometry readers share a single-pass tokenizer with attribute-aware tag endings and self-closing flags. Preserve comment/CDATA context, script/style text exclusion, ASCII tag delimiters and the full root after nested SVG elements; this is a scoped artifact scanner rather than a general HTML validator.
 - Checker transport failure is not an artifact verdict. Preserve previous delivered output when verification cannot complete.
 - Explainer checker receipts fully drain piped stdout before exit, preserving a single JSON receipt and verdict exit code.
-- Class method styling preserves authored parameter delimiters. Timeline title wrapping keeps complete grapheme clusters and existing CJK punctuation grouping.
+- Class method styling preserves authored parameter delimiters and whitespace. Timeline title wrapping keeps complete grapheme clusters and existing CJK punctuation grouping.
 - Repository evidence accepts only the supplied commit object identity; refuse tag/tree/blob IDs without silently peeling them. GitHub/GitLab Markdown line citations use plain source; path-only citations remain unchanged.
 - Preview retains the last verified artifact independently of checking/failure status; same-revision state updates preserve the loaded document.
 - Migration validates complete source/final semantic contracts; group repair spans preserve exact membership and each node's effective group identity under canonical ordering, including overlapping groups with equal labels. Self-calls retain ownership, notes and identity. Raster pins undergo container checks even with matching digests.
@@ -35,7 +35,7 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 
 - Tree label/sublabel, Timeline title and Sequence note wrapping keep closing CJK punctuation, iteration marks and ellipses with the preceding piece, and opening brackets with the following piece, including authored whitespace after the bracket. Timeline retains complete grapheme clusters. Keep width measurement, fonts and non-CJK wrapping; this is a scoped punctuation rule, not complete Unicode line breaking.
 
-- Automatic workflow port probing stops when the configured spacing cannot produce a distinct floating-point coordinate; preserve finite authored dimensions and ordinary routing.
+- Automatic workflow port probing skips occupied intervals and repeated floating-point coordinates on the bounded spacing grid. Preserve stroke-aware clearance, later usable ports, finite authored dimensions and ordinary routing; stop when no distinct bounded candidate remains.
 - Failed schema-v2 relative drop forks may retry opposite source-port order at up to four stably selected forks per compile invocation. Speculative candidates disable repair-hint discovery while retaining full validation. Accept only a fully validated compile; keep successful scenes, authored topology/sides and absolute geometry. Outer layout feedback retains its independent bounds.
 - Indeterminate sidecar namespaces produce structured provenance/evidence failures without an alternative write path or treating unknown provenance as verified.
 
@@ -60,6 +60,8 @@ This boundary owns `bin/`, `renderers/`, `scripts/`, `delta/`, `assets/`, `schem
 
 ## Child DOX Index
 
+- [story/DOX.md](story/DOX.md) — walkthrough attachment, choreography, source excerpts and recoverable media outputs.
+- [modules/code-analysis/DOX.md](modules/code-analysis/DOX.md) — separate analysis package, captured facts, findings, task evidence and loopback workbench.
 - [explainer/DOX.md](explainer/DOX.md) — structured document rendering and data-chart fidelity.
 
 - [references/DOX.md](references/DOX.md) — on-demand guidance, routing indexes and compatibility links. Runtime contracts remain owned here.
