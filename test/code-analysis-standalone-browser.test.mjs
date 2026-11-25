@@ -139,7 +139,12 @@ test('standalone workbench keeps Atlas alongside evidence, both locales/themes a
     assert.equal(selected.kind, { 'coupling/cycle': 'modules', 'coupling/import-cycle': 'cycle' }[selected.code]);
     await click(`${details} .inline-evidence .ref`);
     assert.equal(await run("document.getElementById('bauify-code').hidden"), false);
+    // Source changes the grid width; sample pointer coordinates only at its target size.
+    await wait(`(${canvasSized}) && document.querySelector('.analysis-reader-shell').getBoundingClientRect().width === Math.min(760, innerWidth * .54)`, 'source reader did not finish expanding');
     await click('#bauify-code .source-back');
+    assert.equal(await run("document.getElementById('bauify-code').hidden"), true, 'returning from source closes the source pane');
+    assert.equal(await run("document.documentElement.hasAttribute('data-bauify-source')"), false, 'returning from source restores the detail page');
+    await wait(`(${canvasSized}) && document.querySelector('.analysis-reader-shell').getBoundingClientRect().width === 420`, 'detail reader did not finish returning from source');
     assert.equal(await run(selectedFinding), id, 'returning from source keeps the detail selected');
     await click(`${details} .back`);
     assert.equal(await run(selectedFinding), '', 'returning to the overview restores no selection');

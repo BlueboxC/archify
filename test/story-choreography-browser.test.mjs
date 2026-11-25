@@ -442,7 +442,35 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const presetButton = document.getElementById('stage-preset');
     presetButton.click();
     const presetOpenBeforeExport = presetButton.getAttribute('aria-expanded') === 'true';
-    const vidBlob = await window.ArchifyStoryStage.exportVideo({ format: 'webm', start: 2, seconds: 5, fps: 1, onProgress: ev => {
+    const thumbnail = document.createElement('canvas');
+    thumbnail.width = 96;
+    thumbnail.height = 54;
+    const ctx = thumbnail.getContext('2d', { willReadFrequently: true });
+    const frameSample = (source, x = 0, width = thumbnail.width) => {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, thumbnail.width, thumbnail.height);
+      ctx.drawImage(source, x, 0, width, thumbnail.height);
+      return ctx.getImageData(0, 0, thumbnail.width, thumbnail.height).data;
+    };
+    const stills = await Promise.all(${JSON.stringify(lightStills.map(still => toDataUri(still.path)))}.map(async (src) => {
+      const img = new Image();
+      img.src = src;
+      await img.decode();
+      const width = thumbnail.height * img.width / img.height;
+      return frameSample(img, (thumbnail.width - width) / 2, width);
+    }));
+    const distance = (pixels, still) => pixels.reduce((sum, channel, i) => sum + Math.abs(channel - still[i]), 0);
+    const videoFps = 1;
+    const encodedInputs = [];
+    const originalEncode = VideoEncoder.prototype.encode;
+    VideoEncoder.prototype.encode = function (frame, options) {
+      if (frame.timestamp === 0 || frame.timestamp === 4e6) {
+        encodedInputs.push({ timestamp: frame.timestamp, pixels: frameSample(frame) });
+      }
+      return originalEncode.call(this, frame, options);
+    };
+    let vidBlob;
+    try { vidBlob = await window.ArchifyStoryStage.exportVideo({ format: 'webm', start: 2, seconds: 5, fps: videoFps, onProgress: ev => {
       if (ev.frame === 1) {
         controlsLocked = controls.every(el => el.disabled) && presetButton.getAttribute('aria-expanded') === 'false';
         document.getElementById('stage-theme').click();
@@ -458,7 +486,7 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
         overlappingExport = window.ArchifyStoryStage.exportVideo({ format: 'webm', start: 0, seconds: 0.1, fps: 10 })
           .then(() => null, error => error.message);
       }
-    } });
+    } }); } finally { VideoEncoder.prototype.encode = originalEncode; }
     const overlapMessage = await overlappingExport;
     const themeAfterExport = window.ArchifyStoryStage.state().theme;
     const presetAfterExport = window.ArchifyStoryStage.state().preset;
@@ -491,46 +519,89 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
     const vUrl = URL.createObjectURL(vidBlob);
     const video = document.createElement('video');
     video.muted = true;
-    video.src = vUrl;
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('WebM decode timeout')), 5000);
-      video.onloadeddata = () => { clearTimeout(timer); resolve(); };
-      video.onerror = () => { clearTimeout(timer); reject(new Error('WebM decode failed')); };
+    // Compare presented decoded frames with the requested timeline stills.
+    const frameTrace = [];
+    const videoState = () => ({ currentTime: video.currentTime, readyState: video.readyState, seeking: video.seeking });
+    const sampleVideoFrame = (expectedTime, seekTo = null) => new Promise((resolve, reject) => {
+      let callbackId, presented, seeked, settled = false;
+      const cleanup = () => {
+        clearTimeout(timer);
+        video.cancelVideoFrameCallback(callbackId);
+        video.removeEventListener('error', failed);
+        video.removeEventListener('seeked', onSeeked);
+      };
+      const finish = (error) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        if (error) reject(new Error(error.message + ': ' + JSON.stringify({
+          expectedTime, seekTo, ...videoState(), frameTrace,
+          encoderInputTimes: encodedInputs.map(frame => frame.timestamp / 1e6),
+          encoderInputDistances: encodedInputs.map(frame => stills.map(still => distance(frame.pixels, still))),
+          presentedDistances: presented && stills.map(still => distance(presented.pixels, still)),
+          seekedDistances: seeked && stills.map(still => distance(seeked.pixels, still)),
+        })));
+        else resolve({ presented, seeked });
+      };
+      const complete = () => {
+        if (presented && (seekTo === null || seeked)) finish();
+      };
+      const failed = () => finish(new Error('WebM decode failed: ' + JSON.stringify(videoState())));
+      const onSeeked = () => {
+        try {
+          seeked = { ...videoState(), pixels: frameSample(video) };
+          complete();
+        } catch (error) { finish(error); }
+      };
+      const onFrame = (_, metadata) => {
+        frameTrace.push({ mediaTime: metadata.mediaTime, presentedFrames: metadata.presentedFrames, ...videoState() });
+        if (frameTrace.length > 16) frameTrace.shift();
+        if (!Number.isFinite(metadata.mediaTime) || Math.abs(metadata.mediaTime - expectedTime) > 0.001) {
+          callbackId = video.requestVideoFrameCallback(onFrame);
+          return;
+        }
+        try {
+          presented = {
+            ...videoState(), mediaTime: metadata.mediaTime, presentedFrames: metadata.presentedFrames,
+            pixels: frameSample(video),
+          };
+          complete();
+        } catch (error) { finish(error); }
+      };
+      const timer = setTimeout(() => finish(new Error('Video frame timeout: ' + JSON.stringify({
+        expectedTime, seekTo, ...videoState(),
+      }))), 5000);
+      video.addEventListener('error', failed);
+      if (seekTo !== null) video.addEventListener('seeked', onSeeked);
+      try {
+        // Arm before load/seek: a paused video need not present the same frame again.
+        callbackId = video.requestVideoFrameCallback(onFrame);
+        if (seekTo !== null) video.currentTime = seekTo;
+      } catch (error) { finish(error); }
     });
-    const videoDims = { width: video.videoWidth, height: video.videoHeight, duration: video.duration };
-    // Compare decoded frames with the requested timeline stills.
-    const thumbnail = document.createElement('canvas');
-    thumbnail.width = 96;
-    thumbnail.height = 54;
-    const ctx = thumbnail.getContext('2d', { willReadFrequently: true });
-    const frameSample = (source, x = 0, width = thumbnail.width) => {
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, thumbnail.width, thumbnail.height);
-      ctx.drawImage(source, x, 0, width, thumbnail.height);
-      return ctx.getImageData(0, 0, thumbnail.width, thumbnail.height).data;
-    };
-    const seekVideo = (video, time) => new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Video seek timeout')), 5000);
-      video.onseeked = () => { clearTimeout(timer); resolve(); };
-      video.currentTime = time;
-    });
-    // loadeddata can precede the first frame being drawable into a canvas.
-    await seekVideo(video, 0.25);
-    const firstFrame = frameSample(video);
-    await seekVideo(video, video.duration - 0.5);
-    const lastFrame = frameSample(video);
-    video.removeAttribute('src');
-    video.load();
-    URL.revokeObjectURL(vUrl);
-    const stills = await Promise.all(${JSON.stringify(lightStills.map(still => toDataUri(still.path)))}.map(async (src) => {
-      const img = new Image();
-      img.src = src;
-      await img.decode();
-      const width = thumbnail.height * img.width / img.height;
-      return frameSample(img, (thumbnail.width - width) / 2, width);
-    }));
-    const distance = (pixels, still) => pixels.reduce((sum, channel, i) => sum + Math.abs(channel - still[i]), 0);
+    let firstFrame, lastFrame, seekedFrame, videoDims, decodedFrameStates;
+    try {
+      const firstPresented = sampleVideoFrame(0);
+      video.src = vUrl;
+      const first = await firstPresented;
+      videoDims = { width: video.videoWidth, height: video.videoHeight, duration: video.duration };
+      const lastTime = video.duration - 0.5;
+      const last = await sampleVideoFrame(Math.floor(lastTime * videoFps) / videoFps, lastTime);
+      firstFrame = first.presented.pixels;
+      lastFrame = last.presented.pixels;
+      seekedFrame = last.seeked.pixels;
+      decodedFrameStates = [first, last].map(({ presented, seeked }) => ({
+        presented: { ...presented, pixels: undefined }, seeked: seeked && { ...seeked, pixels: undefined },
+      }));
+    } finally {
+      video.removeAttribute('src');
+      video.load();
+      URL.revokeObjectURL(vUrl);
+    }
     const frameDistances = [firstFrame, lastFrame].map(frame => stills.map(still => distance(frame, still)));
+    const seekedFrameDistances = stills.map(still => distance(seekedFrame, still));
+    const encoderInputDistances = encodedInputs.map(({ pixels }) => stills.map(still => distance(pixels, still)));
+    const encoderInputTimes = encodedInputs.map(({ timestamp }) => timestamp / 1e6);
     const matchedStills = frameDistances.map(([first, second]) => first < second ? 0 : 1);
     const supportsH264 = typeof VideoEncoder !== 'undefined' && (await VideoEncoder.isConfigSupported({
       codec: 'avc1.64002a', width: 1920, height: 1080, framerate: 30, bitrate: 12000000, latencyMode: 'quality', avc: { format: 'avc' },
@@ -544,14 +615,20 @@ test('story SVGs render in <img>/<picture>, settle under prefers-reduced-motion,
         silentMp4Head = new TextDecoder().decode(await mp4.slice(4,12).arrayBuffer());
       } finally { window.AudioEncoder = originalAudioEncoder; }
     }
-    return { state, pngDims, head, videoDims, matchedStills, frameDistances, overlapMessage, supportsH264, silentMp4Head, themeAfterExport, presetAfterExport, timeAfterExport, presetOpenBeforeExport, controlsLocked, cancellations, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
+    return { state, pngDims, head, videoDims, matchedStills, frameDistances, decodedFrameStates, seekedFrameDistances, encoderInputDistances, encoderInputTimes, overlapMessage, supportsH264, silentMp4Head, themeAfterExport, presetAfterExport, timeAfterExport, presetOpenBeforeExport, controlsLocked, cancellations, invalidRangeRejected, controlsRestored: controls.every(el => !el.disabled) };
   })()`);
 
   await t.test('Stage rejects an overlapping export before it can change reader state', () => {
     assert.match(stageCheck.overlapMessage ?? '', /already running/i);
   });
-  await t.test('decoded Stage video advances under reduced motion', () => {
-    assert.deepEqual(stageCheck.matchedStills, [0, 1], JSON.stringify(stageCheck.frameDistances));
+  await t.test('decoded Stage video advances under reduced motion', (t) => {
+    const evidence = {
+      frameDistances: stageCheck.frameDistances, decodedFrameStates: stageCheck.decodedFrameStates,
+      seekedFrameDistances: stageCheck.seekedFrameDistances,
+      encoderInputTimes: stageCheck.encoderInputTimes, encoderInputDistances: stageCheck.encoderInputDistances,
+    };
+    t.diagnostic(JSON.stringify(evidence));
+    assert.deepEqual(stageCheck.matchedStills, [0, 1], JSON.stringify(evidence));
   });
   await t.test('Stage programmatic video cancellation restores controls and reader position', () => {
     const cancelled = { error: 'AbortError', time: stageCheck.state.time, unlocked: true };
